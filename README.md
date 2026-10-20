@@ -55,5 +55,5 @@ Structure :
 | `js/cards.js` | Contenu du jeu |
 | `js/game.js` | Moteur déterministe : code de partie, distribution, conditions de victoire |
 | `js/app.js` | Écrans (accueil, animateur, joueur, distribution, débrief, règles, catalogue) |
-| `vendor/qrcode.js` | Génération des QR codes ([qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator), MIT) |
+| QR codes | [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT), chargé depuis jsDelivr puis mis en cache hors ligne |
 | `sw.js`, `manifest.webmanifest` | Fonctionnement hors ligne / installation |

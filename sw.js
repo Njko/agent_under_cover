@@ -9,7 +9,6 @@ const ASSETS = [
   "js/app.js",
   "js/game.js",
   "js/cards.js",
-  "vendor/qrcode.js",
   "manifest.webmanifest",
   "icons/icon.svg",
 ];
