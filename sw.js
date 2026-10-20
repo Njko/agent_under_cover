@@ -1,7 +1,7 @@
 // Service worker : met l'application en cache pour qu'elle fonctionne même sans réseau
 // (utile dans une salle de formation avec un Wi-Fi capricieux).
 // Incrémenter VERSION à chaque modification des fichiers pour forcer la mise à jour.
-const VERSION = "v1";
+const VERSION = "v2";
 const ASSETS = [
   "./",
   "index.html",
@@ -12,8 +12,6 @@ const ASSETS = [
   "vendor/qrcode.js",
   "manifest.webmanifest",
   "icons/icon.svg",
-  "icons/icon-192.png",
-  "icons/icon-512.png",
 ];
 
 self.addEventListener("install", (event) => {
