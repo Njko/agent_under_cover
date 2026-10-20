@@ -1,0 +1,10 @@
+{
+  "name": "agent-under-cover",
+  "private": true,
+  "type": "module",
+  "description": "Serious game Undercover autour de l'IA responsable, 100 % statique (GitHub Pages).",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "start": "python3 -m http.server 8000"
+  }
+}
