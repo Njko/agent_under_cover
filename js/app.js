@@ -38,12 +38,14 @@ const store = {
   },
 };
 
+// Une page peut imposer son adresse publique (ex. quand elle est intégrée dans une iframe).
 function baseUrl() {
-  return location.href.split("#")[0];
+  return window.UNDERCOVER_SHARE_URL || location.href.split("#")[0];
 }
 
+// Format court « #join-CODE-3 » : uniquement lettres, chiffres et tirets, accepté partout.
 function joinUrl(code, seat) {
-  return `${baseUrl()}#/join/${code}${seat ? `/${seat}` : ""}`;
+  return `${baseUrl()}#join-${code}${seat ? `-${seat}` : ""}`;
 }
 
 function qrSvg(text, cell = 6) {
@@ -67,6 +69,19 @@ function openModal(html) {
   modal.innerHTML = `<div class="modal-box" role="dialog" aria-modal="true">${html}</div>`;
   modal.hidden = false;
   modal.querySelector("button, a")?.focus();
+}
+
+function confirmModal(message, okLabel, onConfirm) {
+  openModal(`
+    <p>${esc(message)}</p>
+    <div class="actions">
+      <button class="btn btn--primary" id="confirm-ok">${esc(okLabel)}</button>
+      <button class="btn" data-close>Annuler</button>
+    </div>`);
+  document.getElementById("confirm-ok").onclick = () => {
+    closeModal();
+    onConfirm();
+  };
 }
 
 function closeModal() {
@@ -311,7 +326,11 @@ function viewHost(code) {
       await navigator.clipboard.writeText(url);
       document.getElementById("copy").textContent = "Lien copié ✓";
     } catch {
-      prompt("Lien à partager :", url);
+      openModal(`
+        <h2>Lien à partager</h2>
+        <input class="share-url" id="share-url" readonly value="${esc(url)}" aria-label="Lien de la partie">
+        <button class="btn btn--primary" data-close>Fermer</button>`);
+      document.getElementById("share-url").select();
     }
   };
   document.getElementById("seat-qrs").onclick = () => showSeatQrs(code, game, state);
@@ -330,17 +349,16 @@ function viewHost(code) {
 
   document.getElementById("debrief").onclick = () => {
     const s = hostState(code);
-    if (!s.finished && !outcome(deal, s.eliminated)) {
-      if (!confirm("La manche n'est pas terminée. Révéler tous les rôles ?")) return;
+    if (s.finished || outcome(deal, s.eliminated)) return go(`#/debrief/${code}`);
+    confirmModal("La manche n'est pas terminée. Révéler tous les rôles ?", "Révéler", () => {
       s.finished = "revealed";
       saveHostState(code, s);
-    }
-    go(`#/debrief/${code}`);
+      go(`#/debrief/${code}`);
+    });
   };
 
-  document.getElementById("next").onclick = () => {
+  const nextRound = () => {
     const s = hostState(code);
-    if (!result && !confirm("La manche en cours n'est pas terminée. Passer à la suivante ?")) return;
     s.round += 1;
     s.eliminated = [];
     s.finished = null;
@@ -351,6 +369,8 @@ function viewHost(code) {
       <p>Demandez à chaque joueur d'appuyer sur <strong>« Manche suivante »</strong> sur son téléphone pour découvrir sa nouvelle carte.</p>
       <button class="btn btn--primary" data-close>OK</button>`);
   };
+  document.getElementById("next").onclick = () =>
+    result ? nextRound() : confirmModal("La manche en cours n'est pas terminée. Passer à la suivante ?", "Passer", nextRound);
 }
 
 function resultText(result) {
@@ -664,7 +684,9 @@ function viewInvalid(code) {
 
 function render() {
   closeModal();
-  const [, route = "", a, b] = location.hash.replace(/^#/, "").split("/");
+  const hash = location.hash.replace(/^#/, "");
+  const short = hash.match(/^join-([A-Za-z0-9]+)(?:-(\d+))?$/);
+  const [, route = "", a, b] = short ? ["", "join", short[1], short[2]] : hash.split("/");
   switch (route) {
     case "host":
       a ? viewHost(a) : viewHostSetup();

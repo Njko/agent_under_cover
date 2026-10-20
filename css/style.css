@@ -16,6 +16,8 @@
   --rule5: #0b5677;
   --rule6: #5a2db3;
   --rule7: #0d4b5a;
+  --bar: #00008f;
+  --why-bg: #fff5f5;
   --radius: 14px;
   color-scheme: light;
 }
@@ -38,15 +40,15 @@ h1 { font-size: 1.6rem; line-height: 1.2; margin: 0.4em 0; }
 h2 { font-size: 1.15rem; margin: 1.4em 0 0.5em; }
 
 .topbar {
-  background: var(--primary);
-  color: var(--primary-text);
+  background: var(--bar);
+  color: #ffffff;
   padding: 10px 16px;
   padding-top: max(10px, env(safe-area-inset-top));
 }
 .brand { display: flex; gap: 10px; align-items: center; color: inherit; text-decoration: none; font-weight: 700; }
 .brand small { font-weight: 400; opacity: 0.8; }
 
-main { max-width: 760px; margin: 0 auto; padding: 16px 16px 48px; outline: none; }
+main { max-width: 760px; margin: 0 auto; padding-block: 16px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); outline: none; }
 
 .hero { text-align: center; padding: 24px 0 8px; }
 .hero h1 { font-size: 2rem; }
@@ -120,7 +122,7 @@ input[type="number"], input.code-input, input.name {
 .card--undercover { outline: 3px solid var(--danger); }
 .card-label { margin: 0 18px 14px; font-size: 0.85rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 8px; }
 .rule-title { border-left: 4px solid var(--primary); padding-left: 10px; }
-.why { background: #fff5f5; border-left: 4px solid var(--danger); padding: 10px 14px; border-radius: 8px; }
+.why { background: var(--why-bg); border-left: 4px solid var(--danger); padding: 10px 14px; border-radius: 8px; }
 
 /* Carte secrète du joueur */
 .secret { position: relative; margin: 16px auto; max-width: 380px; user-select: none; -webkit-user-select: none; touch-action: none; }
@@ -149,6 +151,7 @@ input[type="number"], input.code-input, input.name {
 /* Écran animateur */
 .share { display: flex; gap: 16px; align-items: center; background: var(--surface); padding: 14px; border-radius: var(--radius); border: 1px solid var(--border); flex-wrap: wrap; }
 .share .btn { margin: 4px 4px 0 0; }
+.share-url { width: 100%; font: inherit; padding: 10px; margin-bottom: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); }
 .qr { width: 150px; background: #fff; border-radius: 8px; }
 .qr svg { width: 100%; height: auto; display: block; }
 .qr--big { width: min(280px, 75vw); margin: 12px auto; }
@@ -161,7 +164,7 @@ input[type="number"], input.code-input, input.name {
 .players li { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 8px 10px; }
 .players li.out { opacity: 0.6; }
 .players li.out .name { text-decoration: line-through; }
-.seat { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
+.seat { width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: var(--primary-text); display: flex; align-items: center; justify-content: center; font-weight: 700; flex: none; }
 .players .name { flex: 1; min-width: 0; padding: 6px 8px; border-color: transparent; }
 .players .name:focus { border-color: var(--border); }
 .score { font-size: 0.85rem; color: var(--muted); white-space: nowrap; }
@@ -197,11 +200,22 @@ input[type="number"], input.code-input, input.name {
     --text: #e8ecf5;
     --muted: #9aa6c0;
     --border: #2a3654;
-    --primary: #6f86ff;
+    --primary: #8fa2ff;
     --primary-text: #0d1424;
+    --bar: #00008f;
+    --why-bg: #2a1c26;
     color-scheme: dark;
   }
-  :root:not([data-theme="light"]) .topbar { background: #00008f; color: #fff; }
-  :root:not([data-theme="light"]) .why { background: #2a1c26; }
-  :root:not([data-theme="light"]) .seat { color: #0d1424; }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1424;
+  --surface: #17213a;
+  --text: #e8ecf5;
+  --muted: #9aa6c0;
+  --border: #2a3654;
+  --primary: #8fa2ff;
+  --primary-text: #0d1424;
+  --bar: #00008f;
+  --why-bg: #2a1c26;
+  color-scheme: dark;
 }
