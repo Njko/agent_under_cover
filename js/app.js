@@ -170,8 +170,8 @@ function loadQrLibrary() {
   return qrLibrary;
 }
 
-function qrSlot(text, cell = 6, className = "") {
-  return `<div class="qr ${className}" data-qr="${esc(text)}" data-cell="${cell}" role="img" aria-label="QR code"></div>`;
+function qrSlot(text, label, cell = 6, className = "") {
+  return `<div class="qr ${className}" data-qr="${esc(text)}" data-cell="${cell}" role="img" aria-label="${esc(label)}"></div>`;
 }
 
 function hydrateQr(root = document) {
@@ -200,11 +200,34 @@ function go(hash) {
   else location.hash = hash;
 }
 
+// Message lu par les lecteurs d'écran sans déplacer le focus (zone aria-live de index.html).
+function announce(message) {
+  const live = document.getElementById("live");
+  if (!live) return;
+  live.textContent = "";
+  setTimeout(() => (live.textContent = message), 50);
+}
+
+// Élément qui avait le focus avant l'ouverture de la modale, pour l'y ramener à la fermeture.
+let modalOpener = null;
+
+function setBackgroundInert(on) {
+  for (const el of document.querySelectorAll("body > :not(#modal)")) el.inert = on;
+}
+
 function openModal(html) {
+  if (modal.hidden) modalOpener = document.activeElement;
   modal.innerHTML = `<div class="modal-box" role="dialog" aria-modal="true">${html}</div>`;
+  // Le premier titre (ou à défaut le premier paragraphe) nomme la boîte de dialogue.
+  const title = modal.querySelector("h2, p");
+  if (title) {
+    title.id = "modal-title";
+    modal.firstElementChild.setAttribute("aria-labelledby", "modal-title");
+  }
   modal.hidden = false;
+  setBackgroundInert(true);
   hydrateQr(modal);
-  modal.querySelector("button, a")?.focus();
+  modal.querySelector("button, a, input")?.focus();
 }
 
 function confirmModal(message, okLabel, onConfirm, danger = false) {
@@ -220,10 +243,19 @@ function confirmModal(message, okLabel, onConfirm, danger = false) {
   };
 }
 
-function closeModal() {
+function closeModal(restoreFocus = true) {
+  if (modal.hidden) return;
   modal.hidden = true;
   modal.innerHTML = "";
+  setBackgroundInert(false);
+  // Après un nouveau rendu, l'élément d'origine peut avoir disparu : on se rabat sur le titre de l'écran.
+  if (restoreFocus) (modalOpener?.isConnected ? modalOpener : app.querySelector("h1"))?.focus({ preventScroll: true });
+  modalOpener = null;
 }
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && !modal.hidden) closeModal();
+});
 
 modal.addEventListener("click", (e) => {
   if (e.target === modal || e.target.closest("[data-close]")) closeModal();
@@ -271,8 +303,7 @@ function syncModeToggle() {
   const btn = document.getElementById("mode-toggle");
   if (!btn) return;
   btn.setAttribute("aria-pressed", String(isLowTech()));
-  btn.textContent = isLowTech() ? "Normal" : "Low-tech";
-  btn.title = isLowTech() ? "Revenir à l'affichage normal" : "Passer en mode low-tech (moins de données, moins d'énergie)";
+  btn.title = isLowTech() ? "Mode low-tech activé : toucher pour revenir à l'affichage normal" : "Activer le mode low-tech (moins de données, moins d'énergie)";
 }
 
 // Poids réellement transféré depuis l'ouverture de la page (0 pour ce qui vient du cache).
@@ -317,29 +348,42 @@ function backImg(rule, className = "back", { lazy = true, small = false } = {}) 
   }
   const src = small ? rule.back.replace(".webp", "-mini.webp") : rule.back;
   const [w, h] = small ? [200, 279] : [640, 893];
-  return `<img class="${className}" src="${src}" width="${w}" height="${h}" draggable="false" ${lazy ? 'loading="lazy"' : ""} alt="${alt}">`;
+  // Les vignettes sont toujours accompagnées du nom de la règle en texte : elles sont décoratives.
+  return `<img class="${className}" src="${src}" width="${w}" height="${h}" draggable="false" ${lazy ? 'loading="lazy"' : ""} alt="${small ? "" : alt}">`;
 }
 
 // Carte secrète : le dos de la carte de la règle d'or la masque ; on la retourne en maintenant le doigt.
+// Deux façons de voir sa carte : maintenir le doigt dessus (elle se recache en relâchant), ou le
+// bouton « Afficher ma carte », utilisable au clavier et avec un lecteur d'écran.
 function secretHtml(rule, front) {
   return `
     <div class="secret" id="secret">
-      <div class="secret-cover secret-cover--back">${backImg(rule, "back", { lazy: false })}</div>
-      <div class="secret-content">${front}</div>
+      <div class="secret-cover secret-cover--back" aria-hidden="true">${backImg(rule, "back", { lazy: false })}</div>
+      <div class="secret-content" id="secret-content" tabindex="-1" aria-label="Ta carte">${front}</div>
     </div>
-    <p class="secret-hint">👆 Maintiens le doigt sur la carte pour la retourner. Cache ton écran des autres joueurs.</p>`;
+    <button type="button" class="btn secret-toggle" id="secret-toggle" aria-pressed="false" aria-controls="secret-content">Afficher ma carte</button>
+    <p class="secret-hint"><span aria-hidden="true">👆 </span>Maintiens le doigt sur la carte pour la retourner, ou touche « Afficher ma carte ». Cache ton écran des autres joueurs.</p>`;
 }
 
 function bindSecret() {
   const secret = document.getElementById("secret");
+  const toggle = document.getElementById("secret-toggle");
+  let pinned = false;
+  const show = (on) => secret.classList.toggle("revealed", on || pinned);
   secret.addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    secret.classList.add("revealed");
+    show(true);
   });
-  ["pointerup", "pointerleave", "pointercancel"].forEach((ev) =>
-    secret.addEventListener(ev, () => secret.classList.remove("revealed"))
-  );
+  ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => secret.addEventListener(ev, () => show(false)));
   secret.addEventListener("contextmenu", (e) => e.preventDefault());
+  toggle.addEventListener("click", () => {
+    pinned = !pinned;
+    show(pinned);
+    toggle.setAttribute("aria-pressed", String(pinned));
+    toggle.textContent = pinned ? "Masquer ma carte" : "Afficher ma carte";
+    // Le lecteur d'écran lit la carte dès qu'elle est affichée.
+    if (pinned) document.getElementById("secret-content").focus({ preventScroll: true });
+  });
 }
 
 function ruleTag(rule) {
@@ -433,6 +477,7 @@ function paintTimer() {
     timer.end = null;
     timer.remaining = 0;
     beep();
+    announce("Temps écoulé : fin du débat.");
   }
   const running = Boolean(timer.end);
   const done = left === 0;
@@ -833,7 +878,7 @@ function viewHost(code) {
   app.innerHTML = `
     <section class="host">
       <div class="share">
-        ${qrSlot(url)}
+        ${qrSlot(url, "QR code pour rejoindre la partie")}
         <div>
           <p class="label">Code de la partie</p>
           <p class="code">${esc(prettyCode(code))}</p>
@@ -856,8 +901,8 @@ function viewHost(code) {
 
       ${
         result
-          ? `<div class="banner banner--${result === "civilians" ? "win" : "lose"}">${esc(resultText(result))}</div>`
-          : `<p class="starter">🎙️ <strong>${esc(playerName(state, deal.starter))}</strong> commence le tour de parole.</p>`
+          ? resultBanner(result, "div")
+          : `<p class="starter"><span aria-hidden="true">🎙️ </span><strong>${esc(playerName(state, deal.starter))}</strong> commence le tour de parole.</p>`
       }
 
       <ul class="players">
@@ -872,7 +917,7 @@ function viewHost(code) {
               <span class="score">${state.scores[r.seat] || 0} pt${(state.scores[r.seat] || 0) > 1 ? "s" : ""}</span>
               ${
                 revealed
-                  ? `<span class="role role--${r.role}">${ROLE_LABELS[r.role]}</span>`
+                  ? `<span class="role role--${r.role}">${ROLE_LABELS[r.role]}${out ? " · éliminé" : ""}</span>`
                   : `<button class="btn btn--small btn--danger" data-eliminate="${r.seat}">Éliminer</button>`
               }
             </li>`;
@@ -899,7 +944,8 @@ function viewHost(code) {
   document.getElementById("copy").onclick = async () => {
     try {
       await navigator.clipboard.writeText(url);
-      document.getElementById("copy").textContent = "Lien copié ✓";
+      document.getElementById("copy").textContent = "Lien copié";
+      announce("Lien de la partie copié.");
     } catch {
       openModal(`
         <h2>Lien à partager</h2>
@@ -981,15 +1027,14 @@ function viewHost(code) {
   document.getElementById("forget").onclick = () => confirmForget(code, "cette partie");
 }
 
-function resultText(result) {
-  switch (result) {
-    case "civilians":
-      return "🎉 Les civils ont démasqué l'undercover !";
-    case "impostors":
-      return "🕵️ L'undercover l'emporte : il ne reste qu'un civil.";
-    default:
-      return "Rôles révélés.";
-  }
+function resultBanner(result, tag = "p") {
+  const [icon, text] =
+    result === "civilians"
+      ? ["🎉", "Les civils ont démasqué l'undercover !"]
+      : result === "impostors"
+        ? ["🕵️", "L'undercover l'emporte : il ne reste qu'un civil."]
+        : ["", "Rôles révélés."];
+  return `<${tag} class="banner banner--${result === "civilians" ? "win" : "lose"}">${icon ? `<span aria-hidden="true">${icon} </span>` : ""}${text}</${tag}>`;
 }
 
 function eliminate(code, deal, seat) {
@@ -1020,7 +1065,7 @@ function eliminate(code, deal, seat) {
     openModal(`
       <p class="label">${esc(name)} était…</p>
       <p class="role-reveal role--${player.role}">${ROLE_LABELS[player.role]}</p>
-      ${result ? `<p class="banner banner--${result === "civilians" ? "win" : "lose"}">${esc(resultText(result))}</p>` : `<p>La manche continue : nouveau tour de parole !</p>`}
+      ${result ? resultBanner(result) : `<p>La manche continue : nouveau tour de parole !</p>`}
       <button class="btn btn--primary" data-close>Continuer</button>`);
   };
 }
@@ -1033,7 +1078,7 @@ function showSeatQrs(code, game, state) {
     openModal(`
       <p class="label">Au tour de</p>
       <h2>${esc(playerName(state, seat))}</h2>
-      ${qrSlot(joinUrl(code, seat, state.names, game.players), 8, "qr--big")}
+      ${qrSlot(joinUrl(code, seat, state.names, game.players), `QR code de ${playerName(state, seat)} pour rejoindre la partie`, 8, "qr--big")}
       <p class="small">Scanne ce QR code : ta carte s'affiche directement.</p>
       <div class="actions">
         <button class="btn" id="qr-prev" ${index === 0 ? "disabled" : ""}>←</button>
@@ -1177,7 +1222,7 @@ function viewEnd(code) {
       ${resultsHtml(game, state.names, state.scores, results, null)}
 
       <div class="share share--results">
-        ${qrSlot(shareUrl)}
+        ${qrSlot(shareUrl, "QR code des résultats de la partie")}
         <div>
           <p class="label">Résultats sur les téléphones</p>
           <p>Les joueurs scannent ce QR code pour retrouver le classement et le récapitulatif des manches.</p>
@@ -1196,7 +1241,8 @@ function viewEnd(code) {
   document.getElementById("copy-results").onclick = async (e) => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      e.target.textContent = "Lien copié ✓";
+      e.target.textContent = "Lien copié";
+      announce("Lien des résultats copié.");
     } catch {
       openModal(`
         <h2>Lien des résultats</h2>
@@ -1300,7 +1346,7 @@ function viewPlay(code, seat) {
   app.innerHTML = `
     <section class="play">
       <div class="play-head">
-        <span>${myName ? `<strong>${esc(myName)}</strong> <small class="small">joueur ${seat}</small>` : `Joueur <strong>${seat}</strong>`}</span>
+        <h1>${myName ? `${esc(myName)} <small class="small">joueur ${seat}</small>` : `Joueur ${seat}`}</h1>
         <span class="small">${esc(prettyCode(game.code))}</span>
       </div>
       <div class="round-switch">
@@ -1382,6 +1428,7 @@ function viewPass(code) {
           <p>Rendez le téléphone à l'animateur.</p>
           <a class="btn btn--primary" href="#/host/${code}">Aller au tableau de bord</a>
         </section>`;
+      announceView();
       return;
     }
     const me = deal.roles[seat - 1];
@@ -1394,6 +1441,7 @@ function viewPass(code) {
         <button class="btn btn--primary" id="next-seat">J'ai vu ma carte → joueur suivant</button>
       </section>`;
     bindSecret();
+    announceView();
     document.getElementById("next-seat").onclick = () => {
       seat++;
       step();
@@ -1413,8 +1461,21 @@ function viewInvalid(code) {
 
 // --- Routeur --------------------------------------------------------------------------------
 
+// Titre de l'onglet = titre de l'écran ; le focus va sur ce titre pour que le lecteur d'écran l'annonce.
+let firstRender = true;
+function announceView() {
+  const h1 = app.querySelector("h1");
+  const name = h1?.textContent.replace(/\s+/g, " ").trim();
+  document.title = name ? `${name} – Undercover IA responsable` : "Undercover IA responsable";
+  if (h1 && !firstRender) {
+    h1.tabIndex = -1;
+    h1.focus({ preventScroll: true });
+  }
+  firstRender = false;
+}
+
 function render() {
-  closeModal();
+  closeModal(false);
   clearInterval(timer.interval);
   const hash = location.hash.replace(/^#/, "");
   const join = hash.match(/^join-([A-Za-z0-9]+)(?:-(\d+))?(?:~([A-Za-z0-9_-]+))?$/);
@@ -1463,6 +1524,7 @@ function render() {
   }
   hydrateQr(app);
   window.scrollTo(0, 0);
+  announceView();
   paintWeight();
   setTimeout(paintWeight, 1500);
 }

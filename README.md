@@ -48,6 +48,19 @@ Données transférées lors d'une première visite (fichiers compressés comme s
 
 À noter : le tramage n'est pas magique. Appliqué à l'image entière, il donnait des fichiers **plus lourds** que le WebP (le bruit du tramage se compresse mal). Le gain vient de la combinaison : illustration seule, fond uni ramené au blanc, 160 px, 4 gris.
 
+## Accessibilité
+
+Audit WCAG 2.1 AA réalisé sur les deux thèmes (normal et low-tech, clair et sombre) : scan axe-core sur 13 écrans × 4 thèmes sans violation, puis tests manuels.
+
+- **Carte secrète** : en plus de l'appui long, un bouton « Afficher ma carte » (clavier, lecteur d'écran) révèle la carte et y place le focus.
+- **Modales** : nom accessible, page derrière inerte, fermeture par Échap, focus rendu à l'élément d'origine.
+- **Changement d'écran** : titre de l'onglet mis à jour et focus placé sur le titre de l'écran.
+- **Contrastes** ≥ 4,5:1 dans les 4 thèmes (couleurs d'état déclinées par thème), focus clavier visible, cibles tactiles de 44 px minimum.
+- **Reflow** : aucun défilement horizontal à 320 px, y compris avec un texte agrandi à 200 %.
+- **Annonces** (fin du minuteur, lien copié) via une zone `aria-live` ; QR codes nommés, émojis et vignettes décoratifs masqués aux lecteurs d'écran.
+
+Reste à faire : un test avec de vrais lecteurs d'écran (VoiceOver sur iPhone, TalkBack sur Android).
+
 ## Mise en ligne sur GitHub Pages
 
 1. Fusionner cette branche dans `main`.
