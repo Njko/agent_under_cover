@@ -680,7 +680,7 @@ function viewLowTech() {
       </ul>
 
       <h2>L'exemple de Low-tech Magazine</h2>
-      <p>Le site <em>solar.lowtechmagazine.com</em> est hébergé sur un petit serveur alimenté par un panneau solaire. Pour tenir sur cette énergie, il a été repensé :</p>
+      <p>Le site de <a href="https://solar.lowtechmagazine.com/" target="_blank" rel="noopener">Low-tech Magazine<span class="visually-hidden"> (nouvel onglet)</span></a> est hébergé sur un petit serveur alimenté par un panneau solaire. Pour tenir sur cette énergie, il a été repensé :</p>
       <ul>
         <li><strong>site statique</strong> : les pages sont prêtes à l'avance, aucun calcul à chaque visite ;</li>
         <li><strong>images tramées</strong> en quelques niveaux de gris, bien plus légères que des photos en couleur ;</li>
@@ -688,6 +688,8 @@ function viewLowTech() {
         <li><strong>aucun traceur</strong>, aucune publicité, aucun service tiers ;</li>
         <li>il accepte d'être <strong>hors ligne</strong> quand le ciel est couvert trop longtemps, et affiche le niveau de sa batterie.</li>
       </ul>
+      <p>Pour aller plus loin : <a href="https://solar.lowtechmagazine.com/2018/09/how-to-build-a-low-tech-website/" target="_blank" rel="noopener">How to Build a Low-tech Website?<span class="visually-hidden"> (article en anglais, nouvel onglet)</span></a> (en anglais).</p>
+      <p class="hint">Le site étant alimenté par le soleil, il peut être hors ligne après plusieurs jours sans soleil : c'est voulu. Réessayez plus tard.</p>
 
       <h2>Ce que fait ce mode</h2>
       <ul>
