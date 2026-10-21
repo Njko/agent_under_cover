@@ -302,7 +302,7 @@ function setLowTech(on) {
 function syncModeToggle() {
   const btn = document.getElementById("mode-toggle");
   if (!btn) return;
-  btn.setAttribute("aria-pressed", String(isLowTech()));
+  btn.setAttribute("aria-checked", String(isLowTech()));
   btn.title = isLowTech() ? "Mode low-tech activé : toucher pour revenir à l'affichage normal" : "Activer le mode low-tech (moins de données, moins d'énergie)";
 }
 

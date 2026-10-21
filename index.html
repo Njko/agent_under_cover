@@ -15,7 +15,10 @@
 </head>
 <body>
   <header class="topbar">
-    <button type="button" class="mode-toggle" id="mode-toggle" aria-pressed="false">Low-tech</button>
+    <button type="button" class="mode-toggle" id="mode-toggle" role="switch" aria-checked="false">
+      <span class="switch" aria-hidden="true"><span class="switch-thumb"></span></span>
+      <span class="switch-label">Low-tech</span>
+    </button>
     <a href="#/" class="brand" aria-label="Accueil">
       <svg class="brand-logo" viewBox="0 0 64 64" width="28" height="28" aria-hidden="true"><rect width="64" height="64" rx="14" fill="currentColor" opacity=".15"/><path d="M14 30c4-12 32-12 36 0z" fill="currentColor"/><rect x="10" y="29" width="44" height="4" rx="2" fill="currentColor"/><circle cx="24" cy="42" r="6" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="40" cy="42" r="6" fill="none" stroke="currentColor" stroke-width="4"/><path d="M30 42h4" stroke="currentColor" stroke-width="4"/></svg>
       <span>Undercover <small>IA responsable</small></span>
