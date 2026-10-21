@@ -1,7 +1,7 @@
 // Service worker : met l'application en cache pour qu'elle fonctionne même sans réseau
 // (utile dans une salle de formation avec un Wi-Fi capricieux).
 // Incrémenter VERSION à chaque modification des fichiers pour forcer la mise à jour.
-const VERSION = "v5";
+const VERSION = "v6";
 const ASSETS = [
   "./",
   "index.html",
@@ -37,7 +37,8 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   event.respondWith(
-    fetch(event.request)
+    // « no-cache » revalide auprès du serveur : évite de servir un ancien fichier depuis le cache HTTP.
+    fetch(event.request, { cache: "no-cache" })
       .then((response) => {
         const copy = response.clone();
         caches.open(VERSION).then((cache) => cache.put(event.request, copy));
