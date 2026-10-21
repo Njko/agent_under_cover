@@ -32,6 +32,22 @@ Une fois chargée, l'app fonctionne **hors ligne** (service worker) et peut êtr
 
 > Le code permet en théorie de retrouver toutes les cartes : comme pour un jeu de cartes physique, on compte sur le fair-play des joueurs.
 
+## Mode low-tech
+
+Le bouton **Low-tech** de l'en-tête bascule vers un affichage inspiré du [site solaire de Low-tech Magazine](https://solar.lowtechmagazine.com/) : police du système, deux encres (papier et noir, noir pur en thème sombre pour les écrans OLED), aucune ombre, couleur ni animation, dos de cartes rendus en texte avec une illustration **tramée en 4 niveaux de gris** (`img/dos/regle-N-trame.png`, 3 Ko), images décoratives supprimées. Le choix est mémorisé ; il est activé d'office quand le téléphone est en mode « économie de données ». Une page « Pourquoi un Web low-tech ? » explique la démarche, et un indicateur affiche les données transférées.
+
+Optimisations valables dans les deux modes : vignettes de 200 px (`-mini.webp`) pour les petits affichages, bibliothèque QR hébergée avec le site, minifiée et chargée seulement sur les écrans qui affichent un QR code, logo intégré au HTML, préchargement hors ligne limité au cœur de l'application.
+
+Données transférées lors d'une première visite (fichiers compressés comme sur GitHub Pages) :
+
+| Parcours | Avant | Normal | Low-tech |
+| --- | ---: | ---: | ---: |
+| Rejoindre une partie et voir sa carte | 292 Ko | 108 Ko | 32 Ko |
+| Créer une partie et afficher le QR code | 292 Ko | 93 Ko | 37 Ko |
+| Parcourir les 44 cartes | 262 Ko | 254 Ko | 52 Ko |
+
+À noter : le tramage n'est pas magique. Appliqué à l'image entière, il donnait des fichiers **plus lourds** que le WebP (le bruit du tramage se compresse mal). Le gain vient de la combinaison : illustration seule, fond uni ramené au blanc, 160 px, 4 gris.
+
 ## Mise en ligne sur GitHub Pages
 
 1. Fusionner cette branche dans `main`.
@@ -57,8 +73,8 @@ Structure :
 | --- | --- |
 | `index.html`, `css/style.css` | Page unique, design mobile-first |
 | `js/cards.js` | Contenu du jeu |
-| `img/dos/regle-N.webp` | Dos des cartes des 7 règles d'or |
+| `img/dos/regle-N.webp`, `-mini.webp`, `-trame.png` | Dos des cartes : grand format, vignette, illustration tramée (low-tech) |
 | `js/game.js` | Moteur déterministe : code de partie, distribution, conditions de victoire |
 | `js/app.js` | Écrans (accueil, animateur, joueur, distribution, débrief, règles, catalogue) |
-| QR codes | [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT), chargé depuis jsDelivr puis mis en cache hors ligne |
+| `vendor/qrcode.min.js` | [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) 1.4.4 (MIT), minifié, chargé à la demande |
 | `sw.js`, `manifest.webmanifest` | Fonctionnement hors ligne / installation |

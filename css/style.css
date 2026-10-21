@@ -55,8 +55,15 @@ h2 { font-size: 1.15rem; margin: 1.4em 0 0.5em; }
   padding: 10px 16px;
   padding-top: max(10px, env(safe-area-inset-top));
 }
-.topbar { display: grid; grid-template-columns: 40px 1fr 40px; align-items: center; }
-.brand { display: flex; gap: 10px; align-items: center; justify-content: center; color: inherit; text-decoration: none; font-weight: 700; }
+.topbar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px; }
+.brand-logo { flex: none; color: #ffffff; }
+.mode-toggle {
+  justify-self: start; font: inherit; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em;
+  padding: 6px 10px; border-radius: 999px; border: 2px solid rgba(255, 255, 255, 0.7); background: transparent; color: #ffffff; cursor: pointer;
+  white-space: nowrap;
+}
+.weight { max-width: 760px; margin: 0 auto; padding-block: 0 24px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); font-size: 0.8rem; color: var(--muted); }
+.brand { display: flex; gap: 8px; align-items: center; justify-content: center; white-space: nowrap; color: inherit; text-decoration: none; font-weight: 700; }
 .topbar-help {
   width: 34px; height: 34px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.7); color: #ffffff;
   display: flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 800; justify-self: end;
@@ -358,3 +365,117 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
 .result--r, .result--s { background: var(--bg); color: var(--muted); }
 .share--results { margin-top: 20px; }
 .share--results p { margin: 4px 0 0; }
+
+/* =============================================================================================
+   Mode low-tech — inspiré du site solaire de Low-tech Magazine
+   - police par défaut du système, une seule graisse supplémentaire (gras), aucune police web ;
+   - deux encres (papier et noir), pas de dégradés, d'ombres, d'arrondis ni d'animations ;
+   - dos de cartes rendus en texte + illustration tramée de 3 Ko ; vignettes décoratives supprimées ;
+   - en thème sombre, fond noir pur : les pixels OLED éteints ne consomment rien.
+   ============================================================================================= */
+:root[data-lowtech] {
+  --bg: #f2eee3;
+  --surface: #f2eee3;
+  --text: #111111;
+  --muted: #4a4a4a;
+  --border: #111111;
+  --primary: #111111;
+  --primary-text: #f2eee3;
+  --danger: #111111;
+  --win: #111111;
+  --why-bg: transparent;
+  --bar: #f2eee3;
+  --timer-urgent: #111111;
+  --accent: #111111;
+  --radius: 0;
+  --rule1: #111111; --rule2: #111111; --rule3: #111111; --rule4: #111111; --rule5: #111111; --rule6: #111111; --rule7: #111111;
+  --rule1-accent: #111111; --rule2-accent: #111111; --rule3-accent: #111111; --rule4-accent: #111111; --rule5-accent: #111111; --rule6-accent: #111111; --rule7-accent: #111111;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-lowtech]:not([data-theme="light"]) {
+    --bg: #000000; --surface: #000000; --text: #d8d8d8; --muted: #9a9a9a; --border: #d8d8d8;
+    --primary: #d8d8d8; --primary-text: #000000; --danger: #d8d8d8; --win: #d8d8d8; --bar: #000000;
+    --timer-urgent: #d8d8d8; --accent: #d8d8d8;
+    --rule1: #d8d8d8; --rule2: #d8d8d8; --rule3: #d8d8d8; --rule4: #d8d8d8; --rule5: #d8d8d8; --rule6: #d8d8d8; --rule7: #d8d8d8;
+    color-scheme: dark;
+  }
+  :root[data-lowtech]:not([data-theme="light"]) .lt-back img { filter: invert(1); }
+}
+:root[data-lowtech][data-theme="dark"] {
+  --bg: #000000; --surface: #000000; --text: #d8d8d8; --muted: #9a9a9a; --border: #d8d8d8;
+  --primary: #d8d8d8; --primary-text: #000000; --danger: #d8d8d8; --win: #d8d8d8; --bar: #000000;
+  --timer-urgent: #d8d8d8; --accent: #d8d8d8;
+  --rule1: #d8d8d8; --rule2: #d8d8d8; --rule3: #d8d8d8; --rule4: #d8d8d8; --rule5: #d8d8d8; --rule6: #d8d8d8; --rule7: #d8d8d8;
+  color-scheme: dark;
+}
+:root[data-lowtech][data-theme="dark"] .lt-back img { filter: invert(1); }
+
+[data-lowtech] body { font-family: serif; font-size: 1.0625rem; }
+[data-lowtech] *, [data-lowtech] *::before, [data-lowtech] *::after {
+  box-shadow: none !important; text-shadow: none !important; transition: none !important; animation: none !important; border-radius: 0 !important;
+}
+[data-lowtech] input, [data-lowtech] button, [data-lowtech] .btn { font-family: inherit; }
+[data-lowtech] a:not(.btn--primary) { color: var(--text); }
+
+/* En-tête : simple ligne de texte soulignée */
+[data-lowtech] .topbar { background: var(--bg); color: var(--text); border-bottom: 2px solid var(--text); }
+[data-lowtech] .brand-logo { display: none; }
+[data-lowtech] .brand span { font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+[data-lowtech] .mode-toggle, [data-lowtech] .topbar-help { color: var(--text); border-color: var(--text); background: transparent; }
+[data-lowtech] .mode-toggle[aria-pressed="true"] { background: var(--text); color: var(--bg); }
+.lt-logo { font-size: 2rem; font-weight: 700; letter-spacing: 0.06em; margin: 8px 0 0; }
+
+/* Boutons, champs, blocs : traits noirs, pas d'aplats colorés */
+[data-lowtech] .btn { border-width: 2px; }
+[data-lowtech] .btn--ghost { text-decoration: underline; }
+[data-lowtech] .tile, [data-lowtech] .resume-item, [data-lowtech] .share, [data-lowtech] .timer, [data-lowtech] .starter,
+[data-lowtech] .players li, [data-lowtech] .ranking li, [data-lowtech] .recap li, [data-lowtech] .podium-step,
+[data-lowtech] .round-switch, [data-lowtech] fieldset, [data-lowtech] .form label.check.rule-pick { border-color: var(--text); background: transparent; }
+[data-lowtech] .tile-icon { display: none; }
+[data-lowtech] .seat, [data-lowtech] .name-list li::before, [data-lowtech] .ranking .rank { background: transparent; color: var(--text); border: 1px solid var(--text); }
+[data-lowtech] .why { border-left-width: 3px; }
+[data-lowtech] .modal { background: rgba(0, 0, 0, 0.75); }
+[data-lowtech] .modal-box { border: 2px solid var(--text); }
+[data-lowtech] .qr { background: #ffffff; }
+
+/* Cartes recto : en-tête souligné au lieu du bandeau de couleur */
+[data-lowtech] .card { background: transparent; color: var(--text); border: 1px solid var(--text); }
+[data-lowtech] .card-head { background: transparent; color: var(--text); border-bottom: 1px solid var(--text); }
+[data-lowtech] .card-head i { display: none; }
+[data-lowtech] .card-theme { color: var(--text); }
+[data-lowtech] .card-foot { border-top: 1px dashed var(--text); color: var(--text); }
+[data-lowtech] .card--undercover { outline: 3px double var(--text); }
+[data-lowtech] .round-theme span { background: transparent; color: var(--text); border: 1px solid var(--text); }
+
+/* Dos de carte en texte + illustration tramée */
+.lt-back {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center;
+  aspect-ratio: 640 / 893; width: 100%; padding: 12px; border: 3px double var(--text); background: var(--bg); color: var(--text);
+}
+.lt-back img { width: min(160px, 70%); height: auto; image-rendering: pixelated; }
+.lt-back-label { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; margin-top: 8px; }
+.lt-back strong { font-size: 1.25rem; line-height: 1.2; }
+.lt-back-foot { text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.7rem; color: var(--muted); }
+.secret-cover .lt-back { height: 100%; }
+
+/* États : le texte et le style de trait remplacent la couleur */
+[data-lowtech] .role, [data-lowtech] .result { background: transparent; color: var(--text); border: 1px solid var(--text); }
+[data-lowtech] .role--undercover, [data-lowtech] .result--i { border-style: double; border-width: 3px; }
+[data-lowtech] .result--r, [data-lowtech] .result--s { border-style: dashed; color: var(--muted); }
+[data-lowtech] .banner { background: transparent; color: var(--text); border: 2px solid var(--text); }
+[data-lowtech] .banner--lose { border-style: double; border-width: 4px; }
+[data-lowtech] .role-reveal { border: 2px solid var(--text); }
+[data-lowtech] .podium-step--1 { border-width: 3px; border-style: double; }
+[data-lowtech] .timer-bar { border: 1px solid var(--text); background: transparent; }
+[data-lowtech] .chip { background: transparent; border-color: var(--text); }
+[data-lowtech] .timer--done .timer-face { text-decoration: underline; }
+[data-lowtech] .is-me { outline: 2px dashed var(--text); }
+[data-lowtech] .icon-btn { color: var(--text); }
+
+/* Tableau des poids (page « Pourquoi un Web low-tech ? ») */
+.table-wrap { overflow-x: auto; }
+.weights { border-collapse: collapse; width: 100%; font-variant-numeric: tabular-nums; }
+.weights th, .weights td { border-bottom: 1px solid var(--border); padding: 8px 6px; text-align: right; }
+.weights th[scope="row"], .weights thead th:first-child { text-align: left; font-weight: 400; }
+.weight a { color: inherit; }

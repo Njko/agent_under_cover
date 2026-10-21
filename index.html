@@ -5,25 +5,27 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Undercover IA responsable</title>
   <meta name="description" content="Serious game Undercover autour des règles de l'IA responsable, jouable sur les téléphones des participants.">
-  <meta name="theme-color" content="#0b2a5b">
+  <meta name="theme-color" content="#00008f">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon.svg">
+  <!-- Mode low-tech appliqué avant l'affichage : choix mémorisé, sinon option « économie de données » du téléphone. -->
+  <script>try{var v=localStorage.getItem("lowtech");if(v==="true"||(v===null&&navigator.connection&&navigator.connection.saveData))document.documentElement.setAttribute("data-lowtech","")}catch(e){}</script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
   <header class="topbar">
-    <span aria-hidden="true"></span>
+    <button type="button" class="mode-toggle" id="mode-toggle" aria-pressed="false">Low-tech</button>
     <a href="#/" class="brand" aria-label="Accueil">
-      <img src="icons/icon.svg" alt="" width="28" height="28">
+      <svg class="brand-logo" viewBox="0 0 64 64" width="28" height="28" aria-hidden="true"><rect width="64" height="64" rx="14" fill="currentColor" opacity=".15"/><path d="M14 30c4-12 32-12 36 0z" fill="currentColor"/><rect x="10" y="29" width="44" height="4" rx="2" fill="currentColor"/><circle cx="24" cy="42" r="6" fill="none" stroke="currentColor" stroke-width="4"/><circle cx="40" cy="42" r="6" fill="none" stroke="currentColor" stroke-width="4"/><path d="M30 42h4" stroke="currentColor" stroke-width="4"/></svg>
       <span>Undercover <small>IA responsable</small></span>
     </a>
     <a href="#/rules" class="topbar-help" aria-label="Comment jouer ?" title="Comment jouer ?">?</a>
   </header>
   <main id="app" tabindex="-1"></main>
+  <footer class="weight" id="weight" hidden></footer>
   <div id="modal" class="modal" hidden></div>
   <noscript>Cette application nécessite JavaScript.</noscript>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

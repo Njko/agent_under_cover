@@ -152,12 +152,42 @@ function knownNames(code) {
   return store.get(`names:${code}`, {});
 }
 
-function qrSvg(text, cell = 6) {
-  if (typeof window.qrcode !== "function") return "";
-  const qr = window.qrcode(0, "M");
-  qr.addData(text);
-  qr.make();
-  return qr.createSvgTag({ cellSize: cell, margin: 2, scalable: true });
+// La bibliothèque QR (21 Ko) n'est téléchargée que lorsqu'un écran affiche un QR code :
+// les téléphones des joueurs ne la chargent jamais.
+let qrLibrary = null;
+
+function loadQrLibrary() {
+  qrLibrary ??= new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "vendor/qrcode.min.js";
+    script.onload = resolve;
+    script.onerror = () => {
+      qrLibrary = null;
+      reject();
+    };
+    document.head.append(script);
+  });
+  return qrLibrary;
+}
+
+function qrSlot(text, cell = 6, className = "") {
+  return `<div class="qr ${className}" data-qr="${esc(text)}" data-cell="${cell}" role="img" aria-label="QR code"></div>`;
+}
+
+function hydrateQr(root = document) {
+  const slots = [...root.querySelectorAll("[data-qr]")].filter((el) => el.dataset.drawn !== el.dataset.qr);
+  if (!slots.length) return;
+  loadQrLibrary()
+    .then(() => {
+      for (const el of slots) {
+        const qr = window.qrcode(0, "M");
+        qr.addData(el.dataset.qr);
+        qr.make();
+        el.innerHTML = qr.createSvgTag({ cellSize: Number(el.dataset.cell), margin: 2, scalable: true });
+        el.dataset.drawn = el.dataset.qr;
+      }
+    })
+    .catch(() => slots.forEach((el) => (el.textContent = "QR code indisponible : utilisez le code ou le lien.")));
 }
 
 function prettyCode(code) {
@@ -173,6 +203,7 @@ function go(hash) {
 function openModal(html) {
   modal.innerHTML = `<div class="modal-box" role="dialog" aria-modal="true">${html}</div>`;
   modal.hidden = false;
+  hydrateQr(modal);
   modal.querySelector("button, a")?.focus();
 }
 
@@ -221,16 +252,79 @@ function cardHtml({ ruleId, text, kind = "civilian", label, theme }) {
     </article>`;
 }
 
-function backImg(rule, className = "back", lazy = true) {
-  return `<img class="${className}" src="${rule.back}" width="640" height="893" draggable="false" ${lazy ? 'loading="lazy"' : ""}
-    alt="Dos de carte, règle d'or ${rule.id} : ${esc(rule.theme)}">`;
+// --- Mode low-tech ---------------------------------------------------------------------------
+// Inspiré du site solaire de Low-tech Magazine : police du système, pas de couleurs ni d'effets,
+// images tramées en 4 niveaux de gris, et les petites illustrations décoratives sont supprimées.
+
+function isLowTech() {
+  return document.documentElement.hasAttribute("data-lowtech");
+}
+
+function setLowTech(on) {
+  document.documentElement.toggleAttribute("data-lowtech", on);
+  store.set("lowtech", on);
+  syncModeToggle();
+  render();
+}
+
+function syncModeToggle() {
+  const btn = document.getElementById("mode-toggle");
+  if (!btn) return;
+  btn.setAttribute("aria-pressed", String(isLowTech()));
+  btn.textContent = isLowTech() ? "Normal" : "Low-tech";
+  btn.title = isLowTech() ? "Revenir à l'affichage normal" : "Passer en mode low-tech (moins de données, moins d'énergie)";
+}
+
+// Poids réellement transféré depuis l'ouverture de la page (0 pour ce qui vient du cache).
+function paintWeight() {
+  const el = document.getElementById("weight");
+  if (!el) return;
+  if (!isLowTech()) {
+    el.hidden = true;
+    return;
+  }
+  const bytes = transferredBytes();
+  el.hidden = false;
+  el.innerHTML = `Mode low-tech · <strong>${formatKo(bytes)}</strong> transférés depuis l'ouverture · police du système, images tramées, aucun traceur. <a href="#/lowtech">Pourquoi ?</a>`;
+}
+
+function transferredBytes() {
+  return [...performance.getEntriesByType("navigation"), ...performance.getEntriesByType("resource")].reduce(
+    (sum, e) => sum + (e.transferSize || 0),
+    0
+  );
+}
+
+function formatKo(bytes) {
+  return `${(bytes / 1024).toFixed(1).replace(".", ",")} Ko`;
+}
+
+/**
+ * Dos de carte. « small » : vignette décorative (supprimée en mode low-tech).
+ * Sinon : grande image couleur, ou en low-tech une carte en texte avec une illustration tramée de 3 Ko.
+ */
+function backImg(rule, className = "back", { lazy = true, small = false } = {}) {
+  const alt = `Dos de carte, règle d'or ${rule.id} : ${esc(rule.theme)}`;
+  if (isLowTech()) {
+    if (small) return "";
+    return `
+      <div class="lt-back ${className}" role="img" aria-label="${alt}">
+        <img src="${rule.back.replace(".webp", "-trame.png")}" width="160" height="160" alt="" draggable="false" ${lazy ? 'loading="lazy"' : ""}>
+        <span class="lt-back-label">Règle d'or ${rule.id}</span>
+        <strong>${esc(rule.theme)}</strong>
+        <span class="lt-back-foot">L'IA sous couverture</span>
+      </div>`;
+  }
+  const src = small ? rule.back.replace(".webp", "-mini.webp") : rule.back;
+  const [w, h] = small ? [200, 279] : [640, 893];
+  return `<img class="${className}" src="${src}" width="${w}" height="${h}" draggable="false" ${lazy ? 'loading="lazy"' : ""} alt="${alt}">`;
 }
 
 // Carte secrète : le dos de la carte de la règle d'or la masque ; on la retourne en maintenant le doigt.
 function secretHtml(rule, front) {
   return `
     <div class="secret" id="secret">
-      <div class="secret-cover secret-cover--back">${backImg(rule, "back", false)}</div>
+      <div class="secret-cover secret-cover--back">${backImg(rule, "back", { lazy: false })}</div>
       <div class="secret-content">${front}</div>
     </div>
     <p class="secret-hint">👆 Maintiens le doigt sur la carte pour la retourner. Cache ton écran des autres joueurs.</p>`;
@@ -381,7 +475,7 @@ function mountTimer(key) {
     paintTimer();
   });
   clearInterval(timer.interval);
-  timer.interval = setInterval(paintTimer, 250);
+  timer.interval = setInterval(paintTimer, isLowTech() ? 1000 : 250);
   paintTimer();
 }
 
@@ -396,9 +490,13 @@ function viewHome() {
 
   app.innerHTML = `
     <section class="hero">
-      <div class="fan" aria-hidden="true">
-        ${RULES.map((r, i) => `<img src="${r.back}" alt="" width="640" height="893" draggable="false" style="--i:${i - (RULES.length - 1) / 2}">`).join("")}
-      </div>
+      ${
+        isLowTech()
+          ? `<p class="lt-logo" aria-hidden="true">UNDER←COVER</p>`
+          : `<div class="fan" aria-hidden="true">
+              ${RULES.map((r, i) => `<img src="${r.back.replace(".webp", "-mini.webp")}" alt="" width="200" height="279" draggable="false" style="--i:${i - (RULES.length - 1) / 2}">`).join("")}
+            </div>`
+      }
       <h1>Qui enfreint la règle ?</h1>
       <p>Chaque joueur reçoit une pratique liée à une même règle d'or de l'IA responsable.
       Un <strong>undercover</strong> a reçu une pratique qui l'enfreint. Démasquez-le !</p>
@@ -447,6 +545,14 @@ function viewHome() {
         <span class="tile-icon" aria-hidden="true">🃏</span>
         <span><strong>Toutes les cartes</strong><small>Les 7 règles d'or et leurs 44 cartes</small></span>
       </a>
+      ${
+        isLowTech()
+          ? `<a class="tile" href="#/lowtech">
+              <span class="tile-icon" aria-hidden="true">🌱</span>
+              <span><strong>Pourquoi un Web low-tech ?</strong><small>Ce que pèse une page, et comment l'alléger</small></span>
+            </a>`
+          : ""
+      }
     </nav>
 
     ${hasData ? `<p class="center-small"><button class="link-btn" id="forget-all">Effacer toutes les parties de ce téléphone</button></p>` : ""}`;
@@ -502,6 +608,72 @@ function viewRules() {
       <p>Après la dernière manche, l'animateur affiche le classement et un QR code : en le scannant, chaque joueur retrouve les résultats sur son téléphone.</p>
       <h2>Débrief</h2>
       <p>À la fin de chaque manche, l'animateur affiche la règle, la carte undercover et pourquoi elle l'enfreint. C'est le moment d'échanger sur les pratiques réelles des équipes.</p>
+      <p><button class="btn" id="back">Retour</button></p>
+    </section>`;
+  document.getElementById("back").onclick = () => (history.length > 1 ? history.back() : go("#/"));
+}
+
+// Mesures faites sur cette application (Chrome, profil iPhone 13, fichiers compressés comme sur GitHub Pages).
+const WEIGHT_TABLE = [
+  ["Rejoindre une partie et voir sa carte", 292, 108, 32],
+  ["Créer une partie et afficher le QR code", 292, 93, 37],
+  ["Parcourir les 44 cartes", 262, 254, 52],
+];
+
+function viewLowTech() {
+  app.innerHTML = `
+    <section class="prose">
+      <h1>Pourquoi un Web low-tech ?</h1>
+      <p>Chaque page consultée met en mouvement des serveurs, des réseaux et surtout l'appareil que vous tenez en main.
+      Un Web plus léger demande moins d'énergie à chacun de ces maillons, et permet de garder plus longtemps des téléphones moins puissants.</p>
+
+      <h2>Ce que pèse le numérique</h2>
+      <ul>
+        <li>En France, selon l'étude ADEME–Arcep de 2022, la <strong>fabrication et l'usage des terminaux</strong> (téléphones, ordinateurs, écrans) représentent la plus grande part de l'empreinte carbone du numérique, loin devant les réseaux et les centres de données.</li>
+        <li>Des pages plus lourdes poussent à renouveler les appareils : un site qui reste fluide sur un vieux téléphone prolonge sa durée de vie.</li>
+        <li>Une page web médiane pèse aujourd'hui de l'ordre de <strong>2 Mo</strong> sur mobile, essentiellement en images et en scripts : une grande partie n'est pas indispensable à ce que l'on vient y lire.</li>
+      </ul>
+
+      <h2>L'exemple de Low-tech Magazine</h2>
+      <p>Le site <em>solar.lowtechmagazine.com</em> est hébergé sur un petit serveur alimenté par un panneau solaire. Pour tenir sur cette énergie, il a été repensé :</p>
+      <ul>
+        <li><strong>site statique</strong> : les pages sont prêtes à l'avance, aucun calcul à chaque visite ;</li>
+        <li><strong>images tramées</strong> en quelques niveaux de gris, bien plus légères que des photos en couleur ;</li>
+        <li><strong>police par défaut</strong> du système, sans police à télécharger, et pas de logo en image ;</li>
+        <li><strong>aucun traceur</strong>, aucune publicité, aucun service tiers ;</li>
+        <li>il accepte d'être <strong>hors ligne</strong> quand le ciel est couvert trop longtemps, et affiche le niveau de sa batterie.</li>
+      </ul>
+
+      <h2>Ce que fait ce mode</h2>
+      <ul>
+        <li>Police du système et deux encres : pas de couleurs, d'ombres, de dégradés ni d'animations.</li>
+        <li>Dos de cartes rendus en texte, avec une illustration tramée en 4 gris de 3 Ko au lieu d'une image couleur de 30 Ko.</li>
+        <li>Les images décoratives (éventail de l'accueil, vignettes) ne sont pas téléchargées.</li>
+        <li>En thème sombre, fond noir pur : sur les écrans OLED, les pixels noirs sont éteints.</li>
+        <li>Le minuteur se redessine une fois par seconde au lieu de quatre.</li>
+        <li>Partout, l'application ne charge la bibliothèque des QR codes que sur les écrans qui en affichent, et garde ses fichiers en cache pour fonctionner hors ligne.</li>
+      </ul>
+
+      <h2>Les chiffres de cette application</h2>
+      <div class="table-wrap">
+        <table class="weights">
+          <thead><tr><th scope="col">Parcours</th><th scope="col">Avant</th><th scope="col">Normal</th><th scope="col">Low-tech</th></tr></thead>
+          <tbody>
+            ${WEIGHT_TABLE.map(([label, before, normal, low]) => `<tr><th scope="row">${label}</th><td>${before} Ko</td><td>${normal} Ko</td><td><strong>${low} Ko</strong></td></tr>`).join("")}
+          </tbody>
+        </table>
+      </div>
+      <p class="hint">« Avant » : la version de l'application précédant ce mode. Données transférées lors d'une première visite, fichiers compressés comme sur GitHub Pages.
+      Depuis l'ouverture de cette page, votre téléphone a transféré <strong>${formatKo(transferredBytes())}</strong> (0 Ko pour ce qui vient du cache).</p>
+
+      <h2>Et vous, quel Web efficace ?</h2>
+      <p>Quelques questions pour se projeter, en lien avec la règle d'or <em>Impact environnemental</em> :</p>
+      <ul class="questions">
+        <li>Quels outils utilisez-vous chaque jour qui pourraient fonctionner avec moins d'images, de vidéos ou de scripts ?</li>
+        <li>Pour vos usages d'IA, quand un modèle plus léger, ou pas d'IA du tout, suffirait-il ?</li>
+        <li>Seriez-vous prêts à accepter un service parfois indisponible, comme Low-tech Magazine, s'il consommait beaucoup moins ?</li>
+        <li>Quelle serait la version « low-tech » d'un projet sur lequel vous travaillez ?</li>
+      </ul>
       <p><button class="btn" id="back">Retour</button></p>
     </section>`;
   document.getElementById("back").onclick = () => (history.length > 1 ? history.back() : go("#/"));
@@ -567,7 +739,7 @@ function viewHostSetup() {
               (r) => `
               <label class="check rule-pick">
                 <input type="checkbox" name="rules" value="${r.id}" ${prefs.rules.includes(r.id) ? "checked" : ""}>
-                ${backImg(r, "back back--thumb")}
+                ${backImg(r, "back back--thumb", { small: true })}
                 <span><strong>Règle d'or ${r.id}</strong><br>${esc(r.theme)}</span>
               </label>`
             ).join("")}
@@ -661,7 +833,7 @@ function viewHost(code) {
   app.innerHTML = `
     <section class="host">
       <div class="share">
-        <div class="qr">${qrSvg(url)}</div>
+        ${qrSlot(url)}
         <div>
           <p class="label">Code de la partie</p>
           <p class="code">${esc(prettyCode(code))}</p>
@@ -672,7 +844,7 @@ function viewHost(code) {
       </div>
 
       <div class="round-bar">
-        ${backImg(deal.rule, "back back--round", false)}
+        ${backImg(deal.rule, "back back--round", { lazy: false, small: true })}
         <div>
           <h1>Manche ${state.round} <span class="of">/ ${game.rounds}</span></h1>
           ${ruleTag(deal.rule)}
@@ -745,7 +917,8 @@ function viewHost(code) {
       const s = hostState(code);
       s.names[input.dataset.seat] = cleanName(input.value);
       saveHostState(code, s);
-      app.querySelector(".share .qr").innerHTML = qrSvg(joinUrl(code, 0, s.names, game.players));
+      app.querySelector(".share .qr").dataset.qr = joinUrl(code, 0, s.names, game.players);
+      hydrateQr(app);
     })
   );
 
@@ -860,7 +1033,7 @@ function showSeatQrs(code, game, state) {
     openModal(`
       <p class="label">Au tour de</p>
       <h2>${esc(playerName(state, seat))}</h2>
-      <div class="qr qr--big">${qrSvg(joinUrl(code, seat, state.names, game.players), 8)}</div>
+      ${qrSlot(joinUrl(code, seat, state.names, game.players), 8, "qr--big")}
       <p class="small">Scanne ce QR code : ta carte s'affiche directement.</p>
       <div class="actions">
         <button class="btn" id="qr-prev" ${index === 0 ? "disabled" : ""}>←</button>
@@ -895,7 +1068,7 @@ function viewDebrief(code) {
   app.innerHTML = `
     <section>
       <div class="debrief-head">
-        ${backImg(rule, "back back--round", false)}
+        ${backImg(rule, "back back--round", { lazy: false, small: true })}
         <div>
           <p class="label">Manche ${state.round} / ${game.rounds} · débrief</p>
           <h1>Règle d'or ${rule.id} · ${esc(rule.theme)}</h1>
@@ -974,7 +1147,7 @@ function resultsHtml(game, names, scores, results, mySeat) {
                 const res = results[round];
                 return `
                 <li>
-                  ${backImg(deal.rule, "back back--thumb")}
+                  ${backImg(deal.rule, "back back--thumb", { small: true })}
                   <div>
                     <p class="recap-title">Manche ${round} · ${esc(deal.rule.theme)}</p>
                     <p class="small">Undercover : <strong>${esc(undercovers.join(", "))}</strong></p>
@@ -1004,7 +1177,7 @@ function viewEnd(code) {
       ${resultsHtml(game, state.names, state.scores, results, null)}
 
       <div class="share share--results">
-        <div class="qr">${qrSvg(shareUrl)}</div>
+        ${qrSlot(shareUrl)}
         <div>
           <p class="label">Résultats sur les téléphones</p>
           <p>Les joueurs scannent ce QR code pour retrouver le classement et le récapitulatif des manches.</p>
@@ -1174,7 +1347,7 @@ function viewOver(code, seat) {
           const role = deal.roles[seat - 1].role;
           return `
           <li>
-            ${backImg(deal.rule, "back back--thumb")}
+            ${backImg(deal.rule, "back back--thumb", { small: true })}
             <div>
               <p class="recap-title">Manche ${i + 1} · ${esc(deal.rule.theme)}</p>
             </div>
@@ -1282,13 +1455,22 @@ function render() {
     case "cards":
       viewCards();
       break;
+    case "lowtech":
+      viewLowTech();
+      break;
     default:
       viewHome();
   }
+  hydrateQr(app);
   window.scrollTo(0, 0);
+  paintWeight();
+  setTimeout(paintWeight, 1500);
 }
 
+document.getElementById("mode-toggle")?.addEventListener("click", () => setLowTech(!isLowTech()));
+window.addEventListener("load", paintWeight);
 window.addEventListener("hashchange", render);
+syncModeToggle();
 render();
 
 if ("serviceWorker" in navigator && location.protocol === "https:") {

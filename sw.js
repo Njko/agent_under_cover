@@ -1,7 +1,9 @@
 // Service worker : met l'application en cache pour qu'elle fonctionne même sans réseau
 // (utile dans une salle de formation avec un Wi-Fi capricieux).
 // Incrémenter VERSION à chaque modification des fichiers pour forcer la mise à jour.
-const VERSION = "v6";
+const VERSION = "v7";
+// Seul le cœur de l'application est préchargé ; les images sont mises en cache à la première
+// utilisation (le mode low-tech n'en télécharge presque aucune).
 const ASSETS = [
   "./",
   "index.html",
@@ -11,13 +13,6 @@ const ASSETS = [
   "js/cards.js",
   "manifest.webmanifest",
   "icons/icon.svg",
-  "img/dos/regle-1.webp",
-  "img/dos/regle-2.webp",
-  "img/dos/regle-3.webp",
-  "img/dos/regle-4.webp",
-  "img/dos/regle-5.webp",
-  "img/dos/regle-6.webp",
-  "img/dos/regle-7.webp",
 ];
 
 self.addEventListener("install", (event) => {
