@@ -609,3 +609,12 @@ body { overflow-wrap: anywhere; hyphens: auto; }
 /* Low-tech : le bouton principal est déjà à l'encre, l'appui le passe en papier. */
 [data-lowtech] .btn--primary:not(:disabled):is(:active, .is-pressed) { background-color: var(--bg); color: var(--text); }
 [data-lowtech] .mode-toggle:is(:active, .is-pressed) .switch { outline: 2px solid var(--text); outline-offset: 2px; }
+
+/* Création de partie : message sur la couverture des règles d'or */
+.rules-hint { margin: 4px 0 0; font-size: 0.9rem; color: var(--muted); }
+.rules-hint:empty { display: none; }
+.rules-hint--warn { color: var(--text); padding: 8px 10px; border-left: 4px solid var(--focus); background: var(--press-bg); border-radius: 6px; }
+[data-lowtech] .rules-hint--warn { background: transparent; border-left-color: var(--text); }
+/* Case ou bouton radio à gauche, intitulé à droite qui passe à la ligne sur lui-même. */
+.form label.radio, .form label.check { flex-wrap: nowrap; }
+.form label.radio > span, .form label.check > span { flex: 1; min-width: 0; }

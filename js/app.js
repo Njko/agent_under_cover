@@ -857,7 +857,7 @@ function viewHostSetup() {
             <input id="rounds" name="rounds" type="number" inputmode="numeric" min="1" max="${MAX_ROUNDS}" value="${prefs.rounds}" aria-label="Nombre de manches">
             <button type="button" data-step="1" aria-label="Une manche de plus">+</button>
           </div>
-          <p class="hint">À la fin de la dernière manche, l'application affiche le classement et les points.</p>
+          <p class="hint">À la fin de la dernière manche, l'application affiche le score de l'équipe et le récapitulatif des manches.</p>
         </fieldset>
 
         <fieldset>
@@ -876,14 +876,15 @@ function viewHostSetup() {
             <button type="button" class="btn btn--small" data-rules="all">Toutes</button>
             <button type="button" class="btn btn--small" data-rules="none">Aucune</button>
           </div>
-          <label class="radio"><input type="radio" name="ordered" value="0" ${!prefs.ordered ? "checked" : ""}> Ordre aléatoire</label>
-          <label class="radio"><input type="radio" name="ordered" value="1" ${prefs.ordered ? "checked" : ""}> Dans l'ordre des règles (une règle par manche)</label>
+          <label class="radio"><input type="radio" name="ordered" value="0" ${!prefs.ordered ? "checked" : ""}> <span>Ordre aléatoire</span></label>
+          <label class="radio"><input type="radio" name="ordered" value="1" ${prefs.ordered ? "checked" : ""}> <span>Dans l'ordre des règles (une règle par manche)</span></label>
+          <p class="rules-hint" id="rules-hint" aria-live="polite"></p>
         </fieldset>
 
         <fieldset>
           <legend>Undercovers</legend>
-          <label class="radio"><input type="radio" name="undercovers" value="1" ${prefs.undercovers === 1 ? "checked" : ""}> 1 undercover</label>
-          <label class="radio"><input type="radio" name="undercovers" value="2" ${prefs.undercovers === 2 ? "checked" : ""}> 2 undercovers <small>(à partir de 7 joueurs)</small></label>
+          <label class="radio"><input type="radio" name="undercovers" value="1" ${prefs.undercovers === 1 ? "checked" : ""}> <span>1 undercover</span></label>
+          <label class="radio"><input type="radio" name="undercovers" value="2" ${prefs.undercovers === 2 ? "checked" : ""}> <span>2 undercovers <small>(à partir de 7 joueurs)</small></span></label>
         </fieldset>
 
         <p class="error" id="setup-error" role="alert"></p>
@@ -917,8 +918,32 @@ function viewHostSetup() {
     }
     const bulk = e.target.closest("[data-rules]");
     if (bulk) form.querySelectorAll('input[name="rules"]').forEach((c) => (c.checked = bulk.dataset.rules === "all"));
+    syncRulesHint();
   });
   form.elements.players.addEventListener("change", renderNames);
+
+  // Compare le nombre de manches au nombre de règles choisies : toutes ne seront pas forcément jouées.
+  const syncRulesHint = () => {
+    const hint = document.getElementById("rules-hint");
+    const rules = form.querySelectorAll('input[name="rules"]:checked').length;
+    const rounds = Number(form.elements.rounds.value) || 0;
+    const ordered = form.elements.ordered.value === "1";
+    const plural = (n, word) => `${n} ${word}${n > 1 ? "s" : ""}`;
+    hint.textContent =
+      !rules || !rounds
+        ? ""
+        : rounds < rules
+          ? `${plural(rules, "règle")} d'or choisie${rules > 1 ? "s" : ""} pour ${plural(rounds, "manche")} : seule${rounds > 1 ? "s" : ""} ${rounds} ${rounds > 1 ? "seront jouées" : "sera jouée"}, ${
+              ordered ? "les premières dans l'ordre" : "tirée" + (rounds > 1 ? "s" : "") + " au hasard"
+            }. ${rules - rounds} ne ${rules - rounds > 1 ? "seront" : "sera"} pas abordée${rules - rounds > 1 ? "s" : ""}.`
+          : rounds > rules
+            ? `${plural(rounds, "manche")} pour ${plural(rules, "règle")} d'or : toutes seront jouées, et certaines reviendront une seconde fois.`
+            : `Chaque règle d'or choisie sera jouée une fois.`;
+    hint.classList.toggle("rules-hint--warn", rules > 0 && rounds > 0 && rounds < rules);
+  };
+  form.addEventListener("input", syncRulesHint);
+  form.addEventListener("change", syncRulesHint);
+  syncRulesHint();
   renderNames();
 
   form.addEventListener("submit", (e) => {
