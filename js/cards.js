@@ -1,7 +1,8 @@
 // Contenu du jeu de cartes « IA responsable » (source : Jeu_de_cartes_IA_AXA_recto.pdf).
 //
 // Chaque règle contient :
-//   - theme       : intitulé court affiché lors du débrief (déduit des cartes, à ajuster librement)
+//   - theme       : nom de la règle d'or (tel qu'imprimé au dos des cartes)
+//   - back        : image du dos de carte (img/dos/)
 //   - civilians   : cartes « bonne pratique » distribuées aux civils
 //   - undercover  : la carte UNDERCOVER (pratique qui enfreint la règle)
 //   - why         : explication affichée au débrief pour justifier l'undercover
@@ -11,7 +12,8 @@
 export const RULES = [
   {
     id: 1,
-    theme: "L'humain garde le contrôle",
+    theme: "Contrôle humain & Responsabilité",
+    back: "img/dos/regle-1.webp",
     civilians: [
       "L'IA produit du code. Chaque livraison passe par revue de code et tests.",
       "Une IA suggère des réponses aux clients. Le conseiller choisit toujours la réponse finale parmi celles suggérées par l'IA.",
@@ -25,7 +27,8 @@ export const RULES = [
   },
   {
     id: 2,
-    theme: "Tester, surveiller et pouvoir arrêter",
+    theme: "Sécurité & Robustesse",
+    back: "img/dos/regle-2.webp",
     civilians: [
       "Avant sa mise en production, le modèle IA a été testé sur plusieurs jeux de données représentatifs afin d'évaluer sa fiabilité et ses performances.",
       "Les équipes métiers participent aux tests afin de vérifier que les résultats produits sont cohérents avec les besoins réels du terrain.",
@@ -41,7 +44,8 @@ export const RULES = [
   },
   {
     id: 3,
-    theme: "Gouvernance et déclaration des projets",
+    theme: "Gouvernance des données et de l'IA",
+    back: "img/dos/regle-3.webp",
     civilians: [
       "Avant de mettre le chatbot en production, l'équipe présente le projet devant un comité qui vérifie son alignement avec les politiques IA du Groupe.",
       "Une équipe Data Science a documenté son modèle : objectif ; données utilisées ; responsables ; risques identifiés. La documentation est mise à jour à chaque évolution.",
@@ -56,7 +60,8 @@ export const RULES = [
   },
   {
     id: 4,
-    theme: "Sobriété et impact environnemental",
+    theme: "Impact environnemental",
+    back: "img/dos/regle-4.webp",
     civilians: [
       "L'équipe limite les générations inutiles. Elle affine progressivement ses prompts au lieu de lancer des dizaines de requêtes successives.",
       "Avant de lancer un nouveau projet IA, l'équipe utilise la calculatrice carbone du Groupe afin d'estimer l'impact environnemental de la solution envisagée.",
@@ -71,7 +76,8 @@ export const RULES = [
   },
   {
     id: 5,
-    theme: "Transparence et culture du signalement",
+    theme: "Confiance & Transparence",
+    back: "img/dos/regle-5.webp",
     civilians: [
       "L'application informe clairement l'utilisateur que l'IA peut commettre des erreurs et que certaines réponses doivent être vérifiées.",
       "Lorsqu'un compte-rendu est généré automatiquement, une mention indique qu'il a été produit avec l'aide d'une IA et invite l'utilisateur à le relire avant diffusion.",
@@ -88,7 +94,8 @@ export const RULES = [
   },
   {
     id: 6,
-    theme: "Former et acculturer tous les collaborateurs",
+    theme: "Équité & Inclusion",
+    back: "img/dos/regle-6.webp",
     civilians: [
       "Une nouvelle formation IA est proposée à l'ensemble des collaborateurs, quel que soit leur métier ou leur niveau technique. Des parcours débutant, intermédiaire et avancé sont disponibles.",
       "Tous les collaborateurs concernés suivent un module obligatoire sur les usages responsables de l'IA, les risques et les bonnes pratiques.",
@@ -99,11 +106,12 @@ export const RULES = [
     undercover:
       "Pour limiter les erreurs, l'entreprise décide de réserver les formations IA aux équipes techniques et Data. Les autres métiers pourront bénéficier indirectement des résultats produits par les experts.",
     why:
-      "La formation est réservée à une élite technique alors que tous les métiers utilisent l'IA : l'acculturation doit concerner tout le monde.",
+      "La formation est réservée à une élite technique : les autres métiers sont exclus alors qu'ils utilisent aussi l'IA. L'accès à la formation doit être équitable.",
   },
   {
     id: 7,
-    theme: "Une IA utile, au service de l'humain",
+    theme: "L'IA au cœur de l'humain",
+    back: "img/dos/regle-7.webp",
     civilians: [
       "Une IA prépare les informations pertinentes avant un rendez-vous client afin de réduire les tâches administratives et permettre au conseiller de consacrer davantage de temps à l'écoute et au conseil.",
       "Un assistant IA répond aux questions sur les procédures internes afin d'aider les nouveaux arrivants à gagner en autonomie.",

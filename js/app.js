@@ -140,6 +140,23 @@ function cardHtml({ ruleId, text, kind = "civilian", label, theme }) {
     </article>`;
 }
 
+function backImg(rule, className = "back", lazy = true) {
+  return `<img class="${className}" src="${rule.back}" width="640" height="893" ${lazy ? 'loading="lazy"' : ""}
+    alt="Dos de carte, règle d'or ${rule.id} : ${esc(rule.theme)}">`;
+}
+
+// Carte secrète : le dos de la carte (si la règle est annoncée) ou un motif neutre la masque.
+function secretHtml(rule, showBack, front) {
+  return `
+    <div class="secret" id="secret">
+      <div class="secret-cover ${showBack ? "secret-cover--back" : ""}">
+        ${showBack ? backImg(rule, "back", false) : `<p>👆 Maintiens appuyé pour voir ta carte</p>`}
+      </div>
+      <div class="secret-content">${front}</div>
+    </div>
+    <p class="secret-hint">👆 Maintiens le doigt sur la carte pour la retourner. Cache ton écran des autres joueurs.</p>`;
+}
+
 function mrWhiteCardHtml() {
   return `
     <article class="card card--white">
@@ -283,6 +300,9 @@ function viewHome() {
   const lastPlayer = store.get("lastPlayer", null);
   app.innerHTML = `
     <section class="hero">
+      <div class="fan" aria-hidden="true">
+        ${RULES.map((r, i) => `<img src="${r.back}" alt="" width="640" height="893" style="--i:${i - (RULES.length - 1) / 2}">`).join("")}
+      </div>
       <h1>Qui enfreint la règle ?</h1>
       <p>Chaque joueur reçoit une pratique liée à une même règle d'IA responsable.
       Un <strong>undercover</strong> a reçu une pratique qui l'enfreint. Démasquez-le !</p>
@@ -348,8 +368,9 @@ function viewCards() {
       <h1>Toutes les cartes</h1>
       ${RULES.map(
         (r) => `
-        <h2 class="rule-title">Règle ${r.id} · ${esc(r.theme)}</h2>
+        <h2 class="rule-title">Règle d'or ${r.id} · ${esc(r.theme)}</h2>
         <div class="grid">
+          ${backImg(r, "back back--grid")}
           ${r.civilians.map((t) => cardHtml({ ruleId: r.id, text: t })).join("")}
           ${cardHtml({ ruleId: r.id, text: r.undercover, kind: "undercover" })}
         </div>
@@ -392,7 +413,8 @@ function viewHostSetup() {
               (r) => `
               <label class="check rule-pick rule-pick--${r.id}">
                 <input type="checkbox" name="rules" value="${r.id}" ${prefs.rules.includes(r.id) ? "checked" : ""}>
-                <span><strong>Règle ${r.id}</strong> · ${esc(r.theme)}</span>
+                ${backImg(r, "back back--thumb")}
+                <span><strong>Règle d'or ${r.id}</strong><br>${esc(r.theme)}</span>
               </label>`
             ).join("")}
           </div>
@@ -510,13 +532,16 @@ function viewHost(code) {
       </div>
 
       <div class="round-bar">
-        <h1>Manche ${state.round}</h1>
-        ${
-          game.showTheme
-            ? `<p class="round-theme round-theme--${deal.rule.id}"><span>Règle d'or ${deal.rule.id}</span> ${esc(deal.rule.theme)}</p>`
-            : ""
-        }
-        <p>Les joueurs doivent afficher la <strong>manche ${state.round}</strong> sur leur téléphone.</p>
+        ${game.showTheme ? backImg(deal.rule, "back back--round", false) : ""}
+        <div>
+          <h1>Manche ${state.round}</h1>
+          ${
+            game.showTheme
+              ? `<p class="round-theme round-theme--${deal.rule.id}"><span>Règle d'or ${deal.rule.id}</span> ${esc(deal.rule.theme)}</p>`
+              : ""
+          }
+          <p>Les joueurs doivent afficher la <strong>manche ${state.round}</strong> sur leur téléphone.</p>
+        </div>
       </div>
 
       ${result ? "" : timerHtml()}
@@ -738,8 +763,13 @@ function viewDebrief(code) {
 
   app.innerHTML = `
     <section>
-      <p class="label">Manche ${state.round} · débrief</p>
-      <h1>Règle ${rule.id} · ${esc(rule.theme)}</h1>
+      <div class="debrief-head">
+        ${backImg(rule, "back back--round", false)}
+        <div>
+          <p class="label">Manche ${state.round} · débrief</p>
+          <h1>Règle d'or ${rule.id} · ${esc(rule.theme)}</h1>
+        </div>
+      </div>
 
       <h2>La carte undercover</h2>
       ${cardHtml({ ruleId: rule.id, text: rule.undercover, kind: "undercover", label: holders(rule.undercover) })}
@@ -843,15 +873,7 @@ function viewPlay(code, seat) {
         <button class="btn btn--small" id="next" aria-label="Manche suivante">Manche suivante →</button>
       </div>
 
-      <div class="secret" id="secret">
-        <div class="secret-cover">
-          <p>👆 Maintiens appuyé pour voir ta carte</p>
-          <p class="small">Cache ton écran des autres joueurs.</p>
-        </div>
-        <div class="secret-content">
-          ${me.role === "mrwhite" ? mrWhiteCardHtml() : cardHtml({ ruleId: deal.rule.id, text: me.card, theme })}
-        </div>
-      </div>
+      ${secretHtml(deal.rule, game.showTheme && me.role !== "mrwhite", me.role === "mrwhite" ? mrWhiteCardHtml() : cardHtml({ ruleId: deal.rule.id, text: me.card, theme }))}
 
       <p class="hint">À ton tour, évoque ta carte en <strong>un mot ou une phrase courte</strong>, sans la lire. Attention : tu es peut-être l'undercover sans le savoir !</p>
     </section>`;
@@ -898,13 +920,12 @@ function viewPass(code) {
       <section class="center pass">
         <p class="label">Manche ${state.round} · distribution</p>
         <h1>${esc(playerName(state, seat))}</h1>
-        <p>Prends le téléphone, puis maintiens appuyé pour voir ta carte.</p>
-        <div class="secret" id="secret">
-          <div class="secret-cover"><p>👆 Maintiens appuyé</p></div>
-          <div class="secret-content">
-            ${me.role === "mrwhite" ? mrWhiteCardHtml() : cardHtml({ ruleId: deal.rule.id, text: me.card, theme: game.showTheme ? deal.rule.theme : null })}
-          </div>
-        </div>
+        <p>Prends le téléphone, puis maintiens le doigt sur la carte pour la retourner.</p>
+        ${secretHtml(
+          deal.rule,
+          game.showTheme && me.role !== "mrwhite",
+          me.role === "mrwhite" ? mrWhiteCardHtml() : cardHtml({ ruleId: deal.rule.id, text: me.card, theme: game.showTheme ? deal.rule.theme : null })
+        )}
         <button class="btn btn--primary" id="next-seat">J'ai vu ma carte → joueur suivant</button>
       </section>`;
     const secret = document.getElementById("secret");

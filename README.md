@@ -38,8 +38,8 @@ Une fois chargée, l'app fonctionne **hors ligne** (service worker) et peut êtr
 
 ## Modifier les cartes
 
-Tout le contenu est dans [`js/cards.js`](js/cards.js) : texte des cartes, intitulé de chaque règle (`theme`) et explication de l'undercover (`why`).
-Les intitulés et explications ont été **rédigés à partir des cartes** (le PDF n'indique que « RÈGLE 1 » à « RÈGLE 7 ») : relisez-les et ajustez-les à votre référentiel.
+Tout le contenu est dans [`js/cards.js`](js/cards.js) : texte des cartes, nom de chaque règle d'or (`theme`, repris du dos des cartes), image du dos (`back`) et explication de l'undercover (`why`).
+Les dos de cartes sont dans [`img/dos/`](img/dos) (WebP 640 px, coins transparents). Les explications `why` ont été **rédigées à partir des cartes** : relisez-les et ajustez-les à votre référentiel.
 Après une modification, incrémentez `VERSION` dans `sw.js` pour que les téléphones récupèrent la nouvelle version.
 
 ## Développement
@@ -55,6 +55,7 @@ Structure :
 | --- | --- |
 | `index.html`, `css/style.css` | Page unique, design mobile-first |
 | `js/cards.js` | Contenu du jeu |
+| `img/dos/regle-N.webp` | Dos des cartes des 7 règles d'or |
 | `js/game.js` | Moteur déterministe : code de partie, distribution, conditions de victoire |
 | `js/app.js` | Écrans (accueil, animateur, joueur, distribution, débrief, règles, catalogue) |
 | QR codes | [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) (MIT), chargé depuis jsDelivr puis mis en cache hors ligne |

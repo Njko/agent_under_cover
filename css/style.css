@@ -9,13 +9,20 @@
   --danger: #c4262e;
   --win: #1b7a43;
   --accent: #19b5d6;
-  --rule1: #1f5bd6;
-  --rule2: #14294b;
-  --rule3: #3a2c8c;
-  --rule4: #17663a;
-  --rule5: #0b5677;
-  --rule6: #5a2db3;
-  --rule7: #0d4b5a;
+  --rule1: #1859db;
+  --rule1-accent: #72d1dd;
+  --rule2: #16314f;
+  --rule2-accent: #00b8d8;
+  --rule3: #312d80;
+  --rule3-accent: #7c3aed;
+  --rule4: #116b46;
+  --rule4-accent: #67c487;
+  --rule5: #075985;
+  --rule5-accent: #f4c442;
+  --rule6: #5b21b5;
+  --rule6-accent: #f26b5d;
+  --rule7: #0a4f6b;
+  --rule7-accent: #ff6b6b;
   --bar: #00008f;
   --why-bg: #fff5f5;
   --timer-urgent: #b4530a;
@@ -98,23 +105,24 @@ input[type="number"], input.code-input, input.name {
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 14px; }
 .card {
   --rule: var(--rule1);
+  --rule-accent: var(--rule1-accent);
   background: #f7f9fc; border: 1px solid var(--border); border-radius: var(--radius);
   overflow: hidden; display: flex; flex-direction: column; min-height: 240px;
   box-shadow: 0 1px 3px rgba(19, 33, 60, 0.08); color: #13213c;
 }
-.card--rule1 { --rule: var(--rule1); }
-.card--rule2 { --rule: var(--rule2); }
-.card--rule3 { --rule: var(--rule3); }
-.card--rule4 { --rule: var(--rule4); }
-.card--rule5 { --rule: var(--rule5); }
-.card--rule6 { --rule: var(--rule6); }
-.card--rule7 { --rule: var(--rule7); }
+.card--rule1 { --rule: var(--rule1); --rule-accent: var(--rule1-accent); }
+.card--rule2 { --rule: var(--rule2); --rule-accent: var(--rule2-accent); }
+.card--rule3 { --rule: var(--rule3); --rule-accent: var(--rule3-accent); }
+.card--rule4 { --rule: var(--rule4); --rule-accent: var(--rule4-accent); }
+.card--rule5 { --rule: var(--rule5); --rule-accent: var(--rule5-accent); }
+.card--rule6 { --rule: var(--rule6); --rule-accent: var(--rule6-accent); }
+.card--rule7 { --rule: var(--rule7); --rule-accent: var(--rule7-accent); }
 .card--white { --rule: #8a94a8; }
 .card-head {
   background: var(--rule); color: #fff; font-weight: 800; font-size: 0.8rem; letter-spacing: 0.04em;
   padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
 }
-.card-head i { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+.card-head i { width: 10px; height: 10px; border-radius: 50%; background: var(--rule-accent, var(--accent)); }
 .card-text { padding: 16px 18px; margin: auto 0; font-size: 1.02rem; }
 .card-foot {
   margin: 0 18px 14px; padding-top: 8px; border-top: 2px solid var(--accent);
@@ -125,9 +133,25 @@ input[type="number"], input.code-input, input.name {
 .rule-title { border-left: 4px solid var(--primary); padding-left: 10px; }
 .why { background: var(--why-bg); border-left: 4px solid var(--danger); padding: 10px 14px; border-radius: 8px; }
 
+/* Dos des cartes */
+.back { display: block; width: 100%; max-width: 100%; height: auto; aspect-ratio: 640 / 893; filter: drop-shadow(0 2px 6px rgba(10, 18, 38, 0.25)); }
+.back--thumb { width: 44px; flex: none; filter: none; }
+.back--round { width: 96px; flex: none; }
+.back--grid { align-self: start; }
+.round-bar, .debrief-head { display: flex; gap: 16px; align-items: center; }
+.round-bar > div, .debrief-head > div { min-width: 0; }
+.fan { display: flex; justify-content: center; height: 150px; margin: 0 auto 4px; padding-top: 12px; overflow: hidden; }
+.fan img { width: 72px; height: 100px; margin: 0 -19px; transform-origin: 50% 160%; transform: rotate(calc(var(--i) * 6deg)); filter: drop-shadow(0 3px 6px rgba(10, 18, 38, 0.3)); }
+
 /* Carte secrète du joueur */
-.secret { position: relative; margin: 16px auto; max-width: 380px; user-select: none; -webkit-user-select: none; touch-action: none; }
-.secret .card { min-height: 300px; }
+.secret { position: relative; margin: 16px auto 8px; width: min(340px, 100%); aspect-ratio: 640 / 893; user-select: none; -webkit-user-select: none; touch-action: none; }
+.secret .card { height: 100%; min-height: 0; }
+.secret .card-text { overflow: auto; }
+.secret-cover.secret-cover--back { background: none; padding: 0; }
+.secret-cover--back .back { height: 100%; width: 100%; }
+.secret-cover, .secret-content { transition: opacity 0.15s ease; }
+.secret-content { height: 100%; }
+.secret-hint { text-align: center; font-size: 0.85rem; color: var(--muted); margin: 0 auto 12px; max-width: 340px; }
 .secret-cover {
   position: absolute; inset: 0; z-index: 1; border-radius: var(--radius);
   background: repeating-linear-gradient(135deg, var(--primary) 0 14px, #0a0aa3 14px 28px);
@@ -136,6 +160,7 @@ input[type="number"], input.code-input, input.name {
 }
 .secret-cover .small { color: #dfe4ff; font-weight: 400; }
 .secret.revealed .secret-cover { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .secret-cover, .secret-content { transition: none; } }
 .secret-content { visibility: hidden; }
 .secret.revealed .secret-content { visibility: visible; }
 
@@ -148,14 +173,9 @@ input[type="number"], input.code-input, input.name {
 .name-list li::before { content: counter(seat); flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: var(--primary-text); font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 .name-input { flex: 1; min-width: 0; font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); }
 .rule-picks { display: flex; flex-direction: column; gap: 6px; }
-.form label.rule-pick { align-items: flex-start; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); border-left: 5px solid var(--rule1); background: var(--surface); }
-.rule-pick--2 { border-left-color: var(--rule2) !important; }
-.rule-pick--3 { border-left-color: var(--rule3) !important; }
-.rule-pick--4 { border-left-color: var(--rule4) !important; }
-.rule-pick--5 { border-left-color: var(--rule5) !important; }
-.rule-pick--6 { border-left-color: var(--rule6) !important; }
-.rule-pick--7 { border-left-color: var(--rule7) !important; }
-.rule-pick input, .form label.check input { flex: none; margin-top: 1px; }
+.form label.check.rule-pick { align-items: center; padding: 6px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface); }
+.form label.check input { flex: none; margin-top: 1px; }
+.form label.check.rule-pick input { margin-top: 0; }
 .form label.check { align-items: flex-start; }
 .inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
