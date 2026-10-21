@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { RULES } from "../js/cards.js";
-import { decodeCode, dealRound, encodeCode, newCode, outcome, roundPoints, ruleForRound } from "../js/game.js";
+import { coopFound, coopPoints, decodeCode, dealRound, encodeCode, newCode, outcome, roundPoints, ruleForRound, wrongGuesses } from "../js/game.js";
 
 const base = { seed: 4242, players: 5, undercovers: 1 };
 
@@ -20,11 +20,15 @@ test("le code encode et décode les paramètres", () => {
     for (const undercovers of [1, 2]) {
       if (players - undercovers < 2) continue;
       for (const rounds of [1, 5, 16]) {
-        const seed = (players * 7919 + undercovers * 31 + rounds) % 2 ** 17;
-        const rules = [1, 3, 7];
-        const code = encodeCode({ seed, players, undercovers, rules, ordered: true, rounds });
-        assert.match(code, /^[2-9A-HJ-NP-Z]{8}$/);
-        assert.deepEqual(decodeCode(code), { code, seed, players, undercovers, rules, ordered: true, rounds });
+        for (const mode of ["coop", "compet"]) {
+          const seed = (players * 7919 + undercovers * 31 + rounds) % 2 ** 16;
+          const rules = [1, 3, 7];
+          const code = encodeCode({ seed, players, undercovers, rules, ordered: true, rounds, mode });
+          assert.match(code, /^[2-9A-HJ-NP-Z]{8}$/);
+          assert.deepEqual(decodeCode(code), { code, seed, players, undercovers, rules, ordered: true, rounds, mode });
+        }
+        const code = encodeCode({ seed: 1, players, undercovers, rounds });
+        assert.equal(decodeCode(code).mode, "coop", "coopératif par défaut");
         assert.equal(decodeCode(code.toLowerCase().replace(/(....)/, "$1 ")).code, code);
       }
     }
@@ -107,4 +111,15 @@ test("conditions de victoire et points", () => {
   assert.deepEqual(roundPoints(deal, "civilians", [uc]), Object.fromEntries(civ.map((s) => [s, 2])));
   assert.deepEqual(roundPoints(deal, "impostors", [civ[0], civ[1]]), { [uc]: 10 });
   assert.deepEqual(roundPoints(deal, "revealed", []), {});
+});
+
+test("mode coopératif : barème 3/2/1/0 selon les erreurs de désignation", () => {
+  assert.deepEqual([0, 1, 2, 3, 4].map(coopPoints), [3, 2, 1, 0, 0]);
+  const game = decodeCode(encodeCode({ ...base, players: 6, undercovers: 2 }));
+  const deal = dealRound(game, 1);
+  const ucs = deal.roles.filter((r) => r.role === "undercover").map((r) => r.seat);
+  const civ = deal.roles.find((r) => r.role === "civilian").seat;
+  assert.equal(coopFound(deal, [ucs[0]]), false);
+  assert.equal(coopFound(deal, [ucs[0], civ, ucs[1]]), true);
+  assert.equal(wrongGuesses(deal, [ucs[0], civ, ucs[1]]), 1);
 });

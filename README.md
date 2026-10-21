@@ -10,9 +10,11 @@ L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveu
 - À chaque manche, une règle est tirée parmi celles choisies (toutes passent avant qu'une revienne) et annoncée : les cartes apparaissent face cachée avec le dos de la règle.
 - Les **civils** reçoivent chacun une bonne pratique de cette règle (cartes différentes tant que possible).
 - L'**undercover** reçoit la carte « UNDERCOVER » de la règle : elle parle du même sujet mais *enfreint* la règle.
-- Tour de parole (un mot ou une phrase par joueur), **débat chronométré** (30, 60 ou 90 secondes, avec signal sonore), vote, élimination… puis **débrief** : l'app affiche la règle, la carte undercover, *pourquoi* elle enfreint la règle et des questions de discussion.
-- Points : 2 par civil quand les civils gagnent, 10 par undercover encore en jeu quand l'undercover gagne.
-- **Fin de partie** : classement, podium et récapitulatif des manches sur l'écran de l'animateur, avec un QR code qui transmet les résultats aux téléphones des joueurs.
+- Deux **modes de jeu**, choisis à la création :
+  - **Coopératif** (par défaut) : personne ne sait qui a la carte undercover, pas même celui qui l'a. Chacun **lit sa carte à voix haute**, l'équipe débat puis désigne un suspect ; un civil désigné à tort est disculpé et reste en jeu. **Score d'équipe** : 3 points si l'undercover est trouvé au premier vote, 2 au deuxième, 1 au troisième, 0 ensuite.
+  - **Compétitif** : l'undercover **sait qu'il l'est** en retournant sa carte et bluffe. Chacun peut garder sa carte sous les yeux mais la **décrit avec ses mots**. Vote, élimination ; le score compte les **manches gagnées par chaque camp** (civils contre undercover).
+- Débat **chronométré** (30, 60 ou 90 secondes, avec signal sonore), puis **débrief** : l'app affiche la règle, la carte undercover, *pourquoi* elle enfreint la règle et des questions de discussion.
+- **Fin de partie** : score de l'équipe (ou des deux camps) et récapitulatif des manches sur l'écran de l'animateur, avec un QR code qui transmet les résultats aux téléphones des joueurs.
 - Chaque partie peut être **supprimée** du téléphone (accueil, tableau de bord ou fin de partie).
 
 ## Comment ça marche sans serveur ?
@@ -20,7 +22,7 @@ L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveu
 GitHub Pages ne sert que des fichiers statiques : les téléphones ne peuvent pas échanger de données entre eux.
 L'app utilise donc une **distribution déterministe** :
 
-1. L'animateur crée une partie. L'app génère un **code de 8 caractères** (ex. `BVWA RY5W`) qui contient une graine aléatoire et les paramètres (nombre de joueurs, undercovers, règles jouées, ordre, nombre de manches), plus une somme de contrôle contre les fautes de frappe.
+1. L'animateur crée une partie. L'app génère un **code de 8 caractères** (ex. `BVWA RY5W`) qui contient une graine aléatoire et les paramètres (mode de jeu, nombre de joueurs, undercovers, règles jouées, ordre, nombre de manches), plus une somme de contrôle contre les fautes de frappe.
 2. Les joueurs scannent le **QR code** et touchent **leur prénom** : les prénoms sont inclus dans le lien du QR code. Avec le code saisi à la main, ils choisissent leur numéro.
 3. Chaque téléphone recalcule seul, à partir de *(code, manche, numéro)*, exactement la même distribution que celle de l'animateur. Aucune donnée ne circule.
 4. Pour la manche suivante, l'animateur et les joueurs appuient sur « Manche suivante » : pas besoin de rescanner.

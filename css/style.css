@@ -544,3 +544,18 @@ body { overflow-wrap: anywhere; hyphens: auto; }
 .timer-main, .form label.radio, .form label.check { flex-wrap: wrap; }
 .tile > span, .timer-main > * { min-width: 0; }
 @media (max-width: 359px) { [data-lowtech] .brand span { letter-spacing: 0; font-size: 0.95rem; } }
+
+/* Modes de jeu et score d'équipe */
+.form label.radio.mode-pick { align-items: flex-start; flex-wrap: nowrap; }
+.mode-pick > span { flex: 1; min-width: 0; }
+.mode-pick small { font-weight: 400; color: var(--muted); }
+.team-score { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; margin: 12px 0; padding: 10px 14px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); }
+.team-score p { margin: 0; }
+.team-score-value { font-size: 1.1rem; font-variant-numeric: tabular-nums; }
+.team-score--big { flex-direction: column; align-items: center; text-align: center; padding: 20px 14px; }
+.team-score--big .team-score-value { font-size: 1.6rem; }
+.team-score--big .team-score-value strong { font-size: 2.6rem; }
+.card-note { margin: 0 18px 12px; padding: 8px 10px; font-size: 0.9rem; border-left: 3px solid var(--rule); background: rgba(19, 33, 60, 0.05); }
+.card--undercover .card-note { border-left-color: var(--danger); }
+[data-lowtech] .team-score { border-color: var(--text); background: transparent; }
+[data-lowtech] .card-note { background: transparent; border-left-color: var(--text); }

@@ -48,12 +48,15 @@ function shuffle(array, rand) {
 }
 
 // --- Code de partie -----------------------------------------------------------------------
-// Bits : graine (17) | joueurs-3 (4) | undercovers-1 (1) | règles jouées (7) | ordre des règles (1)
-//        | manches-1 (4) | contrôle (6)
+// Bits : graine (16) | mode (1) | joueurs-3 (4) | undercovers-1 (1) | règles jouées (7)
+//        | ordre des règles (1) | manches-1 (4) | contrôle (6)
 // Les valeurs dépassent 32 bits : on calcule avec des multiplications plutôt qu'avec << et |.
 
+export const MODES = ["coop", "compet"]; // coopératif (par défaut) ou compétitif
+
 const FIELDS = [
-  ["seed", 17],
+  ["seed", 16],
+  ["mode", 1],
   ["players", 4],
   ["undercovers", 1],
   ["rulesMask", 7],
@@ -63,7 +66,7 @@ const FIELDS = [
 const CHECK_BITS = 6;
 
 function checksum(payload) {
-  return hash32(payload % 2 ** 32, Math.floor(payload / 2 ** 32), 0xc0de5) % 2 ** CHECK_BITS;
+  return hash32(payload % 2 ** 32, Math.floor(payload / 2 ** 32), 0xc0de6) % 2 ** CHECK_BITS;
 }
 
 export function validateSettings({ players, undercovers, rules = [1], rounds = 1 }) {
@@ -85,12 +88,13 @@ export function validateSettings({ players, undercovers, rules = [1], rounds = 1
   return null;
 }
 
-export function encodeCode({ seed, players, undercovers, rules, ordered = false, rounds = 7 }) {
+export function encodeCode({ seed, players, undercovers, rules, ordered = false, rounds = 7, mode = "coop" }) {
   rules = rules ?? RULES.map((r) => r.id);
   const error = validateSettings({ players, undercovers, rules, rounds });
   if (error) throw new Error(error);
   const values = {
-    seed: seed % 2 ** 17,
+    seed: seed % 2 ** 16,
+    mode: Math.max(0, MODES.indexOf(mode)),
     players: players - MIN_PLAYERS,
     undercovers: undercovers - 1,
     rulesMask: rules.reduce((mask, id) => mask | (1 << (id - 1)), 0),
@@ -136,13 +140,14 @@ export function decodeCode(raw) {
     rules: RULES.map((r) => r.id).filter((id) => v.rulesMask & (1 << (id - 1))),
     ordered: v.ordered === 1,
     rounds: v.rounds + 1,
+    mode: MODES[v.mode],
   };
   if (validateSettings(settings)) return null;
   return { code, ...settings };
 }
 
 export function newCode(settings, random = Math.random) {
-  const seed = Math.floor(random() * 2 ** 17);
+  const seed = Math.floor(random() * 2 ** 16);
   return encodeCode({ ...settings, seed });
 }
 
@@ -190,6 +195,25 @@ export function dealRound(game, round) {
   return { round, rule, roles: roles.slice(1), starter };
 }
 
+// --- Mode coopératif ------------------------------------------------------------------------
+// L'équipe désigne des suspects jusqu'à trouver l'undercover : 3 points au premier essai, 2 au
+// deuxième, 1 au troisième, 0 ensuite.
+export const COOP_MAX_POINTS = 3;
+
+export function coopPoints(wrongGuesses) {
+  return Math.max(0, COOP_MAX_POINTS - wrongGuesses);
+}
+
+/** Mode coopératif : la manche est gagnée quand tous les undercovers ont été désignés. */
+export function coopFound(deal, designatedSeats) {
+  return deal.roles.filter((r) => r.role === "undercover").every((r) => designatedSeats.includes(r.seat));
+}
+
+export function wrongGuesses(deal, designatedSeats) {
+  return designatedSeats.filter((seat) => deal.roles[seat - 1].role !== "undercover").length;
+}
+
+// --- Mode compétitif -------------------------------------------------------------------------
 export const POINTS = { civilian: 2, undercover: 10 };
 
 /**

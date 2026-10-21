@@ -7,19 +7,71 @@ import {
   MAX_PLAYERS,
   decodeCode,
   dealRound,
+  COOP_MAX_POINTS,
+  coopFound,
+  coopPoints,
   newCode,
   outcome,
-  roundPoints,
   validateSettings,
+  wrongGuesses,
 } from "./game.js";
 
 const app = document.getElementById("app");
 const modal = document.getElementById("modal");
 
 const ROLE_LABELS = { civilian: "Civil", undercover: "Undercover" };
-// Issue de chaque manche, stockée en une lettre (elle voyage aussi dans le lien des résultats).
-const RESULT_LABELS = { c: "Victoire des civils", i: "Victoire de l'undercover", r: "Rôles révélés", s: "Manche passée" };
+// Issue de chaque manche, stockée en un caractère (elle voyage aussi dans le lien des résultats) :
+// coopératif : points obtenus « 0 » à « 3 » ; compétitif : « c » civils, « i » undercover ;
+// dans les deux modes : « r » rôles révélés sans vainqueur, « s » manche passée.
 const RESULT_CODES = { civilians: "c", impostors: "i", revealed: "r" };
+
+function resultLabel(res) {
+  if (/^\d$/.test(res)) {
+    const pts = Number(res);
+    return pts ? `Trouvé au ${COOP_MAX_POINTS + 1 - pts}${pts === COOP_MAX_POINTS ? "er" : "e"} vote · +${pts}` : "Trouvé · +0";
+  }
+  return { c: "Victoire des civils", i: "Victoire de l'undercover", r: "Rôles révélés", s: "Manche passée" }[res] || "";
+}
+
+function resultClass(res) {
+  return /^\d$/.test(res) ? (Number(res) > 0 ? "c" : "i") : res;
+}
+
+// Score collectif : total de l'équipe (coopératif) ou manches gagnées par camp (compétitif).
+// « rounds » : nombre de manches sur lequel calculer le maximum (toute la partie, ou les manches jouées).
+function teamScore(game, results, rounds = Object.keys(results).length) {
+  const codes = Object.values(results);
+  if (game.mode === "coop") {
+    return { points: codes.reduce((sum, r) => sum + (/^\d$/.test(r) ? Number(r) : 0), 0), max: rounds * COOP_MAX_POINTS };
+  }
+  return { civilians: codes.filter((r) => r === "c").length, undercover: codes.filter((r) => r === "i").length };
+}
+
+function teamScoreHtml(game, results, big = false) {
+  // Pendant la partie, le maximum porte sur toutes les manches prévues ; à la fin, sur les manches jouées.
+  const score = teamScore(game, results, big ? Object.keys(results).length : game.rounds);
+  if (game.mode === "coop") {
+    const ratio = score.max ? score.points / score.max : 0;
+    const verdict = !score.max ? "" : ratio >= 0.8 ? "Excellent travail d'équipe !" : ratio >= 0.5 ? "Bonne enquête collective." : "L'undercover vous a donné du fil à retordre.";
+    return `
+      <div class="team-score ${big ? "team-score--big" : ""}">
+        <p class="label">Score de l'équipe</p>
+        <p class="team-score-value"><strong>${score.points}</strong> / ${score.max} points</p>
+        ${big && verdict ? `<p>${verdict}</p>` : ""}
+      </div>`;
+  }
+  return `
+    <div class="team-score ${big ? "team-score--big" : ""}">
+      <p class="label">Manches gagnées</p>
+      <p class="team-score-value">Civils <strong>${score.civilians}</strong> – <strong>${score.undercover}</strong> Undercover</p>
+    </div>`;
+}
+
+// Issue de la manche selon le mode : en coopératif, gagnée dès que l'équipe a trouvé tous les undercovers.
+function roundOutcome(game, deal, designated) {
+  if (game.mode === "coop") return coopFound(deal, designated) ? "found" : null;
+  return outcome(deal, designated);
+}
 
 // --- Utilitaires ----------------------------------------------------------------------------
 
@@ -127,7 +179,7 @@ function joinUrl(code, seat, names = {}, players = 0) {
 // Lien des résultats : prénoms, scores et issue de chaque manche.
 function resultsUrl(code, game, state) {
   const results = Array.from({ length: playedRounds(state) }, (_, i) => state.results[i + 1] || "s").join("");
-  const scores = Array.from({ length: game.players }, (_, i) => state.scores[i + 1] || 0).join(",");
+  const scores = "";
   return `${baseUrl()}#results-${code}~${toBase64Url([nameList(state.names, game.players).join("|"), scores, results].join("\n"))}`;
 }
 
@@ -274,12 +326,13 @@ function confirmForget(code, label) {
   );
 }
 
-function cardHtml({ ruleId, text, kind = "civilian", label, theme }) {
+function cardHtml({ ruleId, text, kind = "civilian", label, theme, note }) {
   return `
     <article class="card card--rule${ruleId} ${kind === "undercover" ? "card--undercover" : ""}">
       <header class="card-head"><span>RÈGLE ${ruleId}</span><i></i></header>
       ${theme ? `<p class="card-theme">${esc(theme)}</p>` : ""}
       <p class="card-text">${esc(text)}</p>
+      ${note ? `<p class="card-note">${note}</p>` : ""}
       ${kind === "undercover" ? `<footer class="card-foot">UNDERCOVER</footer>` : ""}
       ${label ? `<footer class="card-label">${esc(label)}</footer>` : ""}
     </article>`;
@@ -385,6 +438,20 @@ function bindSecret() {
     // Le lecteur d'écran lit la carte dès qu'elle est affichée.
     if (pinned) document.getElementById("secret-content").focus({ preventScroll: true });
   });
+}
+
+// Carte vue par un joueur. Coopératif : personne ne connaît son rôle. Compétitif : chacun le connaît.
+function playerCardHtml(game, deal, me) {
+  if (game.mode === "coop") return cardHtml({ ruleId: deal.rule.id, text: me.card, theme: deal.rule.theme });
+  return me.role === "undercover"
+    ? cardHtml({ ruleId: deal.rule.id, text: me.card, theme: deal.rule.theme, kind: "undercover", note: "<strong>Tu es l'undercover :</strong> ta carte enfreint la règle d'or. Fais-toi passer pour un civil !" })
+    : cardHtml({ ruleId: deal.rule.id, text: me.card, theme: deal.rule.theme, note: "<strong>Tu es civil :</strong> ta carte respecte la règle d'or. Démasque l'undercover !" });
+}
+
+function playerHint(game) {
+  return game.mode === "coop"
+    ? `À ton tour, <strong>lis ta carte à voix haute</strong>. Personne ne sait qui a la carte undercover, pas même toi : enquêtez ensemble pour trouver la pratique qui enfreint la règle d'or.`
+    : `Garde ta carte sous les yeux si tu veux, mais à ton tour <strong>décris-la avec tes mots</strong>, sans la lire.`;
 }
 
 function ruleTag(rule) {
@@ -633,25 +700,29 @@ function viewRules() {
       </ol>
       <p class="hint">Aucune connexion entre téléphones n'est nécessaire : chaque téléphone calcule sa propre carte à partir du code.
       Pas assez de téléphones ? Utilisez le mode « Distribuer sur ce téléphone ».</p>
-      <h2>Les rôles</h2>
-      <ul>
-        <li><strong>Civils</strong> : ils ont tous une bonne pratique liée à la règle d'or de la manche.</li>
-        <li><strong>Undercover</strong> : sa carte parle du même sujet mais <em>enfreint</em> la règle. Il ne sait pas forcément qu'il est l'undercover !</li>
-      </ul>
-      <h2>Déroulement d'une manche</h2>
+      <h2>Deux modes de jeu</h2>
+      <p>Dans les deux modes, les <strong>civils</strong> ont une bonne pratique liée à la règle d'or de la manche ; l'<strong>undercover</strong> a une carte qui parle du même sujet mais <em>enfreint</em> la règle.</p>
+
+      <h3>Coopératif (recommandé)</h3>
       <ol>
-        <li><strong>Tour de parole</strong> : à partir du joueur désigné, chacun donne <em>un mot ou une phrase courte</em> qui évoque sa carte, sans la lire.</li>
-        <li><strong>Débat</strong> chronométré (30 secondes par défaut) : qui semble enfreindre la règle d'or ?</li>
-        <li><strong>Vote</strong> : on élimine un joueur à main levée. L'animateur le marque comme éliminé et son rôle est révélé.</li>
-        <li>On recommence jusqu'à la victoire d'un camp, puis on débriefe.</li>
+        <li><strong>Personne ne sait</strong> qui a la carte undercover, pas même celui qui l'a.</li>
+        <li><strong>Lecture</strong> : à partir du joueur désigné, chacun lit sa carte à voix haute.</li>
+        <li><strong>Débat</strong> chronométré (30 secondes par défaut) : quelle pratique enfreint la règle d'or, et pourquoi ?</li>
+        <li><strong>Désignation</strong> : l'équipe désigne un suspect. S'il n'a pas la carte undercover, il est disculpé et on recommence.</li>
+        <li><strong>Points pour l'équipe</strong> : 3 points si l'undercover est trouvé au premier vote, 2 au deuxième, 1 au troisième, 0 ensuite.</li>
       </ol>
-      <h2>Victoire et points</h2>
-      <ul>
-        <li>Les <strong>civils</strong> gagnent s'ils éliminent tous les undercovers : <strong>2 points</strong> pour chaque civil.</li>
-        <li>L'<strong>undercover</strong> gagne s'il ne reste plus qu'un civil : <strong>10 points</strong> pour chaque undercover encore en jeu.</li>
-      </ul>
+
+      <h3>Compétitif</h3>
+      <ol>
+        <li>En retournant sa carte, chacun découvre son rôle : <strong>l'undercover sait qu'il l'est</strong> et doit se faire passer pour un civil.</li>
+        <li><strong>Tour de parole</strong> : chacun peut garder sa carte sous les yeux, mais la <strong>décrit avec ses mots</strong>, sans la lire.</li>
+        <li><strong>Débat</strong> chronométré, puis <strong>vote</strong> : le joueur éliminé révèle son rôle.</li>
+        <li>Les <strong>civils</strong> gagnent la manche s'ils éliminent l'undercover ; l'<strong>undercover</strong> la gagne s'il ne reste plus qu'un civil.</li>
+        <li>Le score compte les <strong>manches gagnées par chaque camp</strong>.</li>
+      </ol>
+
       <h2>Fin de partie</h2>
-      <p>Après la dernière manche, l'animateur affiche le classement et un QR code : en le scannant, chaque joueur retrouve les résultats sur son téléphone.</p>
+      <p>Après la dernière manche, l'animateur affiche le score et un QR code : en le scannant, chaque joueur retrouve les résultats sur son téléphone.</p>
       <h2>Débrief</h2>
       <p>À la fin de chaque manche, l'animateur affiche la règle, la carte undercover et pourquoi elle l'enfreint. C'est le moment d'échanger sur les pratiques réelles des équipes.</p>
       <p><button class="btn" id="back">Retour</button></p>
@@ -752,6 +823,7 @@ function viewHostSetup() {
     rules: RULES.map((r) => r.id),
     ordered: false,
     rounds: 5,
+    mode: "coop",
     names: {},
     ...store.get("hostPrefs", {}),
   };
@@ -759,6 +831,14 @@ function viewHostSetup() {
     <section>
       <h1>Nouvelle partie</h1>
       <form id="setup" class="form">
+        <fieldset>
+          <legend>Mode de jeu</legend>
+          <label class="radio mode-pick"><input type="radio" name="mode" value="coop" ${prefs.mode !== "compet" ? "checked" : ""}>
+            <span><strong>Coopératif</strong> (recommandé)<br><small>Personne ne sait qui a la carte undercover. Chacun lit sa carte à voix haute et l'équipe enquête ensemble. 3, 2 ou 1 point selon le nombre de votes.</small></span></label>
+          <label class="radio mode-pick"><input type="radio" name="mode" value="compet" ${prefs.mode === "compet" ? "checked" : ""}>
+            <span><strong>Compétitif</strong><br><small>L'undercover sait qu'il l'est et bluffe. On décrit sa carte avec ses mots. Civils contre undercover.</small></span></label>
+        </fieldset>
+
         <fieldset>
           <legend>Joueurs</legend>
           <div class="stepper" data-target="players">
@@ -849,6 +929,7 @@ function viewHostSetup() {
       rules: [...form.querySelectorAll('input[name="rules"]:checked')].map((c) => Number(c.value)),
       ordered: form.elements.ordered.value === "1",
       rounds: Number(form.elements.rounds.value),
+      mode: form.elements.mode.value,
     };
     const error = validateSettings(settings);
     if (error) {
@@ -872,7 +953,8 @@ function viewHost(code) {
   const state = hostState(code);
   saveHostState(code, state);
   const deal = dealRound(game, state.round);
-  const result = state.finished || outcome(deal, state.eliminated);
+  const coop = game.mode === "coop";
+  const result = state.finished || roundOutcome(game, deal, state.eliminated);
   const lastRound = state.round >= game.rounds;
   const url = joinUrl(code, 0, state.names, game.players);
   const rulesSummary =
@@ -885,7 +967,7 @@ function viewHost(code) {
         <div>
           <p class="label">Code de la partie</p>
           <p class="code">${esc(prettyCode(code))}</p>
-          <p class="small">${game.players} joueurs · ${game.undercovers} undercover${game.undercovers > 1 ? "s" : ""} · ${game.rounds} manche${game.rounds > 1 ? "s" : ""} · ${rulesSummary}</p>
+          <p class="small">Mode ${coop ? "coopératif" : "compétitif"} · ${game.players} joueurs · ${game.undercovers} undercover${game.undercovers > 1 ? "s" : ""} · ${game.rounds} manche${game.rounds > 1 ? "s" : ""} · ${rulesSummary}</p>
           <button class="btn btn--small" id="copy">Copier le lien</button>
           <button class="btn btn--small" id="seat-qrs">QR par joueur</button>
         </div>
@@ -900,12 +982,16 @@ function viewHost(code) {
         </div>
       </div>
 
+      ${teamScoreHtml(game, state.results)}
+
       ${result ? "" : timerHtml()}
 
       ${
         result
-          ? resultBanner(result, "div")
-          : `<p class="starter"><span aria-hidden="true">🎙️ </span><strong>${esc(playerName(state, deal.starter))}</strong> commence le tour de parole.</p>`
+          ? resultBanner(result, "div", state.results[state.round])
+          : `<p class="starter"><span aria-hidden="true">🎙️ </span><strong>${esc(playerName(state, deal.starter))}</strong> ${
+              coop ? "commence : chacun lit sa carte à voix haute, puis l'équipe désigne un suspect." : "commence le tour de parole."
+            }</p>`
       }
 
       <ul class="players">
@@ -913,15 +999,18 @@ function viewHost(code) {
           .map((r) => {
             const out = state.eliminated.includes(r.seat);
             const revealed = out || result;
+            // Coopératif : un civil désigné à tort est disculpé et reste en jeu.
+            const status = !out ? "" : coop ? (r.role === "undercover" ? " · démasqué" : " · disculpé") : " · éliminé";
             return `
-            <li class="${out ? "out" : ""}">
+            <li class="${out && !coop ? "out" : ""}">
               <span class="seat">${r.seat}</span>
               <input class="name" id="host-name-${r.seat}" data-seat="${r.seat}" maxlength="${MAX_NAME_LENGTH}" value="${esc(state.names[r.seat] || "")}" placeholder="Joueur ${r.seat}" aria-label="Prénom du joueur ${r.seat}">
-              <span class="score">${state.scores[r.seat] || 0} pt${(state.scores[r.seat] || 0) > 1 ? "s" : ""}</span>
               ${
                 revealed
-                  ? `<span class="role role--${r.role}">${ROLE_LABELS[r.role]}${out ? " · éliminé" : ""}</span>`
-                  : `<button class="btn btn--small btn--danger" data-eliminate="${r.seat}">Éliminer</button>`
+                  ? `<span class="role role--${r.role}">${ROLE_LABELS[r.role]}${status}</span>`
+                  : coop
+                    ? `<button class="btn btn--small" data-eliminate="${r.seat}">Désigner</button>`
+                    : `<button class="btn btn--small btn--danger" data-eliminate="${r.seat}">Éliminer</button>`
               }
             </li>`;
           })
@@ -972,7 +1061,7 @@ function viewHost(code) {
   );
 
   app.querySelectorAll("[data-eliminate]").forEach((btn) =>
-    btn.addEventListener("click", () => eliminate(code, deal, Number(btn.dataset.eliminate)))
+    btn.addEventListener("click", () => eliminate(code, game, deal, Number(btn.dataset.eliminate)))
   );
 
   // Une manche interrompue sans vainqueur est marquée « révélée » (sans points).
@@ -983,7 +1072,7 @@ function viewHost(code) {
 
   document.getElementById("debrief").onclick = () => {
     const s = hostState(code);
-    if (s.finished || outcome(deal, s.eliminated)) return go(`#/debrief/${code}`);
+    if (s.finished || roundOutcome(game, deal, s.eliminated)) return go(`#/debrief/${code}`);
     confirmModal("La manche n'est pas terminée. Révéler tous les rôles ?", "Révéler", () => {
       closeRound(s, "r");
       saveHostState(code, s);
@@ -1030,45 +1119,66 @@ function viewHost(code) {
   document.getElementById("forget").onclick = () => confirmForget(code, "cette partie");
 }
 
-function resultBanner(result, tag = "p") {
+function resultBanner(result, tag = "p", code = "") {
+  const pts = Number(code);
   const [icon, text] =
-    result === "civilians"
+    result === "found"
+      ? ["🎉", `Undercover démasqué ! +${pts} point${pts > 1 ? "s" : ""} pour l'équipe.`]
+      : result === "civilians"
       ? ["🎉", "Les civils ont démasqué l'undercover !"]
       : result === "impostors"
         ? ["🕵️", "L'undercover l'emporte : il ne reste qu'un civil."]
         : ["", "Rôles révélés."];
-  return `<${tag} class="banner banner--${result === "civilians" ? "win" : "lose"}">${icon ? `<span aria-hidden="true">${icon} </span>` : ""}${text}</${tag}>`;
+  return `<${tag} class="banner banner--${result === "civilians" || result === "found" ? "win" : "lose"}">${icon ? `<span aria-hidden="true">${icon} </span>` : ""}${text}</${tag}>`;
 }
 
-function eliminate(code, deal, seat) {
+// Compétitif : le joueur éliminé quitte la manche. Coopératif : l'équipe désigne un suspect ;
+// s'il n'a pas la carte undercover, il est disculpé et reste en jeu.
+function eliminate(code, game, deal, seat) {
   const state = hostState(code);
   const player = deal.roles[seat - 1];
   const name = playerName(state, seat);
+  const coop = game.mode === "coop";
 
-  openModal(`
+  openModal(
+    coop
+      ? `
+    <h2>Désigner ${esc(name)} ?</h2>
+    <p>L'équipe pense que ${esc(name)} a la carte qui enfreint la règle d'or. Son rôle sera révélé.</p>
+    <div class="actions">
+      <button class="btn btn--primary" id="do-eliminate">Désigner</button>
+      <button class="btn" data-close>Annuler</button>
+    </div>`
+      : `
     <h2>Éliminer ${esc(name)} ?</h2>
     <p>Son rôle sera révélé à tout le groupe.</p>
     <div class="actions">
       <button class="btn btn--danger" id="do-eliminate">Éliminer</button>
       <button class="btn" data-close>Annuler</button>
-    </div>`);
+    </div>`
+  );
 
   document.getElementById("do-eliminate").onclick = () => {
     state.eliminated.push(seat);
-    const result = outcome(deal, state.eliminated);
+    const result = roundOutcome(game, deal, state.eliminated);
     if (result) {
       state.finished = result;
-      state.results[state.round] = RESULT_CODES[result];
-      for (const [s, pts] of Object.entries(roundPoints(deal, result, state.eliminated))) {
-        state.scores[s] = (state.scores[s] || 0) + pts;
-      }
+      state.results[state.round] = coop ? String(coopPoints(wrongGuesses(deal, state.eliminated))) : RESULT_CODES[result];
     }
     saveHostState(code, state);
     render();
+    const errors = wrongGuesses(deal, state.eliminated);
+    const next = coop
+      ? player.role === "undercover"
+        ? "Bien vu ! Il reste un undercover à trouver."
+        : `Ce n'est pas l'undercover : ${esc(name)} est disculpé. Relisez les cartes et désignez un autre suspect${
+            errors >= COOP_MAX_POINTS ? "." : ` (la manche vaut maintenant ${coopPoints(errors)} point${coopPoints(errors) > 1 ? "s" : ""}).`
+          }`
+      : "La manche continue : nouveau tour de parole !";
     openModal(`
-      <p class="label">${esc(name)} était…</p>
-      <p class="role-reveal role--${player.role}">${ROLE_LABELS[player.role]}</p>
-      ${result ? resultBanner(result) : `<p>La manche continue : nouveau tour de parole !</p>`}
+      <p class="label">${esc(name)} ${coop ? "avait…" : "était…"}</p>
+      <p class="role-reveal role--${player.role}">${coop ? (player.role === "undercover" ? "La carte undercover" : "Une bonne pratique") : ROLE_LABELS[player.role]}</p>
+      ${result ? resultBanner(result, "p", state.results[state.round]) : `<p>${next}</p>`}
       <button class="btn btn--primary" data-close>Continuer</button>`);
   };
 }
@@ -1147,43 +1257,12 @@ function viewDebrief(code) {
 }
 
 // Classement et récapitulatif des manches, partagés par l'écran animateur et les téléphones.
-function resultsHtml(game, names, scores, results, mySeat) {
+function resultsHtml(game, names, results, mySeat) {
   const label = (seat) => names[seat] || `Joueur ${seat}`;
-  const ranking = Array.from({ length: game.players }, (_, i) => i + 1).sort((a, b) => (scores[b] || 0) - (scores[a] || 0) || a - b);
-  // Rang partagé en cas d'égalité (1, 2, 2, 4…).
-  const rankOf = (seat) => 1 + ranking.filter((s) => (scores[s] || 0) > (scores[seat] || 0)).length;
-  const medals = ["🥇", "🥈", "🥉"];
-  const podium = ranking.slice(0, Math.min(3, ranking.length));
   const rounds = Object.keys(results).map(Number).sort((a, b) => a - b);
 
   return `
-    <ol class="podium" aria-label="Podium">
-      ${podium
-        .map(
-          (seat) => `
-          <li class="podium-step podium-step--${rankOf(seat)} ${seat === mySeat ? "is-me" : ""}">
-            <span class="medal" aria-hidden="true">${medals[rankOf(seat) - 1] || ""}</span>
-            <strong>${esc(label(seat))}</strong>
-            <span>${scores[seat] || 0} pts</span>
-          </li>`
-        )
-        .join("")}
-    </ol>
-
-    <h2 class="section-title">Classement</h2>
-    <ol class="ranking">
-      ${ranking
-        .map(
-          (seat) => `
-          <li class="${seat === mySeat ? "is-me" : ""}">
-            <span class="rank">${rankOf(seat)}</span>
-            <span class="who">${esc(label(seat))}${seat === mySeat ? " <small>(toi)</small>" : ""}</span>
-            <span class="pts">${scores[seat] || 0} pts</span>
-          </li>`
-        )
-        .join("")}
-    </ol>
-
+    ${teamScoreHtml(game, results, true)}
     ${
       rounds.length
         ? `<h2 class="section-title">Les manches</h2>
@@ -1191,7 +1270,7 @@ function resultsHtml(game, names, scores, results, mySeat) {
             ${rounds
               .map((round) => {
                 const deal = dealRound(game, round);
-                const undercovers = deal.roles.filter((r) => r.role === "undercover").map((r) => label(r.seat));
+                const undercovers = deal.roles.filter((r) => r.role === "undercover").map((r) => label(r.seat) + (r.seat === mySeat ? " (toi)" : ""));
                 const res = results[round];
                 return `
                 <li>
@@ -1200,7 +1279,7 @@ function resultsHtml(game, names, scores, results, mySeat) {
                     <p class="recap-title">Manche ${round} · ${esc(deal.rule.theme)}</p>
                     <p class="small">Undercover : <strong>${esc(undercovers.join(", "))}</strong></p>
                   </div>
-                  <span class="result result--${res}">${RESULT_LABELS[res] || ""}</span>
+                  <span class="result result--${resultClass(res)}">${resultLabel(res)}</span>
                 </li>`;
               })
               .join("")}
@@ -1222,13 +1301,13 @@ function viewEnd(code) {
     <section class="end">
       <p class="label center-text">Partie ${esc(prettyCode(code))}</p>
       <h1 class="center-text">Fin de partie</h1>
-      ${resultsHtml(game, state.names, state.scores, results, null)}
+      ${resultsHtml(game, state.names, results, null)}
 
       <div class="share share--results">
         ${qrSlot(shareUrl, "QR code des résultats de la partie")}
         <div>
           <p class="label">Résultats sur les téléphones</p>
-          <p>Les joueurs scannent ce QR code pour retrouver le classement et le récapitulatif des manches.</p>
+          <p>Les joueurs scannent ce QR code pour retrouver le score et le récapitulatif des manches.</p>
           <button class="btn btn--small" id="copy-results">Copier le lien des résultats</button>
         </div>
       </div>
@@ -1268,7 +1347,7 @@ function viewResults(code, token) {
     <section class="end">
       <p class="label center-text">Partie ${esc(prettyCode(game.code))}</p>
       <h1 class="center-text">Résultats</h1>
-      ${resultsHtml(game, data.names, data.scores, data.results, mySeat)}
+      ${resultsHtml(game, data.names, data.results, mySeat)}
       <div class="actions">
         <a class="btn btn--primary" href="#/">Accueil</a>
         <a class="btn" href="#/cards">Revoir toutes les cartes</a>
@@ -1362,9 +1441,9 @@ function viewPlay(code, seat) {
         }
       </div>
 
-      ${secretHtml(deal.rule, cardHtml({ ruleId: deal.rule.id, text: me.card, theme: deal.rule.theme }))}
+      ${secretHtml(deal.rule, playerCardHtml(game, deal, me))}
 
-      <p class="hint">À ton tour, évoque ta carte en <strong>un mot ou une phrase courte</strong>, sans la lire. Attention : tu es peut-être l'undercover sans le savoir !</p>
+      <p class="hint">${playerHint(game)}</p>
     </section>`;
 
   bindSecret();
@@ -1387,7 +1466,7 @@ function viewOver(code, seat) {
   app.innerHTML = `
     <section class="end">
       <h1 class="center-text">Partie terminée${myName ? `, ${esc(myName)}` : ""} !</h1>
-      <p class="center-text">Scanne le <strong>QR code des résultats</strong> affiché par l'animateur pour voir le classement et les points.</p>
+      <p class="center-text">Scanne le <strong>QR code des résultats</strong> affiché par l'animateur pour voir le score ${game.mode === "coop" ? "de l'équipe" : "des deux camps"}.</p>
 
       <h2 class="section-title">Tes cartes</h2>
       <ol class="recap">
@@ -1400,7 +1479,7 @@ function viewOver(code, seat) {
             <div>
               <p class="recap-title">Manche ${i + 1} · ${esc(deal.rule.theme)}</p>
             </div>
-            <span class="role role--${role}">${ROLE_LABELS[role]}</span>
+            <span class="role role--${role}">${role === "undercover" ? "Carte undercover" : "Bonne pratique"}</span>
           </li>`;
         }).join("")}
       </ol>
@@ -1440,7 +1519,8 @@ function viewPass(code) {
         <p class="label">Manche ${state.round} / ${game.rounds} · distribution</p>
         <h1>${esc(playerName(state, seat))}</h1>
         <p>Prends le téléphone, puis maintiens le doigt sur la carte pour la retourner.</p>
-        ${secretHtml(deal.rule, cardHtml({ ruleId: deal.rule.id, text: me.card, theme: deal.rule.theme }))}
+        ${secretHtml(deal.rule, playerCardHtml(game, deal, me))}
+        <p class="hint">${playerHint(game)}</p>
         <button class="btn btn--primary" id="next-seat">J'ai vu ma carte → joueur suivant</button>
       </section>`;
     bindSecret();
