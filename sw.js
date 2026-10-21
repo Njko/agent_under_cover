@@ -1,7 +1,7 @@
 // Service worker : met l'application en cache pour qu'elle fonctionne même sans réseau
 // (utile dans une salle de formation avec un Wi-Fi capricieux).
 // Incrémenter VERSION à chaque modification des fichiers pour forcer la mise à jour.
-const VERSION = "v10";
+const VERSION = "v11";
 // Seul le cœur de l'application est préchargé ; les images sont mises en cache à la première
 // utilisation (le mode low-tech n'en télécharge presque aucune).
 const ASSETS = [
@@ -11,6 +11,7 @@ const ASSETS = [
   "js/app.js",
   "js/game.js",
   "js/cards.js",
+  "js/icons.js",
   "manifest.webmanifest",
   "icons/icon.svg",
 ];

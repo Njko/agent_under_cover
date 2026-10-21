@@ -1,4 +1,5 @@
 import { RULES } from "./cards.js";
+import { ICONS } from "./icons.js";
 import {
   CODE_LENGTH,
   MAX_ROUNDS,
@@ -286,7 +287,7 @@ function cardHtml({ ruleId, text, kind = "civilian", label, theme }) {
 
 // --- Mode low-tech ---------------------------------------------------------------------------
 // Inspiré du site solaire de Low-tech Magazine : police du système, pas de couleurs ni d'effets,
-// images tramées en 4 niveaux de gris, et les petites illustrations décoratives sont supprimées.
+// dessins vectoriels simplifiés intégrés à la page, et les petites illustrations décoratives sont supprimées.
 
 function isLowTech() {
   return document.documentElement.hasAttribute("data-lowtech");
@@ -316,7 +317,7 @@ function paintWeight() {
   }
   const bytes = transferredBytes();
   el.hidden = false;
-  el.innerHTML = `Mode low-tech · <strong>${formatKo(bytes)}</strong> transférés depuis l'ouverture · police du système, images tramées, aucun traceur. <a href="#/lowtech">Pourquoi ?</a>`;
+  el.innerHTML = `Mode low-tech · <strong>${formatKo(bytes)}</strong> transférés depuis l'ouverture · police du système, dessins vectoriels, aucun traceur. <a href="#/lowtech">Pourquoi ?</a>`;
 }
 
 function transferredBytes() {
@@ -332,7 +333,7 @@ function formatKo(bytes) {
 
 /**
  * Dos de carte. « small » : vignette décorative (supprimée en mode low-tech).
- * Sinon : grande image couleur, ou en low-tech une carte en texte avec une illustration tramée de 3 Ko.
+ * Sinon : grande image couleur, ou en low-tech une carte en texte avec un dessin vectoriel simplifié (< 1 Ko).
  */
 function backImg(rule, className = "back", { lazy = true, small = false } = {}) {
   const alt = `Dos de carte, règle d'or ${rule.id} : ${esc(rule.theme)}`;
@@ -340,7 +341,7 @@ function backImg(rule, className = "back", { lazy = true, small = false } = {}) 
     if (small) return "";
     return `
       <div class="lt-back ${className}" role="img" aria-label="${alt}">
-        <img src="${rule.back.replace(".webp", "-trame.png")}" width="160" height="160" alt="" draggable="false" ${lazy ? 'loading="lazy"' : ""}>
+        <svg class="lt-icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">${ICONS[rule.id]}</svg>
         <span class="lt-back-label">Règle d'or ${rule.id}</span>
         <strong>${esc(rule.theme)}</strong>
         <span class="lt-back-foot">L'IA sous couverture</span>
@@ -660,9 +661,9 @@ function viewRules() {
 
 // Mesures faites sur cette application (Chrome, profil iPhone 13, fichiers compressés comme sur GitHub Pages).
 const WEIGHT_TABLE = [
-  ["Rejoindre une partie et voir sa carte", 292, 108, 32],
-  ["Créer une partie et afficher le QR code", 292, 93, 37],
-  ["Parcourir les 44 cartes", 262, 254, 52],
+  ["Rejoindre une partie et voir sa carte", 292, 117, 35],
+  ["Créer une partie et afficher le QR code", 292, 100, 43],
+  ["Parcourir les 44 cartes", 262, 260, 35],
 ];
 
 function viewLowTech() {
@@ -694,7 +695,7 @@ function viewLowTech() {
       <h2>Ce que fait ce mode</h2>
       <ul>
         <li>Police du système et deux encres : pas de couleurs, d'ombres, de dégradés ni d'animations.</li>
-        <li>Dos de cartes rendus en texte, avec une illustration tramée en 4 gris de 3 Ko au lieu d'une image couleur de 30 Ko.</li>
+        <li>Dos de cartes rendus en texte, avec un dessin simplifié au trait de moins de 1 Ko, intégré à la page, au lieu d'une image couleur de 30 Ko.</li>
         <li>Les images décoratives (éventail de l'accueil, vignettes) ne sont pas téléchargées.</li>
         <li>En thème sombre, fond noir pur : sur les écrans OLED, les pixels noirs sont éteints.</li>
         <li>Le minuteur se redessine une fois par seconde au lieu de quatre.</li>

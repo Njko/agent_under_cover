@@ -393,7 +393,7 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
    Mode low-tech — inspiré du site solaire de Low-tech Magazine
    - police par défaut du système, une seule graisse supplémentaire (gras), aucune police web ;
    - deux encres (papier et noir), pas de dégradés, d'ombres, d'arrondis ni d'animations ;
-   - dos de cartes rendus en texte + illustration tramée de 3 Ko ; vignettes décoratives supprimées ;
+   - dos de cartes rendus en texte + dessin vectoriel simplifié intégré (< 1 Ko) ; vignettes décoratives supprimées ;
    - en thème sombre, fond noir pur : les pixels OLED éteints ne consomment rien.
    ============================================================================================= */
 :root[data-lowtech] {
@@ -423,7 +423,6 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
     --rule1: #d8d8d8; --rule2: #d8d8d8; --rule3: #d8d8d8; --rule4: #d8d8d8; --rule5: #d8d8d8; --rule6: #d8d8d8; --rule7: #d8d8d8;
     color-scheme: dark;
   }
-  :root[data-lowtech]:not([data-theme="light"]) .lt-back img { filter: invert(1); }
 }
 :root[data-lowtech][data-theme="dark"] {
   --bg: #000000; --surface: #000000; --text: #d8d8d8; --muted: #9a9a9a; --border: #d8d8d8;
@@ -432,7 +431,6 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
   --rule1: #d8d8d8; --rule2: #d8d8d8; --rule3: #d8d8d8; --rule4: #d8d8d8; --rule5: #d8d8d8; --rule6: #d8d8d8; --rule7: #d8d8d8;
   color-scheme: dark;
 }
-:root[data-lowtech][data-theme="dark"] .lt-back img { filter: invert(1); }
 
 [data-lowtech] body { font-family: serif; font-size: 1.0625rem; }
 [data-lowtech] *, [data-lowtech] *::before, [data-lowtech] *::after {
@@ -474,12 +472,16 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
 [data-lowtech] .card--undercover { outline: 3px double var(--text); }
 [data-lowtech] .round-theme span { background: transparent; color: var(--text); border: 1px solid var(--text); }
 
-/* Dos de carte en texte + illustration tramée */
+/* Dos de carte en texte + dessin vectoriel simplifié */
 .lt-back {
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center;
   aspect-ratio: 640 / 893; width: 100%; padding: 12px; border: 3px double var(--text); background: var(--bg); color: var(--text);
 }
-.lt-back img { width: min(160px, 70%); height: auto; image-rendering: pixelated; }
+.lt-icon {
+  width: min(150px, 65%); height: auto; aspect-ratio: 1; overflow: visible;
+  fill: none; stroke: currentColor; stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+}
+.lt-icon .f { fill: currentColor; stroke: none; }
 .lt-back-label { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.8rem; margin-top: 8px; }
 .lt-back strong { font-size: 1.25rem; line-height: 1.2; }
 .lt-back-foot { text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.7rem; color: var(--muted); }
