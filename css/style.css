@@ -148,6 +148,9 @@ input[type="number"], input.code-input, input.name {
 .secret .card { height: 100%; min-height: 0; }
 .secret .card-text { overflow: auto; }
 .secret-cover.secret-cover--back { background: none; padding: 0; }
+/* Appui long : empêche le menu système de l'image (Copier, Enregistrer…) d'iOS et Android. */
+.secret, .secret * { -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+.secret img { pointer-events: none; -webkit-user-drag: none; }
 .secret-cover--back .back { height: 100%; width: 100%; }
 .secret-cover, .secret-content { transition: opacity 0.15s ease; }
 .secret-content { height: 100%; }

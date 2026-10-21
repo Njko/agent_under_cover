@@ -150,7 +150,7 @@ function secretHtml(rule, showBack, front) {
   return `
     <div class="secret" id="secret">
       <div class="secret-cover ${showBack ? "secret-cover--back" : ""}">
-        ${showBack ? backImg(rule, "back", false) : `<p>👆 Maintiens appuyé pour voir ta carte</p>`}
+        ${showBack ? backImg(rule, "back", false).replace("<img ", '<img draggable="false" ') : `<p>👆 Maintiens appuyé pour voir ta carte</p>`}
       </div>
       <div class="secret-content">${front}</div>
     </div>
