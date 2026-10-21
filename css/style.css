@@ -12,6 +12,8 @@
   --win: #1b7a43;
   --win-bg: #e3f4ea;
   --focus: #00008f;
+  --press-bg: #dfe3f8;
+  --primary-pressed: #000066;
   --accent: #19b5d6;
   --rule1: #1859db;
   --rule1-accent: #72d1dd;
@@ -313,6 +315,7 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
     --timer-urgent: #f0a35e;
     --danger: #ff8a8f; --danger-bg: #4a1a22; --danger-text: #1a0507;
     --win: #7ad9a0; --win-bg: #12351f; --focus: #8fa2ff;
+    --press-bg: #28345c; --primary-pressed: #c2ccff;
     color-scheme: dark;
   }
 }
@@ -329,6 +332,7 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
   --timer-urgent: #f0a35e;
   --danger: #ff8a8f; --danger-bg: #4a1a22; --danger-text: #1a0507;
   --win: #7ad9a0; --win-bg: #12351f; --focus: #8fa2ff;
+  --press-bg: #28345c; --primary-pressed: #c2ccff;
   color-scheme: dark;
 }
 
@@ -559,3 +563,49 @@ body { overflow-wrap: anywhere; hyphens: auto; }
 .card--undercover .card-note { border-left-color: var(--danger); }
 [data-lowtech] .team-score { border-color: var(--text); background: transparent; }
 [data-lowtech] .card-note { background: transparent; border-left-color: var(--text); }
+
+/* --- Retour visuel au toucher et au clic ----------------------------------------------------
+   Le bouton s'enfonce légèrement et change de fond pendant l'appui (et au survol à la souris).
+   La classe .is-pressed (posée en JS) garantit un retour visible même pour un appui très bref. */
+.btn, .chip, .seat-btn, .tile, .resume-item a, .stepper button, .icon-btn, .mode-toggle, .topbar-help, .link-btn {
+  transition: transform 0.08s ease, background-color 0.08s ease, color 0.08s ease, border-color 0.08s ease;
+}
+.btn:not(:disabled):is(:active, .is-pressed), .chip:is(:active, .is-pressed), .seat-btn:is(:active, .is-pressed), .tile:is(:active, .is-pressed), .stepper button:is(:active, .is-pressed), .icon-btn:is(:active, .is-pressed),
+.topbar-help:is(:active, .is-pressed), .link-btn:is(:active, .is-pressed) { transform: scale(0.97); }
+.btn:not(:disabled):is(:active, .is-pressed), .chip:is(:active, .is-pressed), .seat-btn:is(:active, .is-pressed), .tile:is(:active, .is-pressed), .resume-item a:is(:active, .is-pressed),
+.stepper button:is(:active, .is-pressed), .icon-btn:is(:active, .is-pressed) { background-color: var(--press-bg); }
+.btn--primary:not(:disabled):is(:active, .is-pressed) { background-color: var(--primary-pressed); border-color: var(--primary-pressed); }
+.btn--danger:not(:disabled):is(:active, .is-pressed) { background-color: var(--danger-bg); }
+.modal .btn--danger:not(:disabled):is(:active, .is-pressed) { background-color: var(--danger); filter: brightness(0.85); }
+.btn--ghost:not(:disabled):is(:active, .is-pressed) { background-color: var(--press-bg); }
+.chip[aria-pressed="true"]:is(:active, .is-pressed) { background-color: var(--primary-pressed); }
+.topbar-help:is(:active, .is-pressed) { background-color: rgba(255, 255, 255, 0.25); }
+.mode-toggle:is(:active, .is-pressed) .switch { transform: scale(0.94); }
+.resume-item:has(a:is(:active, .is-pressed)) { background-color: var(--press-bg); }
+@media (hover: hover) {
+  .btn:not(:disabled):not(.btn--primary):hover, .chip:not([aria-pressed="true"]):hover, .seat-btn:hover,
+  .stepper button:hover, .icon-btn:hover { background-color: var(--press-bg); }
+  .btn--primary:not(:disabled):hover { background-color: var(--primary-pressed); border-color: var(--primary-pressed); }
+  .topbar-help:hover { background-color: rgba(255, 255, 255, 0.15); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .btn, .chip, .seat-btn, .tile, .resume-item a, .stepper button, .icon-btn, .mode-toggle, .topbar-help, .link-btn { transition: none; }
+  .btn:is(:active, .is-pressed), .chip:is(:active, .is-pressed), .seat-btn:is(:active, .is-pressed), .tile:is(:active, .is-pressed), .stepper button:is(:active, .is-pressed), .icon-btn:is(:active, .is-pressed),
+  .topbar-help:is(:active, .is-pressed), .link-btn:is(:active, .is-pressed), .mode-toggle:is(:active, .is-pressed) .switch { transform: none !important; }
+}
+/* Low-tech : pas d'animation, l'appui inverse simplement les couleurs (encre ↔ papier). */
+[data-lowtech] .btn:not(:disabled):is(:active, .is-pressed), [data-lowtech] .chip:is(:active, .is-pressed), [data-lowtech] .seat-btn:is(:active, .is-pressed),
+[data-lowtech] .tile:is(:active, .is-pressed), [data-lowtech] .resume-item a:is(:active, .is-pressed), [data-lowtech] .stepper button:is(:active, .is-pressed),
+[data-lowtech] .icon-btn:is(:active, .is-pressed), [data-lowtech] .topbar-help:is(:active, .is-pressed) {
+  transform: none; background-color: var(--text); color: var(--bg); filter: none;
+}
+[data-lowtech] .tile:is(:active, .is-pressed) strong, [data-lowtech] .tile:is(:active, .is-pressed) small, [data-lowtech] .seat-btn:is(:active, .is-pressed) small { color: var(--bg); }
+@media (hover: hover) {
+  [data-lowtech] .btn:not(:disabled):not(.btn--primary):hover, [data-lowtech] .chip:not([aria-pressed="true"]):hover,
+  [data-lowtech] .seat-btn:hover, [data-lowtech] .stepper button:hover, [data-lowtech] .icon-btn:hover { background-color: transparent; text-decoration: underline; }
+  [data-lowtech] .btn--primary:not(:disabled):hover { background-color: var(--primary); }
+  [data-lowtech] .topbar-help:hover { background-color: transparent; }
+}
+/* Low-tech : le bouton principal est déjà à l'encre, l'appui le passe en papier. */
+[data-lowtech] .btn--primary:not(:disabled):is(:active, .is-pressed) { background-color: var(--bg); color: var(--text); }
+[data-lowtech] .mode-toggle:is(:active, .is-pressed) .switch { outline: 2px solid var(--text); outline-offset: 2px; }

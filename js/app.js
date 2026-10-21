@@ -1614,6 +1614,24 @@ function render() {
 
 document.getElementById("mode-toggle")?.addEventListener("click", () => setLowTech(!isLowTech()));
 window.addEventListener("load", paintWeight);
+// Retour visuel à l'appui : la classe .is-pressed reste au moins 150 ms, même pour un toucher très
+// bref (l'état :active seul est souvent invisible sur mobile). L'écouteur « touchstart » active
+// aussi :active sur Safari iPhone.
+const PRESSABLE = ".btn, .chip, .seat-btn, .tile, .resume-item a, .stepper button, .icon-btn, .mode-toggle, .topbar-help, .link-btn";
+document.addEventListener("touchstart", () => {}, { passive: true });
+document.addEventListener("pointerdown", (e) => {
+  const el = e.target.closest(PRESSABLE);
+  if (!el || el.disabled) return;
+  const since = Date.now();
+  el.classList.add("is-pressed");
+  const release = () => {
+    setTimeout(() => el.classList.remove("is-pressed"), Math.max(0, 150 - (Date.now() - since)));
+    document.removeEventListener("pointerup", release);
+    document.removeEventListener("pointercancel", release);
+  };
+  document.addEventListener("pointerup", release);
+  document.addEventListener("pointercancel", release);
+});
 window.addEventListener("hashchange", render);
 syncModeToggle();
 render();
