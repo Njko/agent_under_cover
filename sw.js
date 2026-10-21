@@ -1,7 +1,7 @@
 // Service worker : met l'application en cache pour qu'elle fonctionne même sans réseau
 // (utile dans une salle de formation avec un Wi-Fi capricieux).
 // Incrémenter VERSION à chaque modification des fichiers pour forcer la mise à jour.
-const VERSION = "v2";
+const VERSION = "v3";
 const ASSETS = [
   "./",
   "index.html",

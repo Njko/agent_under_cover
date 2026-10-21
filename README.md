@@ -5,19 +5,21 @@ L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveu
 
 ## Principe du jeu
 
-- À chaque manche, une **règle** est tirée au sort (les 7 règles passent toutes avant qu'une revienne).
+- L'animateur saisit les **prénoms** des joueurs : chacun touche son prénom en rejoignant la partie.
+- Il choisit les **règles d'or** jouées (toutes, quelques-unes ou une seule), au hasard ou dans l'ordre, et peut **annoncer la règle de chaque manche** (affichée sur son écran et sur les cartes).
+- À chaque manche, une règle est tirée parmi celles choisies (toutes passent avant qu'une revienne).
 - Les **civils** reçoivent chacun une bonne pratique de cette règle (cartes différentes tant que possible).
 - L'**undercover** reçoit la carte « UNDERCOVER » de la règle : elle parle du même sujet mais *enfreint* la règle.
 - Option **Mr White** : un joueur sans carte, qui doit bluffer et peut gagner en devinant la règle.
-- Tour de parole (un mot ou une phrase par joueur), débat, vote, élimination… puis **débrief** : l'app affiche la règle, la carte undercover, *pourquoi* elle enfreint la règle et des questions de discussion.
+- Tour de parole (un mot ou une phrase par joueur), **débat chronométré** (30, 60 ou 90 secondes, avec signal sonore), vote, élimination… puis **débrief** : l'app affiche la règle, la carte undercover, *pourquoi* elle enfreint la règle et des questions de discussion.
 
 ## Comment ça marche sans serveur ?
 
 GitHub Pages ne sert que des fichiers statiques : les téléphones ne peuvent pas échanger de données entre eux.
 L'app utilise donc une **distribution déterministe** :
 
-1. L'animateur crée une partie. L'app génère un **code de 6 caractères** (ex. `YYT F8H`) qui contient une graine aléatoire et les paramètres (nombre de joueurs, undercovers, Mr White), plus une somme de contrôle contre les fautes de frappe.
-2. Les joueurs scannent le **QR code** (ou saisissent le code) et choisissent **leur numéro** (l'ordre autour de la table).
+1. L'animateur crée une partie. L'app génère un **code de 8 caractères** (ex. `ZP33 633W`) qui contient une graine aléatoire et les paramètres (nombre de joueurs, undercovers, Mr White, règles jouées, ordre, annonce de la règle), plus une somme de contrôle contre les fautes de frappe. Les codes à 6 caractères de la première version restent valides.
+2. Les joueurs scannent le **QR code** et touchent **leur prénom** : les prénoms sont inclus dans le lien du QR code. Avec le code saisi à la main, ils choisissent leur numéro.
 3. Chaque téléphone recalcule seul, à partir de *(code, manche, numéro)*, exactement la même distribution que celle de l'animateur. Aucune donnée ne circule.
 4. Pour la manche suivante, l'animateur et les joueurs appuient sur « Manche suivante » : pas besoin de rescanner.
 

@@ -8,7 +8,9 @@
 import { RULES } from "./cards.js";
 
 const ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // 32 symboles, sans 0/O/1/I
-export const CODE_LENGTH = 6; // 6 × 5 bits = 30 bits
+export const CODE_LENGTH = 8; // 8 × 5 bits = 40 bits
+const LEGACY_CODE_LENGTH = 6; // codes de la première version, toujours acceptés
+const ALL_RULES_MASK = (1 << RULES.length) - 1;
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 18;
 
@@ -47,13 +49,44 @@ function shuffle(array, rand) {
 }
 
 // --- Code de partie -----------------------------------------------------------------------
-// Bits : graine (20) | joueurs-3 (4) | undercovers-1 (1) | Mr White (1) | contrôle (4)
+// Bits : graine (20) | joueurs-3 (4) | undercovers-1 (1) | Mr White (1) | règles jouées (7)
+//        | ordre des règles (1) | règle annoncée (1) | contrôle (5)
+// Les valeurs dépassent 32 bits : on calcule avec des multiplications plutôt qu'avec << et |.
 
-function checksum(payload) {
-  return hash32(payload, 0xa11ce) & 0xf;
+const FIELDS = [
+  ["seed", 20],
+  ["players", 4],
+  ["undercovers", 1],
+  ["mrWhite", 1],
+  ["rulesMask", 7],
+  ["ordered", 1],
+  ["showTheme", 1],
+];
+
+function checksum(payload, bits) {
+  return hash32(payload % 2 ** 32, Math.floor(payload / 2 ** 32), 0xa11ce) % 2 ** bits;
 }
 
-export function validateSettings({ players, undercovers, mrWhite }) {
+function toBase32(value, length) {
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code = ALPHABET[value % 32] + code;
+    value = Math.floor(value / 32);
+  }
+  return code;
+}
+
+function fromBase32(code) {
+  let value = 0;
+  for (const ch of code) {
+    const idx = ALPHABET.indexOf(ch);
+    if (idx < 0) return null;
+    value = value * 32 + idx;
+  }
+  return value;
+}
+
+export function validateSettings({ players, undercovers, mrWhite, rules = [1], showTheme = false }) {
   if (!Number.isInteger(players) || players < MIN_PLAYERS || players > MAX_PLAYERS) {
     return `Le nombre de joueurs doit être compris entre ${MIN_PLAYERS} et ${MAX_PLAYERS}.`;
   }
@@ -64,21 +97,30 @@ export function validateSettings({ players, undercovers, mrWhite }) {
   if (civilians < 2) {
     return "Il faut au moins 2 civils : ajoutez des joueurs ou retirez un rôle spécial.";
   }
+  if (!rules.length) {
+    return "Choisissez au moins une règle d'or.";
+  }
+  if (mrWhite && showTheme) {
+    return "Mr White doit deviner la règle d'or : il n'est pas compatible avec l'annonce de la règle.";
+  }
   return null;
 }
 
-export function encodeCode({ seed, players, undercovers, mrWhite }) {
-  const error = validateSettings({ players, undercovers, mrWhite });
+export function encodeCode({ seed, players, undercovers, mrWhite, rules, ordered = false, showTheme = false }) {
+  rules = rules ?? RULES.map((r) => r.id);
+  const error = validateSettings({ players, undercovers, mrWhite, rules, showTheme });
   if (error) throw new Error(error);
-  const payload =
-    ((seed & 0xfffff) << 6) | ((players - MIN_PLAYERS) << 2) | ((undercovers - 1) << 1) | (mrWhite ? 1 : 0);
-  let value = payload * 16 + checksum(payload);
-  let code = "";
-  for (let i = 0; i < CODE_LENGTH; i++) {
-    code = ALPHABET[value % 32] + code;
-    value = Math.floor(value / 32);
-  }
-  return code;
+  const values = {
+    seed: seed & 0xfffff,
+    players: players - MIN_PLAYERS,
+    undercovers: undercovers - 1,
+    mrWhite: mrWhite ? 1 : 0,
+    rulesMask: rules.reduce((mask, id) => mask | (1 << (id - 1)), 0),
+    ordered: ordered ? 1 : 0,
+    showTheme: showTheme ? 1 : 0,
+  };
+  const payload = FIELDS.reduce((acc, [name, bits]) => acc * 2 ** bits + values[name], 0);
+  return toBase32(payload * 32 + checksum(payload, 5), CODE_LENGTH);
 }
 
 export function normalizeCode(raw) {
@@ -87,24 +129,50 @@ export function normalizeCode(raw) {
     .replace(/[\s-]/g, "");
 }
 
-export function decodeCode(raw) {
-  const code = normalizeCode(raw);
-  if (code.length !== CODE_LENGTH) return null;
-  let value = 0;
-  for (const ch of code) {
-    const idx = ALPHABET.indexOf(ch);
-    if (idx < 0) return null;
-    value = value * 32 + idx;
-  }
-  const check = value % 16;
+function decodeLegacy(code) {
+  const value = fromBase32(code);
+  if (value === null) return null;
   const payload = Math.floor(value / 16);
-  if (checksum(payload) !== check) return null;
-  const settings = {
+  if ((hash32(payload, 0xa11ce) & 0xf) !== value % 16) return null;
+  return {
     seed: payload >>> 6,
     players: ((payload >>> 2) & 0xf) + MIN_PLAYERS,
     undercovers: ((payload >>> 1) & 1) + 1,
     mrWhite: (payload & 1) === 1,
+    rulesMask: ALL_RULES_MASK,
+    ordered: false,
+    showTheme: false,
   };
+}
+
+function decodeCurrent(code) {
+  const value = fromBase32(code);
+  if (value === null) return null;
+  let payload = Math.floor(value / 32);
+  if (checksum(payload, 5) !== value % 32) return null;
+  const v = {};
+  for (const [name, bits] of [...FIELDS].reverse()) {
+    v[name] = payload % 2 ** bits;
+    payload = Math.floor(payload / 2 ** bits);
+  }
+  return {
+    seed: v.seed,
+    players: v.players + MIN_PLAYERS,
+    undercovers: v.undercovers + 1,
+    mrWhite: v.mrWhite === 1,
+    rulesMask: v.rulesMask,
+    ordered: v.ordered === 1,
+    showTheme: v.showTheme === 1,
+  };
+}
+
+export function decodeCode(raw) {
+  const code = normalizeCode(raw);
+  const decoded =
+    code.length === CODE_LENGTH ? decodeCurrent(code) : code.length === LEGACY_CODE_LENGTH ? decodeLegacy(code) : null;
+  if (!decoded) return null;
+  const { rulesMask, ...settings } = decoded;
+  settings.rules = RULES.map((r) => r.id).filter((id) => rulesMask & (1 << (id - 1)));
   if (validateSettings(settings)) return null;
   return { code, ...settings };
 }
@@ -116,14 +184,13 @@ export function newCode(settings, random = Math.random) {
 
 // --- Distribution des cartes --------------------------------------------------------------
 
-export function ruleForRound(seed, round) {
-  // Les 7 règles sont jouées dans un ordre aléatoire avant de recommencer un nouveau cycle.
-  const cycle = Math.floor((round - 1) / RULES.length);
-  const order = shuffle(
-    RULES.map((_, i) => i),
-    mulberry32(hash32(seed, cycle, 0x52554c45))
-  );
-  return RULES[order[(round - 1) % RULES.length]];
+export function ruleForRound(game, round) {
+  // Les règles choisies sont toutes jouées une fois (dans l'ordre ou au hasard) avant de recommencer.
+  const rules = RULES.filter((r) => game.rules.includes(r.id));
+  if (game.ordered) return rules[(round - 1) % rules.length];
+  const cycle = Math.floor((round - 1) / rules.length);
+  const order = shuffle(rules, mulberry32(hash32(game.seed, cycle, 0x52554c45)));
+  return order[(round - 1) % rules.length];
 }
 
 /**
@@ -133,7 +200,7 @@ export function ruleForRound(seed, round) {
 export function dealRound(game, round) {
   const { seed, players, undercovers, mrWhite } = game;
   const rand = mulberry32(hash32(seed, round, 0x6465616c));
-  const rule = ruleForRound(seed, round);
+  const rule = ruleForRound(game, round);
 
   const seats = shuffle(
     Array.from({ length: players }, (_, i) => i + 1),

@@ -19,13 +19,30 @@ test("le code encode et décode les paramètres", () => {
       for (const mrWhite of [false, true]) {
         if (players - undercovers - (mrWhite ? 1 : 0) < 2) continue;
         const seed = (players * 7919 + undercovers * 31) & 0xfffff;
-        const code = encodeCode({ seed, players, undercovers, mrWhite });
-        assert.match(code, /^[2-9A-HJ-NP-Z]{6}$/);
-        assert.deepEqual(decodeCode(code), { code, seed, players, undercovers, mrWhite });
-        assert.deepEqual(decodeCode(code.toLowerCase().replace(/(...)/, "$1 ")).code, code);
+        const rules = [1, 3, 7];
+        const code = encodeCode({ seed, players, undercovers, mrWhite, rules, ordered: true });
+        assert.match(code, /^[2-9A-HJ-NP-Z]{8}$/);
+        assert.deepEqual(decodeCode(code), {
+          code, seed, players, undercovers, mrWhite, rules, ordered: true, showTheme: false,
+        });
+        assert.deepEqual(decodeCode(code.toLowerCase().replace(/(....)/, "$1 ")).code, code);
       }
     }
   }
+});
+
+test("les codes à 6 caractères de la première version restent valides", () => {
+  assert.deepEqual(decodeCode("YYTF8H"), {
+    code: "YYTF8H", seed: 1014573, players: 6, undercovers: 1, mrWhite: false,
+    ordered: false, showTheme: false, rules: [1, 2, 3, 4, 5, 6, 7],
+  });
+});
+
+test("Mr White est refusé quand la règle est annoncée", () => {
+  assert.throws(() => encodeCode({ seed: 1, players: 6, undercovers: 1, mrWhite: true, showTheme: true }));
+  assert.throws(() => encodeCode({ seed: 1, players: 6, undercovers: 1, mrWhite: false, rules: [] }));
+  const code = encodeCode({ seed: 1, players: 6, undercovers: 1, mrWhite: false, showTheme: true });
+  assert.equal(decodeCode(code).showTheme, true);
 });
 
 test("un code mal saisi est rejeté", () => {
@@ -36,7 +53,7 @@ test("un code mal saisi est rejeté", () => {
     const typo = ch + code.slice(1);
     if (typo !== code && decodeCode(typo) === null) rejected++;
   }
-  assert.ok(rejected >= 25, `seulement ${rejected} fautes de frappe détectées`);
+  assert.ok(rejected >= 29, `seulement ${rejected} fautes de frappe détectées`);
   assert.equal(decodeCode("ABC"), null);
   assert.equal(decodeCode("0OI1!!"), null);
 });
@@ -70,8 +87,22 @@ test("les civils reçoivent des cartes différentes tant que possible", () => {
 });
 
 test("les 7 règles sont jouées une fois chacune avant de se répéter", () => {
-  const ids = Array.from({ length: 7 }, (_, i) => ruleForRound(999, i + 1).id);
+  const game = decodeCode(encodeCode({ seed: 999, players: 5, undercovers: 1, mrWhite: false }));
+  const ids = Array.from({ length: 7 }, (_, i) => ruleForRound(game, i + 1).id);
   assert.deepEqual([...ids].sort(), [1, 2, 3, 4, 5, 6, 7]);
+});
+
+test("seules les règles choisies sont jouées, dans l'ordre si demandé", () => {
+  const random = decodeCode(encodeCode({ seed: 5, players: 5, undercovers: 1, mrWhite: false, rules: [2, 4, 6] }));
+  const ids = Array.from({ length: 9 }, (_, i) => ruleForRound(random, i + 1).id);
+  assert.ok(ids.every((id) => [2, 4, 6].includes(id)));
+  assert.deepEqual([...ids.slice(0, 3)].sort(), [2, 4, 6]);
+
+  const ordered = decodeCode(encodeCode({ seed: 5, players: 5, undercovers: 1, mrWhite: false, rules: [6, 2, 4], ordered: true }));
+  assert.deepEqual(Array.from({ length: 4 }, (_, i) => ruleForRound(ordered, i + 1).id), [2, 4, 6, 2]);
+
+  const single = decodeCode(encodeCode({ seed: 5, players: 5, undercovers: 1, mrWhite: false, rules: [3] }));
+  for (let round = 1; round <= 3; round++) assert.equal(dealRound(single, round).rule.id, 3);
 });
 
 test("conditions de victoire", () => {

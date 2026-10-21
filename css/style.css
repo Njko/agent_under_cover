@@ -18,6 +18,7 @@
   --rule7: #0d4b5a;
   --bar: #00008f;
   --why-bg: #fff5f5;
+  --timer-urgent: #b4530a;
   --radius: 14px;
   color-scheme: light;
 }
@@ -141,10 +142,59 @@ input[type="number"], input.code-input, input.name {
 .play-head { display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; }
 .round-switch { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 12px; padding: 8px; background: var(--surface); border-radius: 12px; border: 1px solid var(--border); }
 
+/* Configuration : prénoms et règles */
+.name-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; counter-reset: seat; }
+.name-list li { display: flex; align-items: center; gap: 8px; counter-increment: seat; }
+.name-list li::before { content: counter(seat); flex: none; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: var(--primary-text); font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.name-input { flex: 1; min-width: 0; font: inherit; padding: 8px 10px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text); }
+.rule-picks { display: flex; flex-direction: column; gap: 6px; }
+.form label.rule-pick { align-items: flex-start; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); border-left: 5px solid var(--rule1); background: var(--surface); }
+.rule-pick--2 { border-left-color: var(--rule2) !important; }
+.rule-pick--3 { border-left-color: var(--rule3) !important; }
+.rule-pick--4 { border-left-color: var(--rule4) !important; }
+.rule-pick--5 { border-left-color: var(--rule5) !important; }
+.rule-pick--6 { border-left-color: var(--rule6) !important; }
+.rule-pick--7 { border-left-color: var(--rule7) !important; }
+.rule-pick input, .form label.check input { flex: none; margin-top: 1px; }
+.form label.check { align-items: flex-start; }
+.inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
+
+/* Règle d'or annoncée */
+.card-theme { margin: 0; padding: 8px 18px 0; font-size: 0.8rem; font-weight: 700; color: var(--rule); text-transform: uppercase; letter-spacing: 0.04em; }
+.round-theme { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 6px 0 8px; font-size: 1.15rem; font-weight: 700; color: var(--text); }
+.round-theme span { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: #fff; background: var(--rule1); padding: 3px 8px; border-radius: 6px; }
+.round-theme--2 span { background: var(--rule2); }
+.round-theme--3 span { background: var(--rule3); }
+.round-theme--4 span { background: var(--rule4); }
+.round-theme--5 span { background: var(--rule5); }
+.round-theme--6 span { background: var(--rule6); }
+.round-theme--7 span { background: var(--rule7); }
+
+/* Minuteur de débat */
+.timer { margin: 14px 0; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; gap: 10px; }
+.timer-main { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.timer-face { margin: 0; font-size: 2.6rem; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; color: var(--text); }
+.timer-bar { height: 8px; border-radius: 999px; background: var(--border); overflow: hidden; }
+.timer-bar i { display: block; height: 100%; width: 100%; background: var(--primary); transition: width 0.25s linear; }
+.timer-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.timer-controls .btn { flex: 1 1 120px; }
+.chips { display: flex; gap: 6px; }
+.chip { font: inherit; font-size: 0.85rem; padding: 6px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer; font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--primary-text); font-weight: 700; }
+.timer--urgent .timer-face { color: var(--timer-urgent); }
+.timer--urgent .timer-bar i { background: var(--timer-urgent); }
+.timer--done { border-color: var(--danger); }
+.timer--done .timer-face { color: var(--danger); font-size: 1.8rem; }
+@media (prefers-reduced-motion: reduce) { .timer-bar i { transition: none; } }
+
 /* Choix du numéro */
 .seat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); gap: 10px; }
+.seat-grid--names { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+.seat-btn small { font-size: 0.7rem; font-weight: 400; color: var(--muted); }
+.seat-btn span { font-size: 1.1rem; overflow-wrap: anywhere; text-align: center; line-height: 1.2; }
 .seat-btn {
-  display: flex; align-items: center; justify-content: center; height: 64px; border-radius: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 64px; padding: 6px; border-radius: 12px;
   background: var(--surface); border: 2px solid var(--primary); font-size: 1.4rem; font-weight: 700; text-decoration: none;
 }
 
@@ -204,6 +254,7 @@ input[type="number"], input.code-input, input.name {
     --primary-text: #0d1424;
     --bar: #00008f;
     --why-bg: #2a1c26;
+    --timer-urgent: #f0a35e;
     color-scheme: dark;
   }
 }
@@ -217,5 +268,6 @@ input[type="number"], input.code-input, input.name {
   --primary-text: #0d1424;
   --bar: #00008f;
   --why-bg: #2a1c26;
+  --timer-urgent: #f0a35e;
   color-scheme: dark;
 }
