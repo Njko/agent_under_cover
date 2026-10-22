@@ -34,6 +34,8 @@ Une fois chargée, l'app fonctionne **hors ligne** (service worker) et peut êtr
 
 > Le code permet en théorie de retrouver toutes les cartes : comme pour un jeu de cartes physique, on compte sur le fair-play des joueurs.
 
+L'application n'envoie aucune donnée : pas de backend, pas de cookie, pas de traceur, et une politique de sécurité (CSP) interdit au navigateur de contacter un autre site. Le détail et les vérifications sont dans [doc/fonctionnement-technique.md](doc/fonctionnement-technique.md).
+
 ## Mode low-tech
 
 Le bouton **Low-tech** de l'en-tête bascule vers un affichage inspiré du [site solaire de Low-tech Magazine](https://solar.lowtechmagazine.com/) : police du système, deux encres (papier et noir, noir pur en thème sombre pour les écrans OLED), aucune ombre, couleur ni animation, dos de cartes rendus en texte avec un **dessin simplifié au trait** de chaque illustration (`js/icons.js`, SVG de moins de 1 Ko intégré à la page, qui prend la couleur du thème), images décoratives supprimées. Le choix est mémorisé ; il est activé d'office quand le téléphone est en mode « économie de données ». Une page « Pourquoi un Web low-tech ? » explique la démarche, et un indicateur affiche les données transférées.
@@ -63,30 +65,57 @@ Audit WCAG 2.1 AA réalisé sur les deux thèmes (normal et low-tech, clair et s
 
 Reste à faire : un test avec de vrais lecteurs d'écran (VoiceOver sur iPhone, TalkBack sur Android).
 
-## Mise en ligne sur GitHub Pages
+## Documentation
+
+| Document | Contenu |
+| --- | --- |
+| [Fonctionnement technique](doc/fonctionnement-technique.md) | Architecture, données échangées et stockées, garanties (CSP, NetworkPolicy) : pourquoi l'application n'est pas connectée |
+| [Image Docker](doc/docker.md) | Construire, lancer et publier l'image nginx de l'application |
+| [Kubernetes](doc/kubernetes.md) | Déployer l'image dans un cluster : manifestes, sécurité du pod, ingress, opérations |
+
+## Déploiement
+
+### GitHub Pages (version actuelle)
 
 1. Fusionner cette branche dans `main`.
 2. Dans le dépôt : **Settings → Pages → Build and deployment → Source : Deploy from a branch**, branche `main`, dossier `/ (root)`.
 3. L'app est disponible sur `https://<compte>.github.io/<dépôt>/`.
 
+### Autres hébergements : Docker et Kubernetes
+
+L'application est aussi livrée sous forme d'**image Docker** (nginx sans root, lecture seule, en-têtes de sécurité). Elle est publiée sur `ghcr.io/njko/agent_under_cover` par le workflow GitHub Actions, avec des **manifestes Kubernetes** prêts à l'emploi :
+
+```bash
+npm run docker:build && npm run docker:run   # http://localhost:8080
+kubectl apply -k deploy/kubernetes           # après avoir adapté l'ingress (domaine, TLS)
+```
+
+Tout autre serveur de fichiers statiques convient aussi (Azure Static Web Apps, S3 + CloudFront, Netlify…) : il suffit de servir les fichiers du dépôt en HTTPS. Voir [doc/docker.md](doc/docker.md) et [doc/kubernetes.md](doc/kubernetes.md).
+
 ## Modifier les cartes
 
 Tout le contenu est dans [`js/cards.js`](js/cards.js) : texte des cartes, nom de chaque règle d'or (`theme`, repris du dos des cartes), image du dos (`back`) et explication de l'undercover (`why`).
 Les dos de cartes sont dans [`img/dos/`](img/dos) (WebP 640 px, coins transparents). Les explications `why` ont été **rédigées à partir des cartes** : relisez-les et ajustez-les à votre référentiel.
-Après une modification, incrémentez `VERSION` dans `sw.js` pour que les téléphones récupèrent la nouvelle version.
+Après une modification, incrémentez `VERSION` dans `sw.js` pour que les téléphones récupèrent la nouvelle version (et republiez l'image Docker si vous l'utilisez).
 
 ## Développement
 
 ```bash
-npm start   # serveur local sur http://localhost:8000
-npm test    # tests du moteur (Node 18+)
+npm start              # serveur local sur http://localhost:8000
+npm test               # tests du moteur (Node 18+)
+npm run docker:build   # image Docker undercover:local
+npm run docker:run     # conteneur durci sur http://localhost:8080
+npm run k8s:render     # manifestes Kubernetes rendus par Kustomize
 ```
+
+Les consignes pour les agents de code (Claude Code, Codex…) sont dans [AGENTS.md](AGENTS.md).
 
 Structure :
 
 | Fichier | Rôle |
 | --- | --- |
-| `index.html`, `css/style.css` | Page unique, design mobile-first |
+| `index.html`, `css/style.css` | Page unique, design mobile-first, CSP en balise meta |
+| `js/boot.js` | Applique le mode low-tech avant le premier affichage |
 | `js/cards.js` | Contenu du jeu |
 | `img/dos/regle-N.webp`, `-mini.webp` | Dos des cartes : grand format et vignette |
 | `js/icons.js` | Dessins simplifiés des 7 illustrations (mode low-tech) |
@@ -94,3 +123,7 @@ Structure :
 | `js/app.js` | Écrans (accueil, animateur, joueur, distribution, débrief, règles, catalogue) |
 | `vendor/qrcode.min.js` | [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) 1.4.4 (MIT), minifié, chargé à la demande |
 | `sw.js`, `manifest.webmanifest` | Fonctionnement hors ligne / installation |
+| `doc/` | Documentation technique et d'exploitation |
+| `Dockerfile`, `.dockerignore`, `deploy/nginx/default.conf` | Image Docker et configuration nginx |
+| `deploy/kubernetes/` | Manifestes Kubernetes (Kustomize) |
+| `.github/workflows/docker-image.yml` | Construction, test et publication de l'image sur ghcr.io |

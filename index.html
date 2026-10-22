@@ -4,13 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Undercover IA responsable</title>
+  <!-- Politique de sécurité : le navigateur n'accepte de charger et de contacter que ce site (voir doc/fonctionnement-technique.md). -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; font-src 'none'; object-src 'none'; media-src 'none'; frame-src 'none'; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
   <meta name="description" content="Serious game Undercover autour des règles de l'IA responsable, jouable sur les téléphones des participants.">
   <meta name="theme-color" content="#00008f">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
   <link rel="apple-touch-icon" href="icons/icon.svg">
-  <!-- Mode low-tech appliqué avant l'affichage : choix mémorisé, sinon option « économie de données » du téléphone. -->
-  <script>try{var v=localStorage.getItem("lowtech");if(v==="true"||(v===null&&navigator.connection&&navigator.connection.saveData))document.documentElement.setAttribute("data-lowtech","")}catch(e){}</script>
+  <script src="js/boot.js"></script>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>

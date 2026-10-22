@@ -1,0 +1,18 @@
+# Déploiement : kubectl apply -k deploy/kubernetes  (voir doc/kubernetes.md)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: undercover
+resources:
+  - namespace.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+  - networkpolicy.yaml
+  - poddisruptionbudget.yaml
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: undercover
+# Image à déployer : changez le registre ou épinglez une version ici plutôt que dans deployment.yaml.
+images:
+  - name: ghcr.io/njko/agent_under_cover
+    newTag: latest

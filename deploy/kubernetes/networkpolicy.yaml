@@ -1,0 +1,21 @@
+# Le serveur ne fait que répondre à des requêtes entrantes : toute connexion sortante est interdite
+# (pas même de résolution DNS), ce qui garantit qu'il ne contacte aucun service.
+# Nécessite un plugin réseau qui applique les NetworkPolicy (Calico, Cilium…).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: undercover
+  labels:
+    app.kubernetes.io/name: undercover
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: undercover
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - port: http
+          protocol: TCP
+  egress: []

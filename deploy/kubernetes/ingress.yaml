@@ -1,0 +1,28 @@
+# Exposition HTTPS. À adapter : classe d'ingress, nom de domaine et certificat.
+# Le service worker (mode hors ligne) n'est actif que si le site est servi en HTTPS.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: undercover
+  labels:
+    app.kubernetes.io/name: undercover
+  annotations:
+    # Avec cert-manager, décommentez pour obtenir le certificat automatiquement :
+    # cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - undercover.example.com
+      secretName: undercover-tls
+  rules:
+    - host: undercover.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: undercover
+                port:
+                  name: http

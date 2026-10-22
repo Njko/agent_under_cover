@@ -1,0 +1,12 @@
+# Garde au moins un réplica disponible pendant les maintenances des nœuds.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: undercover
+  labels:
+    app.kubernetes.io/name: undercover
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: undercover

@@ -1,0 +1,11 @@
+# Seuls les fichiers servis par l'application et la configuration nginx entrent dans le contexte.
+*
+!index.html
+!manifest.webmanifest
+!sw.js
+!css/
+!js/
+!icons/
+!img/
+!vendor/
+!deploy/nginx/

@@ -607,7 +607,7 @@ function viewHome() {
         isLowTech()
           ? `<p class="lt-logo" aria-hidden="true">UNDER←COVER</p>`
           : `<div class="fan" aria-hidden="true">
-              ${RULES.map((r, i) => `<img src="${r.back.replace(".webp", "-mini.webp")}" alt="" width="200" height="279" draggable="false" style="--i:${i - (RULES.length - 1) / 2}">`).join("")}
+              ${RULES.map((r, i) => `<img class="fan-${i}" src="${r.back.replace(".webp", "-mini.webp")}" alt="" width="200" height="279" draggable="false">`).join("")}
             </div>`
       }
       <h1>Qui enfreint la règle ?</h1>
