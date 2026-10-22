@@ -90,7 +90,7 @@ Puis ouvrez `https://undercover.example.com` (votre domaine).
 
 ## Registre privé
 
-Si l'image est dans un registre privé, ou si le paquet GHCR n'a pas été rendu public :
+Si l'image est dans un registre privé (l'image publiée sur ghcr.io est publique et n'en a pas besoin) :
 
 ```bash
 kubectl -n undercover create secret docker-registry registre-undercover \

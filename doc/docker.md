@@ -96,7 +96,16 @@ Le workflow `.github/workflows/docker-image.yml` s'exécute à chaque push sur `
 
 Pour publier une version : `git tag v1.0.0 && git push origin v1.0.0`.
 
-Un paquet GitHub Container Registry est **privé** à sa création. Pour que n'importe quel cluster puisse télécharger l'image sans identifiants, rendez-le public : sur GitHub, ouvrez **Packages → agent_under_cover → Package settings → Change visibility**. Sinon, configurez un secret d'accès au registre dans Kubernetes (voir [kubernetes.md](kubernetes.md)).
+Comme le dépôt est public, l'image l'est aussi : elle se télécharge sans identifiants. C'était le cas au 22/10/2026, en amd64 et arm64 :
+
+```bash
+docker pull ghcr.io/njko/agent_under_cover:latest
+```
+
+Si le paquet devient privé (dépôt privé, fork, autre compte), deux possibilités :
+
+- le rendre public, sur GitHub, dans **Packages → agent_under_cover → Package settings → Change visibility** ;
+- configurer un secret d'accès au registre dans Kubernetes (voir [kubernetes.md](kubernetes.md#registre-privé)).
 
 ### Manuellement, vers un autre registre
 
