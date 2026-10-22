@@ -620,3 +620,105 @@ body { overflow-wrap: anywhere; hyphens: auto; }
 /* Case ou bouton radio à gauche, intitulé à droite qui passe à la ligne sur lui-même. */
 .form label.radio, .form label.check { flex-wrap: nowrap; }
 .form label.radio > span, .form label.check > span { flex: 1; min-width: 0; }
+
+/* =============================================================================================
+   Grands écrans (ordinateur, vidéoprojecteur) — à partir de 1024 px uniquement.
+   Le mobile n'est pas concerné : les conteneurs de mise en page ci-dessous sont « transparents »
+   (display: contents) en dessous de 1024 px et l'ordre du contenu reste le même partout.
+   Patterns : écran partagé (accueil), vue présentateur (tableau de bord), formulaire en deux
+   colonnes avec action collante (création), comparaison côte à côte (débrief), héros + liste
+   (fin de partie), largeur de lecture limitée (pages de texte), typographie fluide (projection).
+   ============================================================================================= */
+.host-side, .host-main, .debrief-uc, .debrief-civ, .results-rounds { display: contents; }
+
+@media (min-width: 1024px) {
+  body { font-size: 17px; }
+  main, .weight { max-width: 1280px; }
+  main { padding-block: 32px 64px; }
+
+  /* Pages de lecture et écrans des joueurs : largeur de lecture confortable, centrée. */
+  #app:is([data-view="rules"], [data-view="lowtech"], [data-view="join"], [data-view="play"], [data-view="over"], [data-view="pass"]) { max-width: 840px; }
+
+  /* --- Accueil : écran partagé, visuel à gauche et actions à droite ----------------------- */
+  #app[data-view="home"] {
+    display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); column-gap: clamp(32px, 5vw, 80px);
+    align-items: start; align-content: start; min-height: calc(100vh - 80px);
+  }
+  #app[data-view="home"] .hero { grid-column: 1; grid-row: 1 / span 6; text-align: left; padding-top: 8px; position: sticky; top: 24px; }
+  #app[data-view="home"] > :not(.hero) { grid-column: 2; }
+  #app[data-view="home"] > .actions { margin-top: 56px; }
+  #app[data-view="home"] .hero h1 { font-size: clamp(2.4rem, 3.6vw, 3.6rem); margin-top: 24px; }
+  #app[data-view="home"] .hero p { font-size: 1.25rem; max-width: 36ch; }
+  /* La taille des cartes suit la largeur de la colonne pour que l'éventail ne soit jamais rogné. */
+  #app[data-view="home"] .fan { --fan-w: clamp(84px, 8.4vw, 132px); height: calc(var(--fan-w) * 2.25); padding-top: 24px; }
+  #app[data-view="home"] .fan img { width: var(--fan-w); height: calc(var(--fan-w) * 1.395); margin: 0 calc(var(--fan-w) * -0.26); }
+  #app[data-view="home"] .lt-logo { font-size: 3.2rem; }
+  #app[data-view="home"] .tiles { grid-template-columns: 1fr; }
+
+  /* --- Création de partie : réglages courts à gauche, règles d'or à droite ----------------- */
+  #app[data-view="setup"] .form {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 20px 32px; align-items: start;
+  }
+  #app[data-view="setup"] :is(.fs-mode, .fs-players, .fs-rounds, .fs-undercovers) { grid-column: 1; }
+  #app[data-view="setup"] .fs-rules { grid-column: 2; grid-row: 1 / span 4; }
+  #app[data-view="setup"] #setup-error { grid-column: 1 / -1; min-height: 0; margin: 0; }
+  /* Le bouton de validation reste visible en bas de l'écran pendant le défilement. */
+  #app[data-view="setup"] .form > button[type="submit"] {
+    grid-column: 1 / -1; justify-self: center; width: min(420px, 100%); position: sticky; bottom: 16px; z-index: 2;
+    box-shadow: 0 6px 18px rgba(0, 0, 40, 0.25);
+  }
+
+  /* --- Tableau de bord de l'animateur : vue présentateur ----------------------------------- */
+  #app[data-view="host"] .host {
+    display: grid; grid-template-columns: minmax(0, 1fr) clamp(300px, 26vw, 380px); gap: 32px; align-items: start;
+  }
+  #app[data-view="host"] .host-main { display: block; grid-column: 1; grid-row: 1; }
+  #app[data-view="host"] .host-side { display: block; grid-column: 2; grid-row: 1; position: sticky; top: 16px; }
+  #app[data-view="host"] .host-side .share { flex-direction: column; align-items: stretch; text-align: center; gap: 12px; }
+  #app[data-view="host"] .host-side .qr { width: 100%; max-width: 300px; margin: 0 auto; }
+  #app[data-view="host"] .host-side .code { font-size: 2.3rem; }
+  #app[data-view="host"] .round-bar { margin-top: 0; gap: 24px; }
+  #app[data-view="host"] .round-bar .back--round { width: 132px; }
+  #app[data-view="host"] .round-bar h1 { font-size: clamp(2.2rem, 3vw, 3rem); margin-top: 0; }
+  #app[data-view="host"] .round-theme { font-size: 1.5rem; }
+  #app[data-view="host"] .timer-face { font-size: clamp(3.5rem, 5vw, 5.5rem); }
+  #app[data-view="host"] .starter, #app[data-view="host"] .banner { font-size: 1.2rem; }
+  #app[data-view="host"] .players { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+
+  /* --- Débrief : carte undercover face aux cartes des civils ------------------------------- */
+  #app[data-view="debrief"] > section {
+    display: grid; grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); column-gap: 40px; align-items: start;
+  }
+  #app[data-view="debrief"] .debrief-head, #app[data-view="debrief"] > section > .actions { grid-column: 1 / -1; }
+  #app[data-view="debrief"] .debrief-head h1 { font-size: clamp(1.9rem, 2.6vw, 2.6rem); }
+  #app[data-view="debrief"] .debrief-head .back--round { width: 120px; }
+  #app[data-view="debrief"] .debrief-uc { display: block; grid-column: 1; position: sticky; top: 16px; }
+  #app[data-view="debrief"] .debrief-civ { display: block; grid-column: 2; }
+  #app[data-view="debrief"] .questions { font-size: 1.1rem; }
+
+  /* --- Fin de partie et résultats : score en grand à gauche, manches à droite -------------- */
+  #app:is([data-view="end"], [data-view="results"]) .end {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr); column-gap: 40px; align-items: start;
+    grid-template-areas: "label label" "title title" "score rounds" "share rounds" "actions actions" "secondary secondary";
+  }
+  #app:is([data-view="end"], [data-view="results"]) .end > .label { grid-area: label; }
+  #app:is([data-view="end"], [data-view="results"]) .end > h1 { grid-area: title; font-size: clamp(2.2rem, 3vw, 3rem); }
+  #app:is([data-view="end"], [data-view="results"]) .team-score--big { grid-area: score; margin-top: 16px; padding-block: 40px; }
+  #app:is([data-view="end"], [data-view="results"]) .team-score--big .team-score-value { font-size: 2.2rem; }
+  #app:is([data-view="end"], [data-view="results"]) .team-score--big .team-score-value strong { font-size: 4.5rem; }
+  #app:is([data-view="end"], [data-view="results"]) .results-rounds { display: block; grid-area: rounds; }
+  #app:is([data-view="end"], [data-view="results"]) .share--results { grid-area: share; flex-direction: column; align-items: stretch; text-align: center; }
+  /* QR code des résultats assez grand pour être scanné depuis la salle, sur l'écran projeté. */
+  #app:is([data-view="end"], [data-view="results"]) .share--results .qr { width: min(260px, 100%); margin: 0 auto; }
+  #app:is([data-view="end"], [data-view="results"]) .end > .actions:not(.actions--secondary) { grid-area: actions; }
+  #app:is([data-view="end"], [data-view="results"]) .end > .actions--secondary { grid-area: secondary; margin-top: 0; }
+
+  /* --- Catalogue des cartes : plus de cartes par ligne ------------------------------------- */
+  #app[data-view="cards"] .grid { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+}
+
+/* Vidéoprojecteur ou écran Full HD : un peu plus grand pour être lu du fond de la salle. */
+@media (min-width: 1600px) {
+  body { font-size: 18px; }
+  main, .weight { max-width: 1440px; }
+}

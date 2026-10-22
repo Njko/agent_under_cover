@@ -52,6 +52,21 @@ Données transférées lors d'une première visite (fichiers compressés comme s
 
 Les illustrations ont d'abord été tramées en 4 gris, comme sur Low-tech Magazine : légères (3 Ko) mais peu lisibles à petite taille. Elles sont désormais redessinées au trait en SVG : plus nettes, adaptées au thème sombre, et sans aucun téléchargement d'image.
 
+## Grand écran et vidéoprojecteur
+
+L'animateur présente le jeu depuis son ordinateur, souvent projeté. À partir de 1024 px, les écrans passent en colonnes pour exploiter toute la largeur. Le mobile reste inchangé.
+
+| Écran | Mise en page |
+| --- | --- |
+| Accueil | Écran partagé : éventail et titre à gauche, actions à droite |
+| Création de partie | Deux colonnes : réglages à gauche, règles d'or à droite ; bouton « Générer » toujours visible |
+| Tableau de bord | Vue présentateur : règle, minuteur et joueurs (en deux colonnes) à gauche, QR code fixe à droite |
+| Débrief | Carte undercover face aux cartes des civils |
+| Fin de partie | Score en grand et QR code des résultats à gauche, manches à droite |
+| Règles, pages joueur | Largeur de lecture limitée, centrée |
+
+Le texte grossit légèrement sur grand écran (17 px, puis 18 px à partir de 1600 px) pour rester lisible du fond de la salle.
+
 ## Accessibilité
 
 Audit WCAG 2.1 AA réalisé sur les deux thèmes (normal et low-tech, clair et sombre) : scan axe-core sur 13 écrans × 4 thèmes sans violation, puis tests manuels.

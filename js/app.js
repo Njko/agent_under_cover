@@ -831,7 +831,7 @@ function viewHostSetup() {
     <section>
       <h1>Nouvelle partie</h1>
       <form id="setup" class="form">
-        <fieldset>
+        <fieldset class="fs-mode">
           <legend>Mode de jeu</legend>
           <label class="radio mode-pick"><input type="radio" name="mode" value="coop" ${prefs.mode !== "compet" ? "checked" : ""}>
             <span><strong>Coopératif</strong> (recommandé)<br><small>Personne ne sait qui a la carte undercover. Chacun lit sa carte à voix haute et l'équipe enquête ensemble. 3, 2 ou 1 point selon le nombre de votes.</small></span></label>
@@ -839,7 +839,7 @@ function viewHostSetup() {
             <span><strong>Compétitif</strong><br><small>L'undercover sait qu'il l'est et bluffe. On décrit sa carte avec ses mots. Civils contre undercover.</small></span></label>
         </fieldset>
 
-        <fieldset>
+        <fieldset class="fs-players">
           <legend>Joueurs</legend>
           <div class="stepper" data-target="players">
             <button type="button" data-step="-1" aria-label="Un joueur de moins">−</button>
@@ -850,7 +850,7 @@ function viewHostSetup() {
           <ol class="name-list" id="name-list"></ol>
         </fieldset>
 
-        <fieldset>
+        <fieldset class="fs-rounds">
           <legend>Manches</legend>
           <div class="stepper" data-target="rounds">
             <button type="button" data-step="-1" aria-label="Une manche de moins">−</button>
@@ -860,7 +860,7 @@ function viewHostSetup() {
           <p class="hint">À la fin de la dernière manche, l'application affiche le score de l'équipe et le récapitulatif des manches.</p>
         </fieldset>
 
-        <fieldset>
+        <fieldset class="fs-rules">
           <legend>Règles d'or jouées</legend>
           <div class="rule-picks">
             ${RULES.map(
@@ -881,7 +881,7 @@ function viewHostSetup() {
           <p class="rules-hint" id="rules-hint" aria-live="polite"></p>
         </fieldset>
 
-        <fieldset>
+        <fieldset class="fs-undercovers">
           <legend>Undercovers</legend>
           <label class="radio"><input type="radio" name="undercovers" value="1" ${prefs.undercovers === 1 ? "checked" : ""}> <span>1 undercover</span></label>
           <label class="radio"><input type="radio" name="undercovers" value="2" ${prefs.undercovers === 2 ? "checked" : ""}> <span>2 undercovers <small>(à partir de 7 joueurs)</small></span></label>
@@ -987,6 +987,7 @@ function viewHost(code) {
 
   app.innerHTML = `
     <section class="host">
+      <aside class="host-side" aria-label="Rejoindre la partie">
       <div class="share">
         ${qrSlot(url, "QR code pour rejoindre la partie")}
         <div>
@@ -997,7 +998,9 @@ function viewHost(code) {
           <button class="btn btn--small" id="seat-qrs">QR par joueur</button>
         </div>
       </div>
+      </aside>
 
+      <div class="host-main">
       <div class="round-bar">
         ${backImg(deal.rule, "back back--round", { lazy: false, small: true })}
         <div>
@@ -1055,6 +1058,7 @@ function viewHost(code) {
       <div class="actions actions--secondary">
         ${!lastRound ? `<button class="btn btn--ghost" id="end-now">Terminer la partie maintenant</button>` : ""}
         <button class="btn btn--ghost btn--ghost-danger" id="forget">Supprimer la partie</button>
+      </div>
       </div>
     </section>`;
 
@@ -1258,10 +1262,13 @@ function viewDebrief(code) {
         </div>
       </div>
 
+      <div class="debrief-uc">
       <h2>La carte undercover</h2>
       ${cardHtml({ ruleId: rule.id, text: rule.undercover, kind: "undercover", label: holders(rule.undercover) })}
       <p class="why"><strong>Pourquoi elle enfreint la règle :</strong> ${esc(rule.why)}</p>
+      </div>
 
+      <div class="debrief-civ">
       <h2>Les cartes des civils</h2>
       <div class="grid">
         ${distributed.map((t) => cardHtml({ ruleId: rule.id, text: t, label: holders(t) })).join("")}
@@ -1274,6 +1281,7 @@ function viewDebrief(code) {
         <li>Comment la transformer pour qu'elle respecte la règle ${rule.id} ?</li>
         <li>Laquelle des bonnes pratiques est la plus facile / difficile à appliquer chez vous ?</li>
       </ul>
+      </div>
 
       <div class="actions">
         <a class="btn btn--primary" href="#/host/${code}">Retour à la partie</a>
@@ -1290,7 +1298,8 @@ function resultsHtml(game, names, results, mySeat) {
     ${teamScoreHtml(game, results, true)}
     ${
       rounds.length
-        ? `<h2 class="section-title">Les manches</h2>
+        ? `<div class="results-rounds">
+          <h2 class="section-title">Les manches</h2>
           <ol class="recap">
             ${rounds
               .map((round) => {
@@ -1308,7 +1317,8 @@ function resultsHtml(game, names, results, mySeat) {
                 </li>`;
               })
               .join("")}
-          </ol>`
+          </ol>
+          </div>`
         : ""
     }`;
 }
@@ -1584,6 +1594,8 @@ function announceView() {
 
 function render() {
   closeModal(false);
+  const viewName = location.hash.replace(/^#\/?/, "").split(/[/~-]/)[0] || "home";
+  app.dataset.view = viewName === "host" && !location.hash.split("/")[2] ? "setup" : viewName;
   clearInterval(timer.interval);
   const hash = location.hash.replace(/^#/, "");
   const join = hash.match(/^join-([A-Za-z0-9]+)(?:-(\d+))?(?:~([A-Za-z0-9_-]+))?$/);
