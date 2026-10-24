@@ -89,7 +89,7 @@ export const RULES = [
       "L'application informe clairement l'utilisateur que l'IA peut commettre des erreurs et que certaines réponses doivent être vérifiées.",
       "Lorsqu'un compte-rendu est généré automatiquement, une mention indique qu'il a été produit avec l'aide d'une IA et invite l'utilisateur à le relire avant diffusion.",
       "Les collaborateurs discutent avec un assistant RH. Une bannière visible indique clairement : « Vous échangez actuellement avec un assistant alimenté par l'intelligence artificielle. »",
-      "Alerter rapidement, corriger et tirer les enseignements plutôt que chercher un responsable.",
+      "Quand l'assistant IA donne une réponse erronée, l'équipe le signale vite, corrige et en tire les leçons, sans chercher de coupable.",
       "Les utilisateurs peuvent facilement savoir quand une réponse provient d'une IA ou d'un conseiller humain.",
       "Les performances du système sont suivies régulièrement afin de détecter les erreurs ou les dérives pouvant affecter la qualité des réponses.",
       "Un collaborateur remarque que les données utilisées par l'outil d'IA sont incomplètes. Il le signale avant que les résultats servent à prendre une décision.",
