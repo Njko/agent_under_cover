@@ -453,7 +453,7 @@ function playerCardHtml(game, deal, me) {
 // Indication visible sous la carte, même face cachée : elle ne doit pas dépendre du rôle.
 function playerHint(game) {
   return game.mode === "coop"
-    ? `À ton tour, <strong>lis ta carte à voix haute</strong>. Personne ne sait qui a la carte undercover, pas même toi : enquêtez ensemble pour trouver la pratique qui enfreint la règle d'or.`
+    ? `À ton tour, <strong>lis ta carte à voix haute, mot pour mot</strong>. Personne ne sait qui a la carte undercover, pas même toi : enquêtez ensemble pour trouver la pratique qui enfreint la règle d'or.`
     : `Garde ta carte sous les yeux si tu veux, mais à ton tour <strong>décris-la avec tes mots</strong>, sans la lire.`;
 }
 
@@ -715,7 +715,7 @@ function viewRules() {
       <h3>Coopératif (recommandé)</h3>
       <ol>
         <li><strong>Personne ne sait</strong> qui a la carte undercover, pas même celui qui l'a.</li>
-        <li><strong>Lecture</strong> : à partir du joueur désigné, chacun lit sa carte à voix haute.</li>
+        <li><strong>Lecture</strong> : à partir du joueur désigné, chacun lit sa carte à voix haute, <strong>mot pour mot</strong>. Une carte résumée ou reformulée fausse l'enquête de toute l'équipe.</li>
         <li><strong>Débat</strong> chronométré (30 secondes par défaut) : quelle pratique enfreint la règle d'or, et pourquoi ?</li>
         <li><strong>Désignation</strong> : l'équipe désigne un suspect. S'il n'a pas la carte undercover, il est disculpé et on recommence.</li>
         <li><strong>Pas de coupable</strong> : être désigné, ou avoir la carte undercover, n'est la faute de personne. Personne ne choisit sa carte : on discute des pratiques, pas des personnes.</li>
@@ -724,14 +724,16 @@ function viewRules() {
 
       <h3>Compétitif</h3>
       <ol>
-        <li>En retournant sa carte, chacun découvre son rôle : <strong>l'undercover sait qu'il l'est</strong> et doit se faire passer pour un civil.</li>
-        <li><strong>Tour de parole</strong> : chacun peut garder sa carte sous les yeux, mais la <strong>décrit avec ses mots</strong>, sans la lire.</li>
-        <li><strong>Débat</strong> chronométré : chacun peut poser une question à un joueur dont la description lui semble floue. Les civils cherchent la description qui évite un détail ; l'undercover parle du contexte de sa carte et tait ce qui la trahit.</li>
+        <li>En retournant sa carte, chacun découvre son rôle : <strong>l'undercover sait qu'il l'est</strong> et doit se faire passer pour un civil. Il faut au moins 4 joueurs : à 3, un seul civil éliminé à tort fait perdre la manche.</li>
+        <li><strong>Tour de parole</strong> : chacun peut garder sa carte sous les yeux, mais la <strong>décrit avec ses mots</strong>, sans la lire. Les civils la décrivent honnêtement : seul l'undercover a le droit de bluffer.</li>
+        <li><strong>Débat</strong> chronométré : chacun peut poser une question à un joueur dont la description lui semble floue. Les civils cherchent la description qui évite un détail ; l'undercover parle du contexte de sa carte et tait ce qui la trahit. Une description vague ou exagérée ne prouve rien : un civil peut aussi mal décrire sa carte.</li>
         <li><strong>Vote</strong> : le joueur éliminé révèle son rôle. Si c'est un civil, la manche continue : nouveau débat, nouveau vote.</li>
         <li>Les <strong>civils</strong> gagnent la manche s'ils éliminent l'undercover ; l'<strong>undercover</strong> la gagne s'il ne reste plus qu'un civil.</li>
         <li>Le score compte les <strong>manches gagnées par chaque camp</strong>.</li>
       </ol>
 
+      <h2>Équité</h2>
+      <p>D'une manche à l'autre, l'application fait tourner le rôle d'undercover et le joueur qui commence : un même joueur peut les avoir deux fois de suite, mais c'est rare.</p>
       <h2>Fin de partie</h2>
       <p>Après la dernière manche, l'animateur affiche le score et un QR code : en le scannant, chaque joueur retrouve les résultats sur son téléphone.</p>
       <h2>Débrief</h2>
@@ -854,7 +856,7 @@ function viewHostSetup() {
           <label class="radio mode-pick"><input type="radio" name="mode" value="coop" ${prefs.mode !== "compet" ? "checked" : ""}>
             <span><strong>Coopératif</strong> (recommandé)<br><small>Personne ne sait qui a la carte undercover. Chacun lit sa carte à voix haute et l'équipe enquête ensemble. 3, 2 ou 1 point selon le nombre de votes.</small></span></label>
           <label class="radio mode-pick"><input type="radio" name="mode" value="compet" ${prefs.mode === "compet" ? "checked" : ""}>
-            <span><strong>Compétitif</strong><br><small>L'undercover sait qu'il l'est et bluffe. On décrit sa carte avec ses mots. Civils contre undercover.</small></span></label>
+            <span><strong>Compétitif</strong><br><small>L'undercover sait qu'il l'est et bluffe. On décrit sa carte avec ses mots. Civils contre undercover. À partir de 4 joueurs.</small></span></label>
         </fieldset>
 
         <fieldset class="fs-players">
@@ -1043,7 +1045,11 @@ function viewHost(code) {
         <div>
           <h1>Manche ${state.round} <span class="of">/ ${game.rounds}</span></h1>
           ${ruleTag(deal.rule)}
-          <p>Les joueurs doivent afficher la <strong>manche ${state.round}</strong> sur leur téléphone.</p>
+          ${
+            state.round > 1 && !result
+              ? `<p class="round-reminder"><span aria-hidden="true">📱 </span>Demandez à chacun de toucher <strong>«&nbsp;Manche suivante&nbsp;»</strong>&nbsp;: son téléphone doit afficher <strong>Manche&nbsp;${state.round}</strong>.</p>`
+              : `<p>Les joueurs doivent afficher la <strong>manche ${state.round}</strong> sur leur téléphone.</p>`
+          }
         </div>
       </div>
 
@@ -1056,12 +1062,12 @@ function viewHost(code) {
           ? resultBanner(result, "div", state.results[state.round])
           : `<div class="starter">
               <p><span aria-hidden="true">🎙️ </span><strong>${esc(playerName(state, deal.starter))}</strong> ${
-                coop ? "commence : chacun lit sa carte à voix haute, puis l'équipe désigne un suspect." : "commence le tour de parole : chacun décrit sa carte avec ses mots, sans la lire."
+                coop ? "commence : chacun lit sa carte à voix haute, mot pour mot, puis l'équipe désigne un suspect." : "commence le tour de parole : chacun décrit sa carte avec ses mots, sans la lire."
               }</p>
               <p class="small">${
                 coop
                   ? "Si le suspect est disculpé, l'équipe relance le débat et désigne quelqu'un d'autre."
-                  : "Pendant le débat, chacun peut poser une question à un joueur. Si un civil est éliminé, la manche continue : nouveau débat, nouveau vote."
+                  : "Pendant le débat, chacun peut poser une question à un joueur. Une description vague ou exagérée ne prouve rien : un civil peut aussi mal décrire sa carte. Si un civil est éliminé, la manche continue : nouveau débat, nouveau vote."
               }</p>
             </div>`
       }
@@ -1550,7 +1556,8 @@ function viewPlay(code, seat) {
   });
 }
 
-// Fin de partie côté joueur : ses rôles manche par manche, en attendant les résultats de l'animateur.
+// Fin de partie côté joueur. Les rôles ne sont pas affichés ici : le joueur a pu y arriver avant la
+// fin réelle de la partie. Seuls les résultats de l'animateur (QR code) révèlent les manches jouées.
 function viewOver(code, seat) {
   const game = decodeCode(code);
   if (!game || !(seat >= 1 && seat <= game.players)) return viewInvalid(code);
@@ -1559,26 +1566,11 @@ function viewOver(code, seat) {
   app.innerHTML = `
     <section class="end">
       <h1 class="center-text">Partie terminée${myName ? `, ${esc(myName)}` : ""} !</h1>
-      <p class="center-text">Scanne le <strong>QR code des résultats</strong> affiché par l'animateur pour voir le score ${game.mode === "coop" ? "de l'équipe" : "des deux camps"}.</p>
-
-      <h2 class="section-title">Tes cartes</h2>
-      <ol class="recap">
-        ${Array.from({ length: game.rounds }, (_, i) => {
-          const deal = dealRound(game, i + 1);
-          const role = deal.roles[seat - 1].role;
-          return `
-          <li>
-            ${backImg(deal.rule, "back back--thumb", { small: true })}
-            <div>
-              <p class="recap-title">Manche ${i + 1} · ${esc(deal.rule.theme)}</p>
-            </div>
-            <span class="role role--${role}">${role === "undercover" ? "Carte undercover" : "Bonne pratique"}</span>
-          </li>`;
-        }).join("")}
-      </ol>
+      <p class="center-text">Scanne le <strong>QR code des résultats</strong> affiché par l'animateur pour voir le score ${game.mode === "coop" ? "de l'équipe" : "des deux camps"} et l'undercover de chaque manche jouée.</p>
+      <p class="hint center-text">La partie n'est pas finie ? Reviens à tes cartes : rien n'a été révélé.</p>
 
       <div class="actions">
-        <a class="btn" href="#/play/${game.code}/${seat}">Revoir mes cartes</a>
+        <a class="btn btn--primary" href="#/play/${game.code}/${seat}">Revoir mes cartes</a>
         <a class="btn" href="#/">Accueil</a>
       </div>
       <div class="actions actions--secondary">

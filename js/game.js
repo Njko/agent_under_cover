@@ -12,6 +12,7 @@ export const CODE_LENGTH = 8; // 8 × 5 bits = 40 bits
 export const MAX_ROUNDS = 16;
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 18;
+export const MIN_COMPET_PLAYERS = 4;
 
 // --- Aléatoire reproductible ------------------------------------------------------------
 
@@ -69,7 +70,7 @@ function checksum(payload) {
   return hash32(payload % 2 ** 32, Math.floor(payload / 2 ** 32), 0xc0de6) % 2 ** CHECK_BITS;
 }
 
-export function validateSettings({ players, undercovers, rules = [1], rounds = 1 }) {
+export function validateSettings({ players, undercovers, rules = [1], rounds = 1, mode = "coop" }) {
   if (!Number.isInteger(players) || players < MIN_PLAYERS || players > MAX_PLAYERS) {
     return `Le nombre de joueurs doit être compris entre ${MIN_PLAYERS} et ${MAX_PLAYERS}.`;
   }
@@ -78,6 +79,9 @@ export function validateSettings({ players, undercovers, rules = [1], rounds = 1
   }
   if (players - undercovers < 2) {
     return "Il faut au moins 2 civils : ajoutez des joueurs ou retirez un undercover.";
+  }
+  if (mode === "compet" && players < MIN_COMPET_PLAYERS) {
+    return `En compétitif, il faut au moins ${MIN_COMPET_PLAYERS} joueurs : à 3, un seul civil éliminé à tort fait perdre la manche. Choisissez le mode coopératif.`;
   }
   if (!rules.length) {
     return "Choisissez au moins une règle d'or.";
@@ -90,7 +94,7 @@ export function validateSettings({ players, undercovers, rules = [1], rounds = 1
 
 export function encodeCode({ seed, players, undercovers, rules, ordered = false, rounds = 7, mode = "coop" }) {
   rules = rules ?? RULES.map((r) => r.id);
-  const error = validateSettings({ players, undercovers, rules, rounds });
+  const error = validateSettings({ players, undercovers, rules, rounds, mode });
   if (error) throw new Error(error);
   const values = {
     seed: seed % 2 ** 16,
@@ -162,19 +166,41 @@ export function ruleForRound(game, round) {
   return order[(round - 1) % rules.length];
 }
 
-/**
- * Calcule la manche complète : règle jouée, rôle et carte de chaque joueur, premier joueur.
- * Les joueurs sont numérotés à partir de 1.
- */
-export function dealRound(game, round) {
+// Tirage pondéré, sans remise : chaque joueur a un poids divisé par 4 à chaque fois qu'il a déjà
+// eu le rôle. Un même joueur peut encore l'avoir deux fois de suite (personne ne peut en déduire
+// son rôle), mais c'est rare : le rôle tourne au fil des manches.
+const REPEAT_PENALTY = 4;
+
+function weightedPick(candidates, counts, rand) {
+  const weights = candidates.map((seat) => REPEAT_PENALTY ** -counts[seat]);
+  let x = rand() * weights.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < candidates.length; i++) {
+    x -= weights[i];
+    if (x < 0) return candidates[i];
+  }
+  return candidates[candidates.length - 1];
+}
+
+function dealOne(game, round, ucCounts, starterCounts) {
   const { seed, players, undercovers } = game;
   const rand = mulberry32(hash32(seed, round, 0x6465616c));
   const rule = ruleForRound(game, round);
 
-  const seats = shuffle(
+  // Ordre de départ aléatoire, puis undercovers tirés en tenant compte des manches précédentes.
+  let seats = shuffle(
     Array.from({ length: players }, (_, i) => i + 1),
     rand
   );
+  const impostors = [];
+  for (let k = 0; k < undercovers; k++) {
+    const seat = weightedPick(
+      seats.filter((s) => !impostors.includes(s)),
+      ucCounts,
+      rand
+    );
+    impostors.push(seat);
+  }
+  seats = [...impostors, ...seats.filter((s) => !impostors.includes(s))];
   const civilianCards = shuffle(rule.civilians, rand);
 
   const roles = new Array(players + 1);
@@ -190,9 +216,31 @@ export function dealRound(game, round) {
     }
   });
 
-  const starter = seats[Math.floor(rand() * seats.length)];
+  // Le premier joueur tourne lui aussi : on évite d'exposer toujours la même personne.
+  const starter = weightedPick(
+    Array.from({ length: players }, (_, i) => i + 1),
+    starterCounts,
+    rand
+  );
 
   return { round, rule, roles: roles.slice(1), starter };
+}
+
+/**
+ * Calcule la manche complète : règle jouée, rôle et carte de chaque joueur, premier joueur.
+ * Les joueurs sont numérotés à partir de 1. Les manches précédentes sont recalculées pour
+ * répartir le rôle d'undercover et la prise de parole.
+ */
+export function dealRound(game, round) {
+  const ucCounts = new Array(game.players + 1).fill(0);
+  const starterCounts = new Array(game.players + 1).fill(0);
+  let deal;
+  for (let r = 1; r <= round; r++) {
+    deal = dealOne(game, r, ucCounts, starterCounts);
+    for (const role of deal.roles) if (role.role === "undercover") ucCounts[role.seat]++;
+    starterCounts[deal.starter]++;
+  }
+  return deal;
 }
 
 // --- Mode coopératif ------------------------------------------------------------------------

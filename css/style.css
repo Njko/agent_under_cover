@@ -275,6 +275,8 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
 .code { font-family: ui-monospace, Menlo, monospace; font-size: 2rem; font-weight: 800; letter-spacing: 0.12em; margin: 0; }
 .round-bar { margin-top: 16px; }
 .round-bar p { margin: 0; color: var(--muted); }
+.round-bar .round-reminder { margin-top: 6px; padding: 6px 10px; color: var(--text); background: var(--press-bg); border-left: 3px solid var(--primary); border-radius: 6px; }
+[data-lowtech] .round-bar .round-reminder { background: transparent; border-left-color: var(--text); border-radius: 0; }
 .starter { font-size: 1.05rem; background: var(--surface); border: 1px solid var(--border); padding: 10px 14px; border-radius: 12px; }
 .starter p { margin: 0; }
 .starter p + p { margin-top: 6px; }

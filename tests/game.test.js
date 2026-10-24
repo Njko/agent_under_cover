@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { RULES } from "../js/cards.js";
-import { coopFound, coopPoints, decodeCode, dealRound, encodeCode, newCode, outcome, roundPoints, ruleForRound, wrongGuesses } from "../js/game.js";
+import { MIN_COMPET_PLAYERS, coopFound, coopPoints, decodeCode, dealRound, encodeCode, newCode, outcome, roundPoints, ruleForRound, wrongGuesses } from "../js/game.js";
 
 const base = { seed: 4242, players: 5, undercovers: 1 };
 
@@ -20,7 +20,7 @@ test("le code encode et décode les paramètres", () => {
     for (const undercovers of [1, 2]) {
       if (players - undercovers < 2) continue;
       for (const rounds of [1, 5, 16]) {
-        for (const mode of ["coop", "compet"]) {
+        for (const mode of players < 4 ? ["coop"] : ["coop", "compet"]) {
           const seed = (players * 7919 + undercovers * 31 + rounds) % 2 ** 16;
           const rules = [1, 3, 7];
           const code = encodeCode({ seed, players, undercovers, rules, ordered: true, rounds, mode });
@@ -122,4 +122,49 @@ test("mode coopératif : barème 3/2/1/0 selon les erreurs de désignation", () 
   assert.equal(coopFound(deal, [ucs[0]]), false);
   assert.equal(coopFound(deal, [ucs[0], civ, ucs[1]]), true);
   assert.equal(wrongGuesses(deal, [ucs[0], civ, ucs[1]]), 1);
+});
+
+test("le compétitif demande au moins 4 joueurs", () => {
+  assert.equal(MIN_COMPET_PLAYERS, 4);
+  assert.throws(() => encodeCode({ ...base, players: 3, mode: "compet" }));
+  assert.ok(encodeCode({ ...base, players: 3, mode: "coop" }));
+  assert.ok(encodeCode({ ...base, players: 4, mode: "compet" }));
+});
+
+test("le rôle d'undercover et la prise de parole tournent d'une manche à l'autre", () => {
+  // Sur de nombreuses parties de 4 joueurs en 5 manches, compare au tirage uniforme.
+  let repeats = 0, transitions = 0, sameStarter = 0, heavy = 0, games = 0;
+  for (let seed = 0; seed < 2000; seed++) {
+    const game = decodeCode(encodeCode({ seed, players: 4, undercovers: 1, rounds: 5, mode: "compet" }));
+    const counts = [0, 0, 0, 0, 0];
+    let prevUc = null, prevStarter = null;
+    for (let round = 1; round <= 5; round++) {
+      const deal = dealRound(game, round);
+      const uc = deal.roles.find((r) => r.role === "undercover").seat;
+      counts[uc]++;
+      if (prevUc !== null) {
+        transitions++;
+        if (uc === prevUc) repeats++;
+        if (deal.starter === prevStarter) sameStarter++;
+      }
+      prevUc = uc;
+      prevStarter = deal.starter;
+    }
+    games++;
+    if (Math.max(...counts) >= 4) heavy++;
+  }
+  // Tirage uniforme : 25 % de répétitions. Ici, rares mais possibles (pas de déduction certaine).
+  assert.ok(repeats / transitions < 0.12, `répétitions undercover : ${repeats / transitions}`);
+  assert.ok(repeats > 0, "un joueur peut encore être undercover deux fois de suite");
+  assert.ok(sameStarter / transitions < 0.12, `répétitions premier joueur : ${sameStarter / transitions}`);
+  assert.ok(heavy / games < 0.005, `undercover 4 fois sur 5 : ${heavy / games}`);
+});
+
+test("la distribution tient compte des manches précédentes de façon déterministe", () => {
+  const game = decodeCode(encodeCode({ seed: 99, players: 6, undercovers: 2, rounds: 8 }));
+  for (let round = 1; round <= 8; round++) {
+    const deal = dealRound(game, round);
+    assert.deepEqual(deal, dealRound(game, round));
+    assert.equal(deal.roles.filter((r) => r.role === "undercover").length, 2);
+  }
 });
