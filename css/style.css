@@ -276,6 +276,8 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
 .round-bar { margin-top: 16px; }
 .round-bar p { margin: 0; color: var(--muted); }
 .starter { font-size: 1.05rem; background: var(--surface); border: 1px solid var(--border); padding: 10px 14px; border-radius: 12px; }
+.starter p { margin: 0; }
+.starter p + p { margin-top: 6px; }
 
 .players { list-style: none; padding: 0; margin: 16px 0; display: flex; flex-direction: column; gap: 8px; }
 .players li { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 8px 10px; }
@@ -736,6 +738,8 @@ body { overflow-wrap: anywhere; hyphens: auto; }
 
 /* Joueur qui a rejoint par le code : vérification de son numéro */
 .seat-check { margin: 4px 0 0; }
+.reuse-names { margin-top: 10px; }
+.reuse-names .small { margin: 4px 0 0; overflow-wrap: anywhere; }
 
 /* Message de réconfort après une désignation (mode coopératif) */
 .reassure { font-size: 0.95rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 10px; }

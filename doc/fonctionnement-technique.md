@@ -64,7 +64,7 @@ Tout est stocké dans le `localStorage` du navigateur, sur l'appareil, et n'en s
 | Clé | Contenu | Appareil |
 | --- | --- | --- |
 | `host:CODE` | Manche en cours, joueurs éliminés ou désignés, prénoms, résultats des manches | Animateur |
-| `hostPrefs` | Derniers réglages de création de partie (dont les prénoms saisis) | Animateur |
+| `hostPrefs` | Derniers réglages de création de partie. Les prénoms saisis ne sont pas remis d'office : un bouton « Reprendre les prénoms de la partie précédente » les propose | Animateur |
 | `lastHost` | Code de la dernière partie animée | Animateur |
 | `names:CODE` | Prénoms reçus via le QR code | Joueur |
 | `player:CODE:N` | Manche affichée par le joueur N | Joueur |

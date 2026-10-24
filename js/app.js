@@ -446,10 +446,11 @@ function playerCardHtml(game, deal, me) {
   const { id: ruleId, theme, summary } = deal.rule;
   if (game.mode === "coop") return cardHtml({ ruleId, text: me.card, theme, summary });
   return me.role === "undercover"
-    ? cardHtml({ ruleId, text: me.card, theme, summary, kind: "undercover", note: "<strong>Tu es l'undercover :</strong> ta carte enfreint la règle d'or. Fais-toi passer pour un civil !" })
-    : cardHtml({ ruleId, text: me.card, theme, summary, note: "<strong>Tu es civil :</strong> ta carte respecte la règle d'or. Démasque l'undercover !" });
+    ? cardHtml({ ruleId, text: me.card, theme, summary, kind: "undercover", note: "<strong>Tu es l'undercover :</strong> ta carte enfreint la règle d'or. Fais-toi passer pour un civil ! <strong>Pour bluffer :</strong> décris le contexte de ta carte (qui, quel outil, pour quoi faire) et tais le détail qui enfreint la règle." })
+    : cardHtml({ ruleId, text: me.card, theme, summary, note: "<strong>Tu es civil :</strong> ta carte respecte la règle d'or. Démasque l'undercover ! <strong>Ta mission :</strong> repère la description trop vague ou qui évite un détail, et pose une question à ce joueur pendant le débat." });
 }
 
+// Indication visible sous la carte, même face cachée : elle ne doit pas dépendre du rôle.
 function playerHint(game) {
   return game.mode === "coop"
     ? `À ton tour, <strong>lis ta carte à voix haute</strong>. Personne ne sait qui a la carte undercover, pas même toi : enquêtez ensemble pour trouver la pratique qui enfreint la règle d'or.`
@@ -725,7 +726,8 @@ function viewRules() {
       <ol>
         <li>En retournant sa carte, chacun découvre son rôle : <strong>l'undercover sait qu'il l'est</strong> et doit se faire passer pour un civil.</li>
         <li><strong>Tour de parole</strong> : chacun peut garder sa carte sous les yeux, mais la <strong>décrit avec ses mots</strong>, sans la lire.</li>
-        <li><strong>Débat</strong> chronométré, puis <strong>vote</strong> : le joueur éliminé révèle son rôle.</li>
+        <li><strong>Débat</strong> chronométré : chacun peut poser une question à un joueur dont la description lui semble floue. Les civils cherchent la description qui évite un détail ; l'undercover parle du contexte de sa carte et tait ce qui la trahit.</li>
+        <li><strong>Vote</strong> : le joueur éliminé révèle son rôle. Si c'est un civil, la manche continue : nouveau débat, nouveau vote.</li>
         <li>Les <strong>civils</strong> gagnent la manche s'ils éliminent l'undercover ; l'<strong>undercover</strong> la gagne s'il ne reste plus qu'un civil.</li>
         <li>Le score compte les <strong>manches gagnées par chaque camp</strong>.</li>
       </ol>
@@ -837,6 +839,12 @@ function viewHostSetup() {
     names: {},
     ...store.get("hostPrefs", {}),
   };
+  // Les prénoms de la partie précédente ne sont pas repris d'office : une nouvelle équipe
+  // risquerait de jouer sous les prénoms de la précédente. Un bouton permet de les reprendre.
+  const lastNames = Object.keys(prefs.names)
+    .sort((a, b) => a - b)
+    .map((seat) => cleanName(prefs.names[seat]))
+    .filter(Boolean);
   app.innerHTML = `
     <section>
       <h1>Nouvelle partie</h1>
@@ -858,6 +866,14 @@ function viewHostSetup() {
           </div>
           <p class="hint" id="players-hint">Comptez uniquement les personnes qui reçoivent une carte : l'animateur ne joue pas. Saisissez leurs prénoms : chacun retrouvera le sien en scannant le QR code, et l'écran de l'animateur affiche le numéro de chacun.</p>
           <ol class="name-list" id="name-list"></ol>
+          ${
+            lastNames.length
+              ? `<div class="reuse-names" id="reuse-names">
+                  <button type="button" class="btn btn--small" id="reuse-names-btn" aria-describedby="reuse-names-list">Reprendre les prénoms de la partie précédente</button>
+                  <p class="small" id="reuse-names-list">${esc(lastNames.join(", "))}</p>
+                </div>`
+              : ""
+          }
         </fieldset>
 
         <fieldset class="fs-rounds">
@@ -904,7 +920,7 @@ function viewHostSetup() {
 
   const form = document.getElementById("setup");
   const nameListEl = document.getElementById("name-list");
-  const typedNames = { ...prefs.names };
+  const typedNames = {};
 
   const renderNames = () => {
     const count = Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, Number(form.elements.players.value) || MIN_PLAYERS));
@@ -931,6 +947,17 @@ function viewHostSetup() {
     syncRulesHint();
   });
   form.elements.players.addEventListener("change", renderNames);
+
+  document.getElementById("reuse-names-btn")?.addEventListener("click", () => {
+    Object.assign(typedNames, prefs.names);
+    const seats = Object.keys(prefs.names).filter((seat) => cleanName(prefs.names[seat])).map(Number);
+    const players = form.elements.players;
+    players.value = Math.min(Number(players.max), Math.max(Number(players.value), ...seats));
+    renderNames();
+    document.getElementById("reuse-names").remove();
+    announce(`Prénoms repris : ${lastNames.join(", ")}.`);
+    document.getElementById("name-1").focus();
+  });
 
   // Compare le nombre de manches au nombre de règles choisies : toutes ne seront pas forcément jouées.
   const syncRulesHint = () => {
@@ -1027,9 +1054,16 @@ function viewHost(code) {
       ${
         result
           ? resultBanner(result, "div", state.results[state.round])
-          : `<p class="starter"><span aria-hidden="true">🎙️ </span><strong>${esc(playerName(state, deal.starter))}</strong> ${
-              coop ? "commence : chacun lit sa carte à voix haute, puis l'équipe désigne un suspect." : "commence le tour de parole."
-            }</p>`
+          : `<div class="starter">
+              <p><span aria-hidden="true">🎙️ </span><strong>${esc(playerName(state, deal.starter))}</strong> ${
+                coop ? "commence : chacun lit sa carte à voix haute, puis l'équipe désigne un suspect." : "commence le tour de parole : chacun décrit sa carte avec ses mots, sans la lire."
+              }</p>
+              <p class="small">${
+                coop
+                  ? "Si le suspect est disculpé, l'équipe relance le débat et désigne quelqu'un d'autre."
+                  : "Pendant le débat, chacun peut poser une question à un joueur. Si un civil est éliminé, la manche continue : nouveau débat, nouveau vote."
+              }</p>
+            </div>`
       }
 
       <ul class="players">
@@ -1459,8 +1493,8 @@ function viewJoin(prefill, seatPrefill, namesToken) {
       </div>
       <p class="hint">${
         hasNames
-          ? "Touche ton prénom. Chaque prénom ne doit être choisi qu'une fois : l'application ne peut pas le vérifier."
-          : "Ton numéro est affiché à côté de ton prénom sur l'écran de l'animateur. Pour choisir directement ton prénom, scanne plutôt le QR code. Chaque numéro ne doit être choisi qu'une fois : l'application ne peut pas le vérifier."
+          ? "Touche ton prénom."
+          : "Choisis le numéro affiché à côté de ton prénom sur l'écran de l'animateur."
       }</p>`;
   };
   form.elements.code.addEventListener("input", update);

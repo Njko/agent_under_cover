@@ -92,7 +92,7 @@ export const RULES = [
       "Alerter rapidement, corriger et tirer les enseignements plutôt que chercher un responsable.",
       "Les utilisateurs peuvent facilement savoir quand une réponse provient d'une IA ou d'un conseiller humain.",
       "Les performances du système sont suivies régulièrement afin de détecter les erreurs ou les dérives pouvant affecter la qualité des réponses.",
-      "Signaler qu'une donnée utilisée pour prendre une décision est incomplète ou potentiellement erronée.",
+      "Un collaborateur remarque que les données utilisées par l'outil d'IA sont incomplètes. Il le signale avant que les résultats servent à prendre une décision.",
     ],
     undercover:
       "Un chatbot répond à la plupart des demandes clients. Les utilisateurs pensent échanger avec un conseiller humain car rien n'indique qu'il s'agit d'un système d'IA. Les retours clients sont pourtant excellents.",
