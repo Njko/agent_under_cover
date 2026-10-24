@@ -2,6 +2,8 @@
 //
 // Chaque règle contient :
 //   - theme       : nom de la règle d'or (tel qu'imprimé au dos des cartes)
+//   - summary     : énoncé court de la règle d'or, rappelé sur les cartes et à l'écran
+//                   (rédigé à partir des cartes, à valider par le référent IA responsable)
 //   - back        : image du dos de carte (img/dos/)
 //   - civilians   : cartes « bonne pratique » distribuées aux civils
 //   - undercover  : la carte UNDERCOVER (pratique qui enfreint la règle)
@@ -14,6 +16,7 @@ export const RULES = [
     id: 1,
     theme: "Contrôle humain & Responsabilité",
     back: "img/dos/regle-1.webp",
+    summary: "L'IA assiste, l'humain décide : chaque résultat est vérifié par une personne qui en est responsable.",
     civilians: [
       "L'IA produit du code. Chaque livraison passe par revue de code et tests.",
       "Une IA suggère des réponses aux clients. Le conseiller choisit toujours la réponse finale parmi celles suggérées par l'IA.",
@@ -29,6 +32,7 @@ export const RULES = [
     id: 2,
     theme: "Sécurité & Robustesse",
     back: "img/dos/regle-2.webp",
+    summary: "Un système d'IA est testé avant sa mise en service, surveillé ensuite, et peut être arrêté en cas de problème.",
     civilians: [
       "Avant sa mise en production, le modèle IA a été testé sur plusieurs jeux de données représentatifs afin d'évaluer sa fiabilité et ses performances.",
       "Les équipes métiers participent aux tests afin de vérifier que les résultats produits sont cohérents avec les besoins réels du terrain.",
@@ -46,6 +50,7 @@ export const RULES = [
     id: 3,
     theme: "Gouvernance des données et de l'IA",
     back: "img/dos/regle-3.webp",
+    summary: "Tout projet d'IA est déclaré, documenté et validé par la gouvernance avant d'être mis à disposition.",
     civilians: [
       "Avant de mettre le chatbot en production, l'équipe présente le projet devant un comité qui vérifie son alignement avec les politiques IA du Groupe.",
       "Une équipe Data Science a documenté son modèle : objectif ; données utilisées ; responsables ; risques identifiés. La documentation est mise à jour à chaque évolution.",
@@ -62,6 +67,7 @@ export const RULES = [
     id: 4,
     theme: "Impact environnemental",
     back: "img/dos/regle-4.webp",
+    summary: "On choisit la solution d'IA la plus sobre qui répond au besoin, et on mesure son impact sur l'environnement.",
     civilians: [
       "L'équipe limite les générations inutiles. Elle affine progressivement ses prompts au lieu de lancer des dizaines de requêtes successives.",
       "Avant de lancer un nouveau projet IA, l'équipe utilise la calculatrice carbone du Groupe afin d'estimer l'impact environnemental de la solution envisagée.",
@@ -78,6 +84,7 @@ export const RULES = [
     id: 5,
     theme: "Confiance & Transparence",
     back: "img/dos/regle-5.webp",
+    summary: "On sait toujours quand on échange avec une IA, ses limites sont annoncées, et les problèmes sont signalés sans chercher de coupable.",
     civilians: [
       "L'application informe clairement l'utilisateur que l'IA peut commettre des erreurs et que certaines réponses doivent être vérifiées.",
       "Lorsqu'un compte-rendu est généré automatiquement, une mention indique qu'il a été produit avec l'aide d'une IA et invite l'utilisateur à le relire avant diffusion.",
@@ -96,6 +103,7 @@ export const RULES = [
     id: 6,
     theme: "Équité & Inclusion",
     back: "img/dos/regle-6.webp",
+    summary: "Tous les collaborateurs, quels que soient leur métier et leur niveau, ont accès à la formation et à l'accompagnement sur l'IA.",
     civilians: [
       "Une nouvelle formation IA est proposée à l'ensemble des collaborateurs, quel que soit leur métier ou leur niveau technique. Des parcours débutant, intermédiaire et avancé sont disponibles.",
       "Tous les collaborateurs concernés suivent un module obligatoire sur les usages responsables de l'IA, les risques et les bonnes pratiques.",
@@ -112,6 +120,7 @@ export const RULES = [
     id: 7,
     theme: "L'IA au cœur de l'humain",
     back: "img/dos/regle-7.webp",
+    summary: "L'IA répond à un vrai besoin et libère du temps pour l'humain : elle n'est pas utilisée pour l'effet vitrine.",
     civilians: [
       "Une IA prépare les informations pertinentes avant un rendez-vous client afin de réduire les tâches administratives et permettre au conseiller de consacrer davantage de temps à l'écoute et au conseil.",
       "Un assistant IA répond aux questions sur les procédures internes afin d'aider les nouveaux arrivants à gagner en autonomie.",

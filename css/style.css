@@ -245,8 +245,14 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
 .chip[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: var(--primary-text); font-weight: 700; }
 .timer--urgent .timer-face { color: var(--timer-urgent); }
 .timer--urgent .timer-bar i { background: var(--timer-urgent); }
-.timer--done { border-color: var(--danger); }
-.timer--done .timer-face { color: var(--danger); font-size: 1.8rem; }
+/* Fin du débat : signal visuel fort, lisible au vidéoprojecteur (en plus des bips et de la vibration). */
+.timer--done { border: 3px solid var(--danger); background: var(--danger-bg); }
+.timer--done .timer-face { color: var(--danger); }
+.timer-done-msg { margin: 0; padding: 10px 12px; border-radius: 10px; background: var(--danger); color: var(--danger-text); font-size: 1.3rem; font-weight: 800; text-align: center; }
+@media (prefers-reduced-motion: no-preference) {
+  :root:not([data-lowtech]) .timer--done { animation: timer-alert 0.6s ease-in-out 3; }
+}
+@keyframes timer-alert { 50% { transform: scale(1.03); box-shadow: 0 0 0 8px var(--danger-bg); } }
 @media (prefers-reduced-motion: reduce) { .timer-bar i { transition: none; } }
 
 /* Choix du numéro */
@@ -722,3 +728,34 @@ body { overflow-wrap: anywhere; hyphens: auto; }
   body { font-size: 18px; }
   main, .weight { max-width: 1440px; }
 }
+
+/* Énoncé de la règle d'or (cartes, tableau de bord, débrief, catalogue) */
+.card-summary { margin: 0; padding: 4px 18px 0; font-size: 0.82rem; font-style: italic; color: var(--muted); }
+.rule-summary { margin: 0 0 8px; font-style: italic; color: var(--muted); max-width: 70ch; }
+.round-bar .rule-summary { margin-bottom: 4px; }
+
+/* Joueur qui a rejoint par le code : vérification de son numéro */
+.seat-check { margin: 4px 0 0; }
+
+/* Message de réconfort après une désignation (mode coopératif) */
+.reassure { font-size: 0.95rem; color: var(--muted); border-top: 1px solid var(--border); padding-top: 10px; }
+
+/* Suppression de la partie, séparée des autres actions */
+.danger-zone { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-top: 24px; padding-top: 16px; border-top: 1px dashed var(--border); }
+.danger-zone p { margin: 0; flex: 1 1 240px; }
+[data-lowtech] .timer-done-msg { background: var(--text); color: var(--bg); border-radius: 0; }
+[data-lowtech] .timer--done { border-style: double; border-width: 4px; background: transparent; }
+@media (min-width: 1024px) {
+  #app[data-view="host"] .timer-done-msg { font-size: 1.8rem; padding: 14px; }
+  #app[data-view="host"] .rule-summary { font-size: 1.15rem; }
+  #app[data-view="debrief"] .rule-summary { font-size: 1.15rem; }
+}
+
+/* Carte secrète : le dos et la face sont superposés dans la même cellule de grille.
+   La carte garde la taille du dos, mais s'agrandit si son texte en a besoin (petits écrans, carte
+   longue + message de rôle) : plus de défilement à l'intérieur de la carte, et le dos la masque toujours. */
+.secret { display: grid; grid-template-columns: minmax(0, 1fr); aspect-ratio: auto; min-height: calc(min(340px, 100vw - 32px) * 893 / 640); }
+.secret > .secret-cover, .secret > .secret-content { grid-area: 1 / 1; position: relative; inset: auto; height: auto; min-width: 0; }
+.secret .card { height: 100%; }
+.secret .card-text { overflow: visible; }
+.secret-cover--back .back { height: 100%; object-fit: cover; }

@@ -326,11 +326,12 @@ function confirmForget(code, label) {
   );
 }
 
-function cardHtml({ ruleId, text, kind = "civilian", label, theme, note }) {
+function cardHtml({ ruleId, text, kind = "civilian", label, theme, summary, note }) {
   return `
     <article class="card card--rule${ruleId} ${kind === "undercover" ? "card--undercover" : ""}">
       <header class="card-head"><span>RÈGLE ${ruleId}</span><i></i></header>
       ${theme ? `<p class="card-theme">${esc(theme)}</p>` : ""}
+      ${summary ? `<p class="card-summary">${esc(summary)}</p>` : ""}
       <p class="card-text">${esc(text)}</p>
       ${note ? `<p class="card-note">${note}</p>` : ""}
       ${kind === "undercover" ? `<footer class="card-foot">UNDERCOVER</footer>` : ""}
@@ -442,10 +443,11 @@ function bindSecret() {
 
 // Carte vue par un joueur. Coopératif : personne ne connaît son rôle. Compétitif : chacun le connaît.
 function playerCardHtml(game, deal, me) {
-  if (game.mode === "coop") return cardHtml({ ruleId: deal.rule.id, text: me.card, theme: deal.rule.theme });
+  const { id: ruleId, theme, summary } = deal.rule;
+  if (game.mode === "coop") return cardHtml({ ruleId, text: me.card, theme, summary });
   return me.role === "undercover"
-    ? cardHtml({ ruleId: deal.rule.id, text: me.card, theme: deal.rule.theme, kind: "undercover", note: "<strong>Tu es l'undercover :</strong> ta carte enfreint la règle d'or. Fais-toi passer pour un civil !" })
-    : cardHtml({ ruleId: deal.rule.id, text: me.card, theme: deal.rule.theme, note: "<strong>Tu es civil :</strong> ta carte respecte la règle d'or. Démasque l'undercover !" });
+    ? cardHtml({ ruleId, text: me.card, theme, summary, kind: "undercover", note: "<strong>Tu es l'undercover :</strong> ta carte enfreint la règle d'or. Fais-toi passer pour un civil !" })
+    : cardHtml({ ruleId, text: me.card, theme, summary, note: "<strong>Tu es civil :</strong> ta carte respecte la règle d'or. Démasque l'undercover !" });
 }
 
 function playerHint(game) {
@@ -455,7 +457,8 @@ function playerHint(game) {
 }
 
 function ruleTag(rule) {
-  return `<p class="round-theme round-theme--${rule.id}"><span>Règle d'or ${rule.id}</span> ${esc(rule.theme)}</p>`;
+  return `<p class="round-theme round-theme--${rule.id}"><span>Règle d'or ${rule.id}</span> ${esc(rule.theme)}</p>
+    <p class="rule-summary">${esc(rule.summary)}</p>`;
 }
 
 // --- État de l'hôte (persisté par code de partie) -------------------------------------------
@@ -499,13 +502,16 @@ function formatSeconds(ms) {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
-function timerHtml() {
+function timerHtml(coop) {
   return `
     <section class="timer" id="timer" aria-label="Minuteur du débat">
       <div class="timer-main">
         <p class="label">Débat</p>
         <p class="timer-face" id="timer-face" role="timer" aria-live="off"></p>
       </div>
+      <p class="timer-done-msg" id="timer-done-msg" hidden>
+        <span aria-hidden="true">⏰ </span>Temps écoulé : ${coop ? "place au vote, désignez un suspect !" : "place au vote !"}
+      </p>
       <div class="timer-bar"><i id="timer-bar"></i></div>
       <div class="timer-controls">
         <div class="chips" role="group" aria-label="Durée">
@@ -545,14 +551,15 @@ function paintTimer() {
     timer.end = null;
     timer.remaining = 0;
     beep();
-    announce("Temps écoulé : fin du débat.");
+    announce("Temps écoulé : place au vote.");
   }
   const running = Boolean(timer.end);
   const done = left === 0;
   el.classList.toggle("timer--running", running);
   el.classList.toggle("timer--done", done);
   el.classList.toggle("timer--urgent", running && left <= 10000);
-  document.getElementById("timer-face").textContent = done ? "Temps écoulé !" : formatSeconds(left);
+  document.getElementById("timer-face").textContent = formatSeconds(left);
+  document.getElementById("timer-done-msg").hidden = !done;
   document.getElementById("timer-bar").style.width = `${(left / (timer.duration * 1000)) * 100}%`;
   document.getElementById("timer-toggle").textContent = running ? "Pause" : done ? "Relancer" : left < timer.duration * 1000 ? "Reprendre" : "Lancer le débat";
   el.querySelectorAll("[data-duration]").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.duration) === timer.duration)));
@@ -694,9 +701,10 @@ function viewRules() {
       <h1>Comment jouer ?</h1>
       <h2>Mise en place</h2>
       <ol>
-        <li>L'animateur crée une partie : prénoms des joueurs, règles d'or à jouer, nombre de manches.</li>
+        <li>L'animateur crée une partie : prénoms des joueurs, règles d'or à jouer, nombre de manches. L'animateur ne joue pas : il ne se compte pas parmi les joueurs.</li>
         <li>Il affiche le <strong>QR code</strong> (ou le code de la partie).</li>
-        <li>Chacun scanne le QR code et touche <strong>son prénom</strong>. Sa carte s'affiche face cachée : on la retourne en maintenant le doigt dessus.</li>
+        <li>Chacun scanne le QR code et touche <strong>son prénom</strong>. Avec le code saisi à la main, on choisit son <strong>numéro</strong>, affiché à côté de son prénom sur l'écran de l'animateur. Chaque prénom ou numéro ne doit être pris qu'une fois.</li>
+        <li>Sa carte s'affiche face cachée : on la retourne en maintenant le doigt dessus, ou avec le bouton « Afficher ma carte ».</li>
       </ol>
       <p class="hint">Aucune connexion entre téléphones n'est nécessaire : chaque téléphone calcule sa propre carte à partir du code.
       Pas assez de téléphones ? Utilisez le mode « Distribuer sur ce téléphone ».</p>
@@ -709,6 +717,7 @@ function viewRules() {
         <li><strong>Lecture</strong> : à partir du joueur désigné, chacun lit sa carte à voix haute.</li>
         <li><strong>Débat</strong> chronométré (30 secondes par défaut) : quelle pratique enfreint la règle d'or, et pourquoi ?</li>
         <li><strong>Désignation</strong> : l'équipe désigne un suspect. S'il n'a pas la carte undercover, il est disculpé et on recommence.</li>
+        <li><strong>Pas de coupable</strong> : être désigné, ou avoir la carte undercover, n'est la faute de personne. Personne ne choisit sa carte : on discute des pratiques, pas des personnes.</li>
         <li><strong>Points pour l'équipe</strong> : 3 points si l'undercover est trouvé au premier vote, 2 au deuxième, 1 au troisième, 0 ensuite.</li>
       </ol>
 
@@ -805,6 +814,7 @@ function viewCards() {
       ${RULES.map(
         (r) => `
         <h2 class="rule-title">Règle d'or ${r.id} · ${esc(r.theme)}</h2>
+        <p class="rule-summary">${esc(r.summary)}</p>
         <div class="grid">
           ${backImg(r, "back back--grid")}
           ${r.civilians.map((t) => cardHtml({ ruleId: r.id, text: t })).join("")}
@@ -840,13 +850,13 @@ function viewHostSetup() {
         </fieldset>
 
         <fieldset class="fs-players">
-          <legend>Joueurs</legend>
+          <legend>Joueurs (sans l'animateur)</legend>
           <div class="stepper" data-target="players">
             <button type="button" data-step="-1" aria-label="Un joueur de moins">−</button>
-            <input id="players" name="players" type="number" inputmode="numeric" min="${MIN_PLAYERS}" max="${MAX_PLAYERS}" value="${prefs.players}" aria-label="Nombre de joueurs">
+            <input id="players" name="players" type="number" inputmode="numeric" min="${MIN_PLAYERS}" max="${MAX_PLAYERS}" value="${prefs.players}" aria-label="Nombre de joueurs, sans compter l'animateur" aria-describedby="players-hint">
             <button type="button" data-step="1" aria-label="Un joueur de plus">+</button>
           </div>
-          <p class="hint">Saisissez les prénoms dans l'ordre du cercle : chaque joueur retrouvera le sien en scannant le QR code.</p>
+          <p class="hint" id="players-hint">Comptez uniquement les personnes qui reçoivent une carte : l'animateur ne joue pas. Saisissez leurs prénoms : chacun retrouvera le sien en scannant le QR code, et l'écran de l'animateur affiche le numéro de chacun.</p>
           <ol class="name-list" id="name-list"></ol>
         </fieldset>
 
@@ -1012,7 +1022,7 @@ function viewHost(code) {
 
       ${teamScoreHtml(game, state.results)}
 
-      ${result ? "" : timerHtml()}
+      ${result ? "" : timerHtml(coop)}
 
       ${
         result
@@ -1055,9 +1065,10 @@ function viewHost(code) {
         <a class="btn" href="#/pass/${code}">Distribuer sur ce téléphone</a>
         ${!result ? `<button class="btn btn--ghost" id="debrief">Révéler et débriefer</button>` : ""}
       </div>
-      <div class="actions actions--secondary">
-        ${!lastRound ? `<button class="btn btn--ghost" id="end-now">Terminer la partie maintenant</button>` : ""}
-        <button class="btn btn--ghost btn--ghost-danger" id="forget">Supprimer la partie</button>
+      ${!lastRound ? `<div class="actions actions--secondary"><button class="btn btn--ghost" id="end-now">Terminer la partie maintenant</button></div>` : ""}
+      <div class="danger-zone">
+        <p class="small">Efface la partie de cet appareil (prénoms, scores, manches). Une confirmation est demandée.</p>
+        <button class="btn btn--small btn--danger" id="forget">Supprimer la partie</button>
       </div>
       </div>
     </section>`;
@@ -1204,10 +1215,17 @@ function eliminate(code, game, deal, seat) {
             errors >= COOP_MAX_POINTS ? "." : ` (la manche vaut maintenant ${coopPoints(errors)} point${coopPoints(errors) > 1 ? "s" : ""}).`
           }`
       : "La manche continue : nouveau tour de parole !";
+    // On débat des pratiques, pas des personnes : personne ne choisit sa carte.
+    const reassure = !coop
+      ? ""
+      : player.role === "undercover"
+        ? `${esc(name)} ne pouvait pas savoir que sa carte enfreignait la règle : c'est la pratique qu'on discute, pas la personne.`
+        : `Ce n'est pas une erreur de sa part : sa carte décrit une bonne pratique, et personne ne sait qui a la carte undercover.`;
     openModal(`
       <p class="label">${esc(name)} ${coop ? "avait…" : "était…"}</p>
       <p class="role-reveal role--${player.role}">${coop ? (player.role === "undercover" ? "La carte undercover" : "Une bonne pratique") : ROLE_LABELS[player.role]}</p>
       ${result ? resultBanner(result, "p", state.results[state.round]) : `<p>${next}</p>`}
+      ${reassure ? `<p class="reassure">${reassure}</p>` : ""}
       <button class="btn btn--primary" data-close>Continuer</button>`);
   };
 }
@@ -1259,6 +1277,7 @@ function viewDebrief(code) {
         <div>
           <p class="label">Manche ${state.round} / ${game.rounds} · débrief</p>
           <h1>Règle d'or ${rule.id} · ${esc(rule.theme)}</h1>
+          <p class="rule-summary">${esc(rule.summary)}</p>
         </div>
       </div>
 
@@ -1440,8 +1459,8 @@ function viewJoin(prefill, seatPrefill, namesToken) {
       </div>
       <p class="hint">${
         hasNames
-          ? "Touche ton prénom. Deux joueurs ne doivent pas choisir le même."
-          : "Les numéros suivent l'ordre du cercle, à partir de l'animateur. Deux joueurs ne doivent pas choisir le même numéro."
+          ? "Touche ton prénom. Chaque prénom ne doit être choisi qu'une fois : l'application ne peut pas le vérifier."
+          : "Ton numéro est affiché à côté de ton prénom sur l'écran de l'animateur. Pour choisir directement ton prénom, scanne plutôt le QR code. Chaque numéro ne doit être choisi qu'une fois : l'application ne peut pas le vérifier."
       }</p>`;
   };
   form.elements.code.addEventListener("input", update);
@@ -1466,6 +1485,11 @@ function viewPlay(code, seat) {
         <h1>${myName ? `${esc(myName)} <small class="small">joueur ${seat}</small>` : `Joueur ${seat}`}</h1>
         <span class="small">${esc(prettyCode(game.code))}</span>
       </div>
+      ${
+        myName
+          ? ""
+          : `<p class="hint seat-check">Vérifie sur l'écran de l'animateur que le numéro ${seat} est bien à côté de ton prénom. <a href="#join-${game.code}">Changer de numéro</a></p>`
+      }
       <div class="round-switch">
         <button class="btn btn--small" id="prev" ${round <= 1 ? "disabled" : ""} aria-label="Manche précédente">←</button>
         <strong>Manche ${round} <span class="of">/ ${game.rounds}</span></strong>
