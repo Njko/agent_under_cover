@@ -47,7 +47,7 @@ export const RULES = [
       "Des audits périodiques vérifient que le système respecte toujours les niveaux de qualité et de sécurité attendus.",
     ],
     undercover:
-      "Le modèle a donné d'excellents résultats pendant la phase de démonstration. L'équipe décide donc de le mettre directement en production sans phase de test complémentaire.",
+      "Le modèle de tri des demandes a convaincu les métiers lors d'une démonstration. Il est mis en production la semaine suivante.",
     why:
       "Une démonstration réussie ne remplace pas des tests représentatifs : le modèle part en production sans validation de sa fiabilité.",
   },
@@ -66,7 +66,7 @@ export const RULES = [
       "Une équipe souhaite réutiliser un modèle IA déjà utilisé dans un autre pays AXA. Avant de le déployer localement, elle vérifie que les données, règles et contraintes sont adaptées au contexte français.",
     ],
     undercover:
-      "Pour gagner du temps, une équipe développe discrètement un outil IA interne et le met à disposition des collaborateurs. Comme les premiers retours sont positifs, elle prévoit de déclarer le projet plus tard lorsque la solution sera mature.",
+      "Une équipe met à disposition de ses collègues un assistant IA qu'elle a développé. Elle le déclarera à la gouvernance une fois la version finale prête.",
     why:
       "C'est du « shadow AI » : l'outil est déployé avant toute déclaration à la gouvernance IA, sans contrôle conformité ni sécurité.",
   },
@@ -85,9 +85,9 @@ export const RULES = [
       "Deux modèles donnent des résultats similaires. L'équipe choisit celui qui consomme moins de ressources tout en répondant aux besoins métiers.",
     ],
     undercover:
-      "Pour rédiger des synthèses internes, l'équipe utilise systématiquement le modèle IA le plus puissant disponible. Elle n'a jamais étudié d'alternative car elle considère que la meilleure qualité possible est forcément le meilleur choix.",
+      "Pour rédiger ses synthèses internes, l'équipe utilise par défaut le modèle d'IA le plus puissant du catalogue, pour toutes ses demandes.",
     why:
-      "Le modèle est surdimensionné pour la tâche et aucune alternative plus sobre n'a été étudiée : l'impact environnemental est ignoré.",
+      "Le modèle le plus puissant est utilisé par défaut, même quand un modèle plus sobre suffirait : l'impact environnemental n'est pas pris en compte.",
   },
   {
     id: 5,
@@ -106,9 +106,9 @@ export const RULES = [
       "Un collaborateur remarque que les données utilisées par l'outil d'IA sont incomplètes. Il le signale avant que les résultats servent à prendre une décision.",
     ],
     undercover:
-      "Un chatbot répond à la plupart des demandes clients. Les utilisateurs pensent échanger avec un conseiller humain car rien n'indique qu'il s'agit d'un système d'IA. Les retours clients sont pourtant excellents.",
+      "Un chatbot répond aux demandes clients en signant du prénom d'un conseiller. Les clients apprécient ce contact personnalisé.",
     why:
-      "Les clients ignorent qu'ils parlent à une IA : de bons retours ne compensent pas l'absence de transparence.",
+      "Le chatbot se fait passer pour un conseiller : les clients ignorent qu'ils parlent à une IA, et leur satisfaction ne compense pas ce manque de transparence.",
   },
   {
     id: 6,
@@ -125,7 +125,7 @@ export const RULES = [
       "Les collaborateurs les plus avancés accompagnent ponctuellement leurs collègues sur les premiers cas d'usage.",
     ],
     undercover:
-      "Pour limiter les erreurs, l'entreprise décide de réserver les formations IA aux équipes techniques et Data. Les autres métiers pourront bénéficier indirectement des résultats produits par les experts.",
+      "Les formations IA sont proposées aux équipes techniques et Data. Les autres métiers reçoivent une synthèse de leurs travaux.",
     why:
       "La formation est réservée à une élite technique : les autres métiers sont exclus alors qu'ils utilisent aussi l'IA. L'accès à la formation doit être équitable.",
   },
@@ -144,7 +144,7 @@ export const RULES = [
       "Une solution IA génère automatiquement des sous-titres et des transcriptions pour rendre les contenus accessibles à davantage de collaborateurs.",
     ],
     undercover:
-      "Une équipe décide d'ajouter une fonctionnalité d'IA générative dans son application principalement pour démontrer sa capacité à innover. Aucun besoin client particulier n'a été identifié et aucun bénéfice concret n'est actuellement mesuré.",
+      "Une équipe ajoute une fonctionnalité d'IA générative à son application pour l'annoncer au prochain salon. Les besoins clients seront étudiés ensuite.",
     why:
       "L'IA est utilisée pour l'effet vitrine, sans besoin identifié ni bénéfice mesuré pour les clients ou les collaborateurs.",
   },
