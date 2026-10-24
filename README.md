@@ -11,9 +11,9 @@ L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveu
 - Les **civils** reçoivent chacun une bonne pratique de cette règle (cartes différentes tant que possible).
 - L'**undercover** reçoit la carte « UNDERCOVER » de la règle : elle parle du même sujet mais *enfreint* la règle.
 - Deux **modes de jeu**, choisis à la création :
-  - **Coopératif** (par défaut) : personne ne sait qui a la carte undercover, pas même celui qui l'a. Chacun **lit sa carte à voix haute**, l'équipe débat puis désigne un suspect ; un civil désigné à tort est disculpé et reste en jeu. **Score d'équipe** : 3 points si l'undercover est trouvé au premier vote, 2 au deuxième, 1 au troisième, 0 ensuite.
+  - **Coopératif** (par défaut) : l'application ne révèle aucun rôle (celui qui a la carte undercover peut la reconnaître, mais la lit comme les autres). Chacun **lit sa carte à voix haute**, l'équipe débat puis désigne un suspect ; un civil désigné à tort est disculpé et reste en jeu. **Score d'équipe** : 3 points si l'undercover est trouvé au premier vote, 2 au deuxième, 1 au troisième, 0 ensuite.
   - **Compétitif** : l'undercover **sait qu'il l'est** en retournant sa carte et bluffe. Chacun peut garder sa carte sous les yeux mais la **décrit avec ses mots**. Vote, élimination ; le score compte les **manches gagnées par chaque camp** (civils contre undercover).
-- Débat **chronométré** (30, 60 ou 90 secondes, avec signal sonore), puis **débrief** : l'app affiche la règle, la carte undercover, *pourquoi* elle enfreint la règle et des questions de discussion.
+- Débat **chronométré** (30 s à 2 min, 1 min par défaut, avec signal sonore), puis **débrief** : l'app affiche la règle, la carte undercover, *pourquoi* elle enfreint la règle, des questions de discussion (dont une propre à chaque règle) et un minuteur de discussion (3, 5 ou 10 min).
 - **Fin de partie** : score de l'équipe (ou des deux camps) et récapitulatif des manches sur l'écran de l'animateur, avec un QR code qui transmet les résultats aux téléphones des joueurs.
 - Chaque partie peut être **supprimée** du téléphone (accueil, tableau de bord ou fin de partie).
 
@@ -109,7 +109,7 @@ Tout autre serveur de fichiers statiques convient aussi (Azure Static Web Apps, 
 
 ## Modifier les cartes
 
-Tout le contenu est dans [`js/cards.js`](js/cards.js) : texte des cartes, nom de chaque règle d'or (`theme`, repris du dos des cartes), énoncé court de la règle (`summary`, rappelé sur les cartes, le tableau de bord et le débrief), image du dos (`back`) et explication de l'undercover (`why`).
+Tout le contenu est dans [`js/cards.js`](js/cards.js) : texte des cartes, nom de chaque règle d'or (`theme`, repris du dos des cartes), énoncé court de la règle (`summary`, rappelé sur les cartes, le tableau de bord et le débrief), image du dos (`back`) explication de l'undercover (`why`) et question de débrief propre à la règle (`question`).
 Les dos de cartes sont dans [`img/dos/`](img/dos) (WebP 640 px, coins transparents). Les énoncés `summary` et les explications `why` ont été **rédigés à partir des cartes** : relisez-les et ajustez-les à votre référentiel.
 Après une modification, incrémentez `VERSION` dans `sw.js` pour que les téléphones récupèrent la nouvelle version (et republiez l'image Docker si vous l'utilisez).
 

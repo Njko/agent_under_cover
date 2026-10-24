@@ -453,7 +453,7 @@ function playerCardHtml(game, deal, me) {
 // Indication visible sous la carte, même face cachée : elle ne doit pas dépendre du rôle.
 function playerHint(game) {
   return game.mode === "coop"
-    ? `À ton tour, <strong>lis ta carte à voix haute, mot pour mot</strong>. Personne ne sait qui a la carte undercover, pas même toi : enquêtez ensemble pour trouver la pratique qui enfreint la règle d'or.`
+    ? `À ton tour, <strong>lis ta carte à voix haute, mot pour mot</strong>. L'application ne révèle aucun rôle : même si tu crois reconnaître la carte undercover, lis-la comme les autres et enquêtez ensemble pour trouver la pratique qui enfreint la règle d'or.`
     : `Garde ta carte sous les yeux si tu veux, mais à ton tour <strong>décris-la avec tes mots</strong>, sans la lire.`;
 }
 
@@ -485,8 +485,30 @@ function playedRounds(state) {
 // --- Minuteur de débat (écran animateur) ---------------------------------------------------
 // L'état repose sur une heure de fin : il survit aux rafraîchissements de l'écran animateur.
 
-const TIMER_DURATIONS = [30, 60, 90];
-const timer = { key: null, duration: store.get("timerDuration", 30), end: null, remaining: 0, interval: null, audio: null };
+// Deux minuteurs : le débat avant le vote (écran de la manche) et la discussion du débrief.
+const TIMERS = {
+  debate: {
+    label: "Débat",
+    aria: "Minuteur du débat",
+    durations: [30, 60, 90, 120],
+    storeKey: "timerDuration",
+    fallback: 60,
+    start: "Lancer le débat",
+    done: (coop) => `Temps écoulé : ${coop ? "place au vote, désignez un suspect !" : "place au vote !"}`,
+    announce: "Temps écoulé : place au vote.",
+  },
+  debrief: {
+    label: "Discussion",
+    aria: "Minuteur de la discussion",
+    durations: [180, 300, 600],
+    storeKey: "debriefDuration",
+    fallback: 300,
+    start: "Lancer la discussion",
+    done: () => "Temps écoulé : concluez la discussion avant de passer à la suite.",
+    announce: "Temps écoulé : concluez la discussion.",
+  },
+};
+const timer = { key: null, kind: "debate", duration: 60, end: null, remaining: 0, interval: null, audio: null };
 
 function timerRemaining() {
   return timer.end ? Math.max(0, timer.end - Date.now()) : timer.remaining;
@@ -503,20 +525,25 @@ function formatSeconds(ms) {
   return `${Math.floor(total / 60)}:${String(total % 60).padStart(2, "0")}`;
 }
 
-function timerHtml(coop) {
+function durationLabel(seconds) {
+  return seconds < 120 ? `${seconds} s` : `${seconds / 60} min`;
+}
+
+function timerHtml(coop, kind = "debate") {
+  const cfg = TIMERS[kind];
   return `
-    <section class="timer" id="timer" aria-label="Minuteur du débat">
+    <section class="timer" id="timer" aria-label="${cfg.aria}">
       <div class="timer-main">
-        <p class="label">Débat</p>
+        <p class="label">${cfg.label}</p>
         <p class="timer-face" id="timer-face" role="timer" aria-live="off"></p>
       </div>
       <p class="timer-done-msg" id="timer-done-msg" hidden>
-        <span aria-hidden="true">⏰ </span>Temps écoulé : ${coop ? "place au vote, désignez un suspect !" : "place au vote !"}
+        <span aria-hidden="true">⏰ </span>${cfg.done(coop)}
       </p>
       <div class="timer-bar"><i id="timer-bar"></i></div>
       <div class="timer-controls">
         <div class="chips" role="group" aria-label="Durée">
-          ${TIMER_DURATIONS.map((d) => `<button type="button" class="chip" data-duration="${d}">${d} s</button>`).join("")}
+          ${cfg.durations.map((d) => `<button type="button" class="chip" data-duration="${d}">${durationLabel(d)}</button>`).join("")}
         </div>
         <button type="button" class="btn btn--small btn--primary" id="timer-toggle"></button>
         <button type="button" class="btn btn--small" id="timer-reset">Réinitialiser</button>
@@ -552,7 +579,7 @@ function paintTimer() {
     timer.end = null;
     timer.remaining = 0;
     beep();
-    announce("Temps écoulé : place au vote.");
+    announce(TIMERS[timer.kind].announce);
   }
   const running = Boolean(timer.end);
   const done = left === 0;
@@ -562,18 +589,24 @@ function paintTimer() {
   document.getElementById("timer-face").textContent = formatSeconds(left);
   document.getElementById("timer-done-msg").hidden = !done;
   document.getElementById("timer-bar").style.width = `${(left / (timer.duration * 1000)) * 100}%`;
-  document.getElementById("timer-toggle").textContent = running ? "Pause" : done ? "Relancer" : left < timer.duration * 1000 ? "Reprendre" : "Lancer le débat";
+  document.getElementById("timer-toggle").textContent = running ? "Pause" : done ? "Relancer" : left < timer.duration * 1000 ? "Reprendre" : TIMERS[timer.kind].start;
   el.querySelectorAll("[data-duration]").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.duration) === timer.duration)));
 }
 
-function mountTimer(key) {
-  if (timer.key !== key) resetTimer(key);
+function mountTimer(key, kind = "debate") {
+  if (timer.key !== key) {
+    const cfg = TIMERS[kind];
+    timer.kind = kind;
+    timer.duration = store.get(cfg.storeKey, cfg.fallback);
+    if (!cfg.durations.includes(timer.duration)) timer.duration = cfg.fallback;
+    resetTimer(key);
+  }
   const el = document.getElementById("timer");
   el.addEventListener("click", (e) => {
     const duration = e.target.closest("[data-duration]");
     if (duration) {
       timer.duration = Number(duration.dataset.duration);
-      store.set("timerDuration", timer.duration);
+      store.set(TIMERS[timer.kind].storeKey, timer.duration);
       if (!timer.end) timer.remaining = timer.duration * 1000;
     }
     if (e.target.id === "timer-toggle") {
@@ -714,9 +747,9 @@ function viewRules() {
 
       <h3>Coopératif (recommandé)</h3>
       <ol>
-        <li><strong>Personne ne sait</strong> qui a la carte undercover, pas même celui qui l'a.</li>
+        <li><strong>L'application ne révèle aucun rôle</strong>. Celui qui a la carte undercover peut la reconnaître en la lisant : il la lit quand même mot pour mot, comme les autres.</li>
         <li><strong>Lecture</strong> : à partir du joueur désigné, chacun lit sa carte à voix haute, <strong>mot pour mot</strong>. Une carte résumée ou reformulée fausse l'enquête de toute l'équipe.</li>
-        <li><strong>Débat</strong> chronométré (30 secondes par défaut) : quelle pratique enfreint la règle d'or, et pourquoi ?</li>
+        <li><strong>Débat</strong> chronométré (1 minute par défaut) : quelle pratique enfreint la règle d'or, et pourquoi ? Citez la phrase précise de la carte avant de juger.</li>
         <li><strong>Désignation</strong> : l'équipe désigne un suspect. S'il n'a pas la carte undercover, il est disculpé et on recommence.</li>
         <li><strong>Pas de coupable</strong> : être désigné, ou avoir la carte undercover, n'est la faute de personne. Personne ne choisit sa carte : on discute des pratiques, pas des personnes.</li>
         <li><strong>Points pour l'équipe</strong> : 3 points si l'undercover est trouvé au premier vote, 2 au deuxième, 1 au troisième, 0 ensuite.</li>
@@ -854,7 +887,7 @@ function viewHostSetup() {
         <fieldset class="fs-mode">
           <legend>Mode de jeu</legend>
           <label class="radio mode-pick"><input type="radio" name="mode" value="coop" ${prefs.mode !== "compet" ? "checked" : ""}>
-            <span><strong>Coopératif</strong> (recommandé)<br><small>Personne ne sait qui a la carte undercover. Chacun lit sa carte à voix haute et l'équipe enquête ensemble. 3, 2 ou 1 point selon le nombre de votes.</small></span></label>
+            <span><strong>Coopératif</strong> (recommandé)<br><small>L'application ne révèle aucun rôle. Chacun lit sa carte à voix haute et l'équipe enquête ensemble. 3, 2 ou 1 point selon le nombre de votes.</small></span></label>
           <label class="radio mode-pick"><input type="radio" name="mode" value="compet" ${prefs.mode === "compet" ? "checked" : ""}>
             <span><strong>Compétitif</strong><br><small>L'undercover sait qu'il l'est et bluffe. On décrit sa carte avec ses mots. Civils contre undercover. À partir de 4 joueurs.</small></span></label>
         </fieldset>
@@ -1099,8 +1132,8 @@ function viewHost(code) {
         ${result ? `<button class="btn btn--primary" id="debrief">Débrief de la manche</button>` : ""}
         ${
           lastRound
-            ? `<a class="btn ${result ? "btn--primary" : ""}" href="#/end/${code}" id="finish">Voir les résultats</a>`
-            : `<button class="btn ${result ? "btn--primary" : ""}" id="next">Manche suivante</button>`
+            ? `<a class="btn" href="#/end/${code}" id="finish">Voir les résultats</a>`
+            : `<button class="btn" id="next">Manche suivante</button>`
         }
         <a class="btn" href="#/pass/${code}">Distribuer sur ce téléphone</a>
         ${!result ? `<button class="btn btn--ghost" id="debrief">Révéler et débriefer</button>` : ""}
@@ -1260,7 +1293,7 @@ function eliminate(code, game, deal, seat) {
       ? ""
       : player.role === "undercover"
         ? `${esc(name)} ne pouvait pas savoir que sa carte enfreignait la règle : c'est la pratique qu'on discute, pas la personne.`
-        : `Ce n'est pas une erreur de sa part : sa carte décrit une bonne pratique, et personne ne sait qui a la carte undercover.`;
+        : `Ce n'est pas une erreur de sa part : sa carte décrit une bonne pratique, et l'application ne révèle à personne qui a la carte undercover.`;
     openModal(`
       <p class="label">${esc(name)} ${coop ? "avait…" : "était…"}</p>
       <p class="role-reveal role--${player.role}">${coop ? (player.role === "undercover" ? "La carte undercover" : "Une bonne pratique") : ROLE_LABELS[player.role]}</p>
@@ -1334,9 +1367,11 @@ function viewDebrief(code) {
       </div>
 
       <h2>Questions pour la discussion</h2>
+      ${timerHtml(game.mode === "coop", "debrief")}
       <ul class="questions">
-        <li>Quel indice vous a mis sur la piste de l'undercover ?</li>
-        <li>Avez-vous déjà rencontré la situation de la carte undercover dans votre activité ?</li>
+        <li><strong>${esc(rule.question)}</strong></li>
+        <li>Quelle phrase précise de la carte undercover enfreint la règle ? Citez-la.</li>
+        <li>Avez-vous déjà rencontré cette situation dans votre activité ?</li>
         <li>Comment la transformer pour qu'elle respecte la règle ${rule.id} ?</li>
         <li>Laquelle des bonnes pratiques est la plus facile / difficile à appliquer chez vous ?</li>
       </ul>
@@ -1346,6 +1381,7 @@ function viewDebrief(code) {
         <a class="btn btn--primary" href="#/host/${code}">Retour à la partie</a>
       </div>
     </section>`;
+  mountTimer(`debrief:${code}:${state.round}`, "debrief");
 }
 
 // Classement et récapitulatif des manches, partagés par l'écran animateur et les téléphones.

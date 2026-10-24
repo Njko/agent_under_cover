@@ -9,7 +9,7 @@ test("chaque règle a au moins 4 cartes civiles, une carte undercover et un dos"
   assert.equal(RULES.length, 7);
   for (const r of RULES) {
     assert.ok(r.civilians.length >= 4, `règle ${r.id}`);
-    assert.ok(r.undercover && r.why && r.theme && r.back && r.summary);
+    assert.ok(r.undercover && r.why && r.theme && r.back && r.summary && r.question);
   }
   const total = RULES.reduce((n, r) => n + r.civilians.length + 1, 0);
   assert.equal(total, 44, "le PDF contient 44 cartes");

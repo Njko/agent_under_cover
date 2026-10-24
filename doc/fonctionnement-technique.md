@@ -70,7 +70,7 @@ Tout est stocké dans le `localStorage` du navigateur, sur l'appareil, et n'en s
 | `names:CODE` | Prénoms reçus via le QR code | Joueur |
 | `player:CODE:N` | Manche affichée par le joueur N | Joueur |
 | `lastPlayer` | Dernière partie rejointe | Joueur |
-| `lowtech`, `timerDuration` | Préférences d'affichage et durée du minuteur | Tous |
+| `lowtech`, `timerDuration`, `debriefDuration` | Préférences d'affichage et durées des minuteurs (débat, discussion du débrief) | Tous |
 
 Le service worker garde aussi une copie des fichiers de l'application (Cache Storage) pour fonctionner hors ligne.
 
