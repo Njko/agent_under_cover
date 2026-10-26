@@ -1,6 +1,6 @@
 # Undercover · IA responsable
 
-Serious game inspiré d'**Undercover**, construit à partir du jeu de cartes « IA responsable » (7 règles, 44 cartes).
+Serious game inspiré d'**Undercover**, construit à partir du jeu de cartes « IA responsable » (7 règles, 44 cartes), complété par une **extension** de 88 cartes tirées des métiers administratifs de l'assurance (132 cartes au total).
 L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveur ni base de données, et chaque participant joue sur son téléphone.
 
 ## Principe du jeu
@@ -46,9 +46,9 @@ Données transférées lors d'une première visite (fichiers compressés comme s
 
 | Parcours | Avant | Normal | Low-tech |
 | --- | ---: | ---: | ---: |
-| Rejoindre une partie et voir sa carte | 292 Ko | 117 Ko | 35 Ko |
-| Créer une partie et afficher le QR code | 292 Ko | 100 Ko | 43 Ko |
-| Parcourir les 44 cartes | 262 Ko | 260 Ko | 35 Ko |
+| Rejoindre une partie et voir sa carte | 292 Ko | 137 Ko | 52 Ko |
+| Créer une partie et afficher le QR code | 292 Ko | 116 Ko | 60 Ko |
+| Parcourir les 132 cartes | 262 Ko | 277 Ko | 52 Ko |
 
 Les illustrations ont d'abord été tramées en 4 gris, comme sur Low-tech Magazine : légères (3 Ko) mais peu lisibles à petite taille. Elles sont désormais redessinées au trait en SVG : plus nettes, adaptées au thème sombre, et sans aucun téléchargement d'image.
 
@@ -109,8 +109,16 @@ Tout autre serveur de fichiers statiques convient aussi (Azure Static Web Apps, 
 
 ## Modifier les cartes
 
-Tout le contenu est dans [`js/cards.js`](js/cards.js) : texte des cartes, nom de chaque règle d'or (`theme`, repris du dos des cartes), énoncé court de la règle (`summary`, rappelé sur les cartes, le tableau de bord et le débrief), image du dos (`back`) explication de l'undercover (`why`) et question de débrief propre à la règle (`question`).
-Les dos de cartes sont dans [`img/dos/`](img/dos) (WebP 640 px, coins transparents). Les énoncés `summary` et les explications `why` ont été **rédigés à partir des cartes** : relisez-les et ajustez-les à votre référentiel.
+Tout le contenu est dans [`js/cards.js`](js/cards.js) : nom de chaque règle d'or (`theme`, repris du dos des cartes), énoncé de la règle (`summary`, formulation exacte de la charte), question de débrief (`question`), image du dos (`back`), cartes civiles (`civilians`) et cartes undercover avec leur explication (`undercovers`, `why`).
+
+Chaque carte indique son jeu :
+
+- `deck: "base"` : **jeu de base**, les 44 cartes du jeu imprimé, validées ;
+- `deck: "ext"` : **extension**, 88 cartes à valider en atelier, avec le métier dont la situation est tirée (`job`).
+
+À la création d'une partie, l'animateur choisit de jouer avec le jeu de base seul ou avec l'extension. Le catalogue « Toutes les cartes » peut n'afficher que l'un ou l'autre, et les cartes de l'extension y sont marquées « Extension à valider », comme au débrief (jamais pendant le jeu, pour ne pas aider à deviner un rôle). Une fois une carte validée, passez son `deck` à `"base"`.
+
+Les dos de cartes sont dans [`img/dos/`](img/dos) (WebP 640 px, coins transparents).
 Après une modification, incrémentez `VERSION` dans `sw.js` pour que les téléphones récupèrent la nouvelle version (et republiez l'image Docker si vous l'utilisez).
 
 ## Développement

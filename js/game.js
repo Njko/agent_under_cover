@@ -49,14 +49,17 @@ function shuffle(array, rand) {
 }
 
 // --- Code de partie -----------------------------------------------------------------------
-// Bits : graine (16) | mode (1) | joueurs-3 (4) | undercovers-1 (1) | règles jouées (7)
-//        | ordre des règles (1) | manches-1 (4) | contrôle (6)
+// Bits : graine (15) | jeu de cartes (1) | mode (1) | joueurs-3 (4) | undercovers-1 (1)
+//        | règles jouées (7) | ordre des règles (1) | manches-1 (4) | contrôle (6)
 // Les valeurs dépassent 32 bits : on calcule avec des multiplications plutôt qu'avec << et |.
 
 export const MODES = ["coop", "compet"]; // coopératif (par défaut) ou compétitif
+// Jeu de cartes : "base" (cartes validées) ou "ext" (jeu de base + extension à valider).
+export const DECK_CHOICES = ["base", "ext"];
 
 const FIELDS = [
-  ["seed", 16],
+  ["seed", 15],
+  ["deck", 1],
   ["mode", 1],
   ["players", 4],
   ["undercovers", 1],
@@ -67,7 +70,8 @@ const FIELDS = [
 const CHECK_BITS = 6;
 
 function checksum(payload) {
-  return hash32(payload % 2 ** 32, Math.floor(payload / 2 ** 32), 0xc0de6) % 2 ** CHECK_BITS;
+  // Le sel change avec le format du code : les codes de l'ancien format sont refusés.
+  return hash32(payload % 2 ** 32, Math.floor(payload / 2 ** 32), 0xc0de7) % 2 ** CHECK_BITS;
 }
 
 export function validateSettings({ players, undercovers, rules = [1], rounds = 1, mode = "coop" }) {
@@ -92,12 +96,13 @@ export function validateSettings({ players, undercovers, rules = [1], rounds = 1
   return null;
 }
 
-export function encodeCode({ seed, players, undercovers, rules, ordered = false, rounds = 7, mode = "coop" }) {
+export function encodeCode({ seed, players, undercovers, rules, ordered = false, rounds = 7, mode = "coop", deck = "base" }) {
   rules = rules ?? RULES.map((r) => r.id);
   const error = validateSettings({ players, undercovers, rules, rounds, mode });
   if (error) throw new Error(error);
   const values = {
-    seed: seed % 2 ** 16,
+    seed: seed % 2 ** 15,
+    deck: Math.max(0, DECK_CHOICES.indexOf(deck)),
     mode: Math.max(0, MODES.indexOf(mode)),
     players: players - MIN_PLAYERS,
     undercovers: undercovers - 1,
@@ -145,13 +150,14 @@ export function decodeCode(raw) {
     ordered: v.ordered === 1,
     rounds: v.rounds + 1,
     mode: MODES[v.mode],
+    deck: DECK_CHOICES[v.deck],
   };
   if (validateSettings(settings)) return null;
   return { code, ...settings };
 }
 
 export function newCode(settings, random = Math.random) {
-  const seed = Math.floor(random() * 2 ** 16);
+  const seed = Math.floor(random() * 2 ** 15);
   return encodeCode({ ...settings, seed });
 }
 
@@ -181,7 +187,18 @@ function weightedPick(candidates, counts, rand) {
   return candidates[candidates.length - 1];
 }
 
-function dealOne(game, round, ucCounts, starterCounts) {
+/** Cartes d'une règle pour le jeu choisi : jeu de base seul, ou jeu de base et extension. */
+export function rulePool(rule, deck = "base") {
+  const keep = (card) => deck === "ext" || card.deck === "base";
+  return { civilians: rule.civilians.filter(keep), undercovers: rule.undercovers.filter(keep) };
+}
+
+// Mélange, puis place en tête les cartes les moins distribuées dans les manches précédentes.
+function freshFirst(cards, usage, rand) {
+  return shuffle(cards, rand).sort((a, b) => (usage.get(a.text) || 0) - (usage.get(b.text) || 0));
+}
+
+function dealOne(game, round, ucCounts, starterCounts, usage) {
   const { seed, players, undercovers } = game;
   const rand = mulberry32(hash32(seed, round, 0x6465616c));
   const rule = ruleForRound(game, round);
@@ -201,16 +218,18 @@ function dealOne(game, round, ucCounts, starterCounts) {
     impostors.push(seat);
   }
   seats = [...impostors, ...seats.filter((s) => !impostors.includes(s))];
-  const civilianCards = shuffle(rule.civilians, rand);
+  const pool = rulePool(rule, game.deck);
+  const undercover = freshFirst(pool.undercovers, usage, rand)[0];
+  const civilianCards = freshFirst(pool.civilians, usage, rand);
 
   const roles = new Array(players + 1);
   let civilianIndex = 0;
   seats.forEach((seat, i) => {
     if (i < undercovers) {
-      roles[seat] = { seat, role: "undercover", card: rule.undercover };
+      roles[seat] = { seat, role: "undercover", card: undercover.text };
     } else {
       // S'il y a plus de civils que de cartes de la règle, les cartes sont réutilisées.
-      const card = civilianCards[civilianIndex % civilianCards.length];
+      const card = civilianCards[civilianIndex % civilianCards.length].text;
       civilianIndex++;
       roles[seat] = { seat, role: "civilian", card };
     }
@@ -223,21 +242,24 @@ function dealOne(game, round, ucCounts, starterCounts) {
     rand
   );
 
-  return { round, rule, roles: roles.slice(1), starter };
+  return { round, rule, roles: roles.slice(1), starter, undercover };
 }
 
 /**
- * Calcule la manche complète : règle jouée, rôle et carte de chaque joueur, premier joueur.
+ * Calcule la manche complète : règle jouée, rôle et carte de chaque joueur, carte undercover
+ * (avec son explication), premier joueur.
  * Les joueurs sont numérotés à partir de 1. Les manches précédentes sont recalculées pour
  * répartir le rôle d'undercover et la prise de parole.
  */
 export function dealRound(game, round) {
   const ucCounts = new Array(game.players + 1).fill(0);
   const starterCounts = new Array(game.players + 1).fill(0);
+  const usage = new Map(); // nombre de distributions de chaque carte (par texte)
   let deal;
   for (let r = 1; r <= round; r++) {
-    deal = dealOne(game, r, ucCounts, starterCounts);
+    deal = dealOne(game, r, ucCounts, starterCounts, usage);
     for (const role of deal.roles) if (role.role === "undercover") ucCounts[role.seat]++;
+    for (const text of new Set(deal.roles.map((role) => role.card))) usage.set(text, (usage.get(text) || 0) + 1);
     starterCounts[deal.starter]++;
   }
   return deal;

@@ -735,6 +735,9 @@ body { overflow-wrap: anywhere; hyphens: auto; }
 
 /* Énoncé de la règle d'or (cartes, tableau de bord, débrief, catalogue) */
 .card-summary { margin: 0; padding: 4px 18px 0; font-size: 0.82rem; font-style: italic; color: var(--muted); }
+.card-deck { align-self: flex-start; margin: 0 18px 12px; padding: 2px 8px; font-size: 0.78rem; font-weight: 700; color: var(--muted); border: 1px dashed var(--muted); border-radius: 6px; }
+[data-lowtech] .card-deck { border-radius: 0; }
+section > .chips { flex-wrap: wrap; margin: 8px 0 16px; }
 .rule-summary { margin: 0 0 8px; font-style: italic; color: var(--muted); max-width: 70ch; }
 .round-bar .rule-summary { margin-bottom: 4px; }
 

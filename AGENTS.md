@@ -20,7 +20,7 @@ npm run k8s:render     # rendu Kustomize des manifestes Kubernetes
 | `js/boot.js` | Script classique chargé dans `<head>` : mode low-tech avant le premier affichage |
 | `js/app.js` | Écrans, routeur (fragment d'URL `#/…`), minuteur, accessibilité |
 | `js/game.js` | Moteur déterministe : code de partie, distribution, conditions de victoire, scores |
-| `js/cards.js` | Contenu des 44 cartes et des 7 règles d'or |
+| `js/cards.js` | Contenu des 7 règles d'or et des 132 cartes : 44 du jeu de base (`deck: "base"`, validées) et 88 de l'extension (`deck: "ext"`, à valider) |
 | `js/icons.js` | Dessins SVG du mode low-tech |
 | `css/style.css` | Styles des deux thèmes (normal et low-tech, clair et sombre) |
 | `sw.js` | Service worker (hors ligne) |

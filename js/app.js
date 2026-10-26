@@ -1,4 +1,4 @@
-import { RULES } from "./cards.js";
+import { DECKS, RULES } from "./cards.js";
 import { ICONS } from "./icons.js";
 import {
   CODE_LENGTH,
@@ -12,6 +12,7 @@ import {
   coopPoints,
   newCode,
   outcome,
+  rulePool,
   validateSettings,
   wrongGuesses,
 } from "./game.js";
@@ -326,13 +327,17 @@ function confirmForget(code, label) {
   );
 }
 
-function cardHtml({ ruleId, text, kind = "civilian", label, theme, summary, note }) {
+function cardHtml({ ruleId, text, kind = "civilian", label, theme, summary, note, card }) {
+  // card : objet carte de js/cards.js. Ses métadonnées (extension, métier) ne sont montrées qu'au
+  // catalogue et au débrief, jamais pendant le jeu : elles pourraient aider à deviner un rôle.
+  const ext = card?.deck === "ext";
   return `
-    <article class="card card--rule${ruleId} ${kind === "undercover" ? "card--undercover" : ""}">
+    <article class="card card--rule${ruleId} ${kind === "undercover" ? "card--undercover" : ""}" data-deck="${card?.deck || ""}">
       <header class="card-head"><span>RÈGLE ${ruleId}</span><i></i></header>
       ${theme ? `<p class="card-theme">${esc(theme)}</p>` : ""}
       ${summary ? `<p class="card-summary">${esc(summary)}</p>` : ""}
-      <p class="card-text">${esc(text)}</p>
+      <p class="card-text">${esc(text ?? card.text)}</p>
+      ${ext ? `<p class="card-deck">${DECKS.ext} à valider${card.job ? ` · ${esc(card.job)}` : ""}</p>` : ""}
       ${note ? `<p class="card-note">${note}</p>` : ""}
       ${kind === "undercover" ? `<footer class="card-foot">UNDERCOVER</footer>` : ""}
       ${label ? `<footer class="card-label">${esc(label)}</footer>` : ""}
@@ -697,7 +702,7 @@ function viewHome() {
       </a>
       <a class="tile" href="#/cards">
         <span class="tile-icon" aria-hidden="true">🃏</span>
-        <span><strong>Toutes les cartes</strong><small>Les 7 règles d'or et leurs 44 cartes</small></span>
+        <span><strong>Toutes les cartes</strong><small>Les 7 règles d'or et leurs ${countCards("ext")} cartes</small></span>
       </a>
       ${
         isLowTech()
@@ -737,7 +742,7 @@ function viewRules() {
       <p>Undercover IA responsable est un <strong>serious game</strong> : en démasquant la pratique qui enfreint la règle, on <strong>apprend ou on se rappelle les 7 règles d'or</strong> de l'IA responsable, et on <strong>challenge nos pratiques actuelles</strong> en les confrontant à ces règles.</p>
       <h2>Mise en place</h2>
       <ol>
-        <li>L'animateur crée une partie : prénoms des joueurs, règles d'or à jouer, nombre de manches. L'animateur ne joue pas : il ne se compte pas parmi les joueurs.</li>
+        <li>L'animateur crée une partie : prénoms des joueurs, règles d'or à jouer, nombre de manches et cartes (le jeu de base, validé, ou le jeu de base avec l'extension, dont les cartes tirées des métiers de l'assurance sont encore à valider). L'animateur ne joue pas : il ne se compte pas parmi les joueurs.</li>
         <li>Il affiche le <strong>QR code</strong> (ou le code de la partie).</li>
         <li>Chacun scanne le QR code et sélectionne <strong>son prénom</strong>, ou choisit un <strong>numéro de place</strong> si aucun prénom n'a été établi avant de lancer la partie. Chaque prénom ou numéro ne doit être pris qu'une fois. Il n'y a pas de contrôle automatisé des participants pour garder le système de jeu le plus simple possible.</li>
         <li>Sur l'appareil du participant (téléphone ou ordinateur), la carte distribuée pour la manche actuelle est affichée face cachée : on la retourne soit en maintenant le doigt dessus (sur téléphone), soit en cliquant longuement dessus, soit en cliquant ou en tapant sur « Afficher ma carte ».</li>
@@ -780,9 +785,9 @@ function viewRules() {
 
 // Mesures faites sur cette application (Chrome, profil iPhone 13, fichiers compressés comme sur GitHub Pages).
 const WEIGHT_TABLE = [
-  ["Rejoindre une partie et voir sa carte", 292, 117, 35],
-  ["Créer une partie et afficher le QR code", 292, 100, 43],
-  ["Parcourir les 44 cartes", 262, 260, 35],
+  ["Rejoindre une partie et voir sa carte", 292, 137, 52],
+  ["Créer une partie et afficher le QR code", 292, 116, 60],
+  ["Parcourir les 132 cartes", 262, 277, 52],
 ];
 
 function viewLowTech() {
@@ -846,23 +851,54 @@ function viewLowTech() {
   document.getElementById("back").onclick = () => (history.length > 1 ? history.back() : go("#/"));
 }
 
+// Nombre de cartes d'un jeu (« base » ou « ext » : jeu de base et extension).
+function countCards(deck) {
+  return RULES.reduce((n, r) => {
+    const pool = rulePool(r, deck);
+    return n + pool.civilians.length + pool.undercovers.length;
+  }, 0);
+}
+
 function viewCards() {
+  const filter = store.get("cardsFilter", "all");
+  const shown = (card) => filter === "all" || card.deck === filter;
   app.innerHTML = `
     <section>
       <h1>Toutes les cartes</h1>
-      ${RULES.map(
-        (r) => `
+      <p>${countCards("ext")} cartes : ${countCards("base")} dans le ${DECKS.base.toLowerCase()}, validées, et ${countCards("ext") - countCards("base")} dans l'${DECKS.ext.toLowerCase()}, à valider en atelier.</p>
+      <div class="chips" role="group" aria-label="Cartes affichées">
+        ${[["all", "Toutes"], ["base", DECKS.base], ["ext", DECKS.ext]]
+          .map(([value, text]) => `<button type="button" class="chip" data-filter="${value}" aria-pressed="${filter === value}">${text}</button>`)
+          .join("")}
+      </div>
+      ${RULES.map((r) => {
+        const civilians = r.civilians.filter(shown);
+        const undercovers = r.undercovers.filter(shown);
+        return `
         <h2 class="rule-title">Règle d'or ${r.id} · ${esc(r.theme)}</h2>
         <p class="rule-summary">${esc(r.summary)}</p>
         <div class="grid">
           ${backImg(r, "back back--grid")}
-          ${r.civilians.map((t) => cardHtml({ ruleId: r.id, text: t })).join("")}
-          ${cardHtml({ ruleId: r.id, text: r.undercover, kind: "undercover" })}
+          ${civilians.map((c) => cardHtml({ ruleId: r.id, card: c })).join("")}
+          ${undercovers.map((u) => cardHtml({ ruleId: r.id, card: u, kind: "undercover" })).join("")}
         </div>
-        <p class="why"><strong>Pourquoi l'undercover enfreint la règle :</strong> ${esc(r.why)}</p>`
-      ).join("")}
+        ${undercovers
+          .map((u) => `<p class="why"><strong>Pourquoi l'undercover${undercovers.length > 1 ? ` « ${esc(shorten(u.text))} »` : ""} enfreint la règle :</strong> ${esc(u.why)}</p>`)
+          .join("")}`;
+      }).join("")}
       <p><a class="btn" href="#/">Retour</a></p>
     </section>`;
+  app.querySelector(".chips").addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-filter]");
+    if (!chip) return;
+    store.set("cardsFilter", chip.dataset.filter);
+    render();
+    app.querySelector(`[data-filter="${chip.dataset.filter}"]`).focus();
+  });
+}
+
+function shorten(text, max = 48) {
+  return text.length <= max ? text : text.slice(0, text.lastIndexOf(" ", max)) + "…";
 }
 
 function viewHostSetup() {
@@ -873,6 +909,7 @@ function viewHostSetup() {
     ordered: false,
     rounds: 5,
     mode: "coop",
+    deck: "base",
     names: {},
     ...store.get("hostPrefs", {}),
   };
@@ -942,6 +979,12 @@ function viewHostSetup() {
           <label class="radio"><input type="radio" name="ordered" value="0" ${!prefs.ordered ? "checked" : ""}> <span>Ordre aléatoire</span></label>
           <label class="radio"><input type="radio" name="ordered" value="1" ${prefs.ordered ? "checked" : ""}> <span>Dans l'ordre des règles (une règle par manche)</span></label>
           <p class="rules-hint" id="rules-hint" aria-live="polite"></p>
+        </fieldset>
+
+        <fieldset class="fs-deck">
+          <legend>Cartes</legend>
+          <label class="radio"><input type="radio" name="deck" value="base" ${prefs.deck !== "ext" ? "checked" : ""}> <span>${DECKS.base} <small>(${countCards("base")} cartes validées)</small></span></label>
+          <label class="radio"><input type="radio" name="deck" value="ext" ${prefs.deck === "ext" ? "checked" : ""}> <span>${DECKS.base} et ${DECKS.ext.toLowerCase()} <small>(${countCards("ext")} cartes, dont ${countCards("ext") - countCards("base")} à valider en atelier)</small></span></label>
         </fieldset>
 
         <fieldset class="fs-undercovers">
@@ -1029,6 +1072,7 @@ function viewHostSetup() {
       ordered: form.elements.ordered.value === "1",
       rounds: Number(form.elements.rounds.value),
       mode: form.elements.mode.value,
+      deck: form.elements.deck.value,
     };
     const error = validateSettings(settings);
     if (error) {
@@ -1067,7 +1111,7 @@ function viewHost(code) {
         <div>
           <p class="label">Code de la partie</p>
           <p class="code">${esc(prettyCode(code))}</p>
-          <p class="small">Mode ${coop ? "coopératif" : "compétitif"} · ${game.players} joueurs · ${game.undercovers} undercover${game.undercovers > 1 ? "s" : ""} · ${game.rounds} manche${game.rounds > 1 ? "s" : ""} · ${rulesSummary}</p>
+          <p class="small">Mode ${coop ? "coopératif" : "compétitif"} · ${game.players} joueurs · ${game.undercovers} undercover${game.undercovers > 1 ? "s" : ""} · ${game.rounds} manche${game.rounds > 1 ? "s" : ""} · ${rulesSummary} · ${game.deck === "ext" ? `${DECKS.base.toLowerCase()} et ${DECKS.ext.toLowerCase()}` : DECKS.base.toLowerCase()}</p>
           <button class="btn btn--small" id="copy">Copier le lien</button>
           <button class="btn btn--small" id="seat-qrs">QR par joueur</button>
         </div>
@@ -1343,7 +1387,7 @@ function viewDebrief(code) {
       .filter((r) => r.card === text)
       .map((r) => playerName(state, r.seat))
       .join(", ");
-  const distributed = rule.civilians.filter((t) => holders(t));
+  const distributed = rule.civilians.filter((c) => holders(c.text));
 
   app.innerHTML = `
     <section>
@@ -1358,14 +1402,14 @@ function viewDebrief(code) {
 
       <div class="debrief-uc">
       <h2>La carte undercover</h2>
-      ${cardHtml({ ruleId: rule.id, text: rule.undercover, kind: "undercover", label: holders(rule.undercover) })}
-      <p class="why"><strong>Pourquoi elle enfreint la règle :</strong> ${esc(rule.why)}</p>
+      ${cardHtml({ ruleId: rule.id, card: deal.undercover, kind: "undercover", label: holders(deal.undercover.text) })}
+      <p class="why"><strong>Pourquoi elle enfreint la règle :</strong> ${esc(deal.undercover.why)}</p>
       </div>
 
       <div class="debrief-civ">
       <h2>Les cartes des civils</h2>
       <div class="grid">
-        ${distributed.map((t) => cardHtml({ ruleId: rule.id, text: t, label: holders(t) })).join("")}
+        ${distributed.map((c) => cardHtml({ ruleId: rule.id, card: c, label: holders(c.text) })).join("")}
       </div>
 
       <h2>Questions pour la discussion</h2>

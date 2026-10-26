@@ -37,7 +37,7 @@ Il n'y a pas de flèche entre les téléphones et le serveur dans l'autre sens :
 
 Le jeu repose sur une **distribution déterministe** (`js/game.js`) :
 
-1. L'animateur crée une partie. L'application tire une graine aléatoire et l'assemble avec les paramètres (mode, nombre de joueurs, undercovers, règles d'or, ordre, nombre de manches) dans un **code de 8 caractères** (40 bits, dont 6 de somme de contrôle contre les fautes de frappe).
+1. L'animateur crée une partie. L'application tire une graine aléatoire et l'assemble avec les paramètres (mode, jeu de cartes, nombre de joueurs, undercovers, règles d'or, ordre, nombre de manches) dans un **code de 8 caractères** (40 bits, dont 6 de somme de contrôle contre les fautes de frappe).
 2. Les joueurs reçoivent ce code via le QR code. Chaque téléphone exécute le **même calcul** à partir de *(code, numéro de manche, numéro de joueur)* et obtient exactement la même distribution des cartes que celui de l'animateur.
 3. Le passage à la manche suivante se fait de la même façon, sans nouvel échange : chacun appuie sur « Manche suivante ».
 4. Pour répartir le rôle d'undercover et la prise de parole, chaque téléphone recalcule aussi les manches précédentes : un joueur qui a déjà eu le rôle a 4 fois moins de chances de l'avoir de nouveau. Le calcul reste identique sur tous les appareils.
