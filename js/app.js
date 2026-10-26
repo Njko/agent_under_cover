@@ -878,14 +878,17 @@ function viewCards() {
         const civilians = r.civilians.filter(shown);
         const undercovers = r.undercovers.filter(shown);
         return `
-        <details class="rule-section" data-rule="${r.id}" ${opened.has(r.id) ? "open" : ""}>
-          <summary>
-            ${backImg(r, "back back--thumb", { small: true })}
-            <span class="rule-section-title">
-              <h2 class="rule-title">Règle d'or ${r.id} · ${esc(r.theme)}</h2>
-              <small>${count(civilians.length, "bonne pratique", "bonnes pratiques")} · ${count(undercovers.length, "carte undercover", "cartes undercover")}</small>
-            </span>
-          </summary>
+        <section class="rule-section" data-rule="${r.id}">
+          <h2 class="rule-head">
+            <button type="button" class="rule-toggle" aria-expanded="${opened.has(r.id)}" aria-controls="rule-panel-${r.id}">
+              ${backImg(r, "back back--thumb", { small: true })}
+              <span class="rule-section-title">
+                <span class="rule-title">Règle d'or ${r.id} · ${esc(r.theme)}</span>
+                <small>${count(civilians.length, "bonne pratique", "bonnes pratiques")} · ${count(undercovers.length, "carte undercover", "cartes undercover")}</small>
+              </span>
+            </button>
+          </h2>
+          <div class="rule-panel" id="rule-panel-${r.id}" ${opened.has(r.id) ? "" : "hidden"}>
           <p class="rule-summary">${esc(r.summary)}</p>
           <h3 class="cards-sub">Bonnes pratiques (cartes des civils)</h3>
           <div class="grid">
@@ -903,24 +906,34 @@ function viewCards() {
               )
               .join("")}
           </div>
-        </details>`;
+          </div>
+        </section>`;
       }).join("")}
       <p><a class="btn" href="#/">Retour</a></p>
     </section>`;
 
-  const sections = [...app.querySelectorAll(".rule-section")];
+  const toggles = [...app.querySelectorAll(".rule-toggle")];
+  const isOpen = (t) => t.getAttribute("aria-expanded") === "true";
+  const setOpen = (t, open) => {
+    t.setAttribute("aria-expanded", String(open));
+    document.getElementById(t.getAttribute("aria-controls")).hidden = !open;
+  };
   const toggleAll = document.getElementById("toggle-all");
   const syncToggleAll = () => {
-    const allOpen = sections.every((d) => d.open);
-    toggleAll.textContent = allOpen ? "Tout replier" : "Tout déplier";
-    store.set("cardsOpen", sections.filter((d) => d.open).map((d) => Number(d.dataset.rule)));
+    toggleAll.textContent = toggles.every(isOpen) ? "Tout replier" : "Tout déplier";
+    store.set("cardsOpen", toggles.filter(isOpen).map((t) => Number(t.closest(".rule-section").dataset.rule)));
   };
   toggleAll.onclick = () => {
-    const open = !sections.every((d) => d.open);
-    sections.forEach((d) => (d.open = open));
+    const open = !toggles.every(isOpen);
+    toggles.forEach((t) => setOpen(t, open));
     syncToggleAll();
   };
-  sections.forEach((d) => d.addEventListener("toggle", syncToggleAll));
+  toggles.forEach((t) =>
+    t.addEventListener("click", () => {
+      setOpen(t, !isOpen(t));
+      syncToggleAll();
+    })
+  );
   syncToggleAll();
 
   app.querySelector(".chips").addEventListener("click", (e) => {
@@ -941,10 +954,10 @@ function equalizeCards() {
   app.style.removeProperty("--card-h");
   // Les sections repliées ne sont pas mises en page : on les ouvre le temps de la mesure, sans rendu
   // intermédiaire (tout se passe dans la même tâche).
-  const closed = [...app.querySelectorAll(".rule-section:not([open])")];
-  closed.forEach((d) => (d.open = true));
+  const closed = [...app.querySelectorAll(".rule-panel[hidden]")];
+  closed.forEach((panel) => (panel.hidden = false));
   const heights = [...app.querySelectorAll(".grid .card")].map((card) => card.getBoundingClientRect().height);
-  closed.forEach((d) => (d.open = false));
+  closed.forEach((panel) => (panel.hidden = true));
   if (heights.length) app.style.setProperty("--card-h", `${Math.ceil(Math.max(...heights))}px`);
   window.addEventListener("resize", onCatalogResize);
 }
