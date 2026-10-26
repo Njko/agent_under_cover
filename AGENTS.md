@@ -57,6 +57,7 @@ C'est un engagement documenté dans `doc/fonctionnement-technique.md`. Ne le cas
   - libellés sur tous les champs ;
   - pas de défilement horizontal à 320 px, même avec le texte agrandi à 200 %.
 - **Mode low-tech :** pas d'image décorative ni d'animation, police du système.
+- **Animations (thème normal) :** courtes et sobres (transform et opacity), regroupées en fin de `css/style.css` sous `@media (prefers-reduced-motion: no-preference)` et `:root:not([data-lowtech])`. Un effet piloté en JavaScript vérifie `motionAllowed()`.
 - **Grands écrans (≥ 1024 px, vidéoprojecteur) :** les mises en page en colonnes sont regroupées en fin de `css/style.css` et ciblent l'écran via `#app[data-view="…"]` (posé par `render()`). Les conteneurs de colonnes (`.host-side`, `.host-main`, `.debrief-uc`, `.debrief-civ`, `.results-rounds`) sont en `display: contents` sur mobile : **le rendu mobile ne doit pas changer** quand on retouche le grand écran, et l'ordre du DOM reste celui du mobile.
 
 ## Déploiement

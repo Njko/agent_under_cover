@@ -801,3 +801,49 @@ section > .chips { flex-wrap: wrap; margin: 8px 0 16px; }
 .secret .card { height: 100%; }
 .secret .card-text { overflow: visible; }
 .secret-cover--back .back { height: 100%; object-fit: cover; }
+
+/* =============================================================================================
+   Animations sobres (thème normal uniquement)
+   Coupées en mode low-tech (règle globale plus haut) et quand l'appareil demande de limiter les
+   animations : on garde alors l'affichage instantané. Uniquement transform et opacity, peu coûteux.
+   ============================================================================================= */
+@media (prefers-reduced-motion: no-preference) {
+  .rule-toggle::after { transition: transform 0.2s ease; }
+
+  /* Changement d'écran : léger fondu montant. */
+  :root:not([data-lowtech]) #app.view-enter { animation: rise-in 0.22s ease-out; }
+
+  /* Carte secrète : vrai retournement. La face reste visible pendant le retour (visibility retardée). */
+  :root:not([data-lowtech]) .secret { perspective: 1200px; }
+  :root:not([data-lowtech]) .secret > .secret-cover,
+  :root:not([data-lowtech]) .secret > .secret-content {
+    -webkit-backface-visibility: hidden; backface-visibility: hidden;
+    transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), visibility 0s linear 0.4s;
+  }
+  :root:not([data-lowtech]) .secret > .secret-content { transform: rotateY(180deg); }
+  :root:not([data-lowtech]) .secret.revealed > .secret-cover { opacity: 1; transform: rotateY(-180deg); }
+  :root:not([data-lowtech]) .secret.revealed > .secret-content {
+    transform: rotateY(0deg); transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), visibility 0s;
+  }
+
+  /* Désignation : le rôle révélé apparaît avec un léger rebond, la victoire s'éclaire une fois. */
+  :root:not([data-lowtech]) .role-reveal,
+  :root:not([data-lowtech]) .players li.row-just .role { animation: pop-in 0.35s cubic-bezier(0.2, 1.4, 0.4, 1); }
+  :root:not([data-lowtech]) #modal .banner--win { animation: win-glow 0.9s ease-out 0.15s; }
+
+  /* Score de l'équipe : le chiffre gagné rebondit et « +N » s'affiche brièvement. */
+  :root:not([data-lowtech]) .team-score-value strong.bump { display: inline-block; animation: pop-in 0.4s cubic-bezier(0.2, 1.4, 0.4, 1); }
+
+  /* Catalogue : la règle se déplie en douceur, ses cartes arrivent en cascade rapide. */
+  :root:not([data-lowtech]) .rule-panel.panel-enter { animation: rise-in 0.25s ease-out; }
+  :root:not([data-lowtech]) .rule-panel.panel-enter .grid > * { animation: rise-in 0.3s ease-out both; animation-delay: calc(var(--i, 0) * 20ms); }
+}
+.score-delta { display: inline-block; margin-left: 6px; font-weight: 800; color: var(--win); animation: score-delta 1.4s ease-out forwards; }
+@keyframes rise-in { from { opacity: 0; transform: translateY(8px); } }
+@keyframes pop-in { from { opacity: 0; transform: scale(0.85); } }
+@keyframes win-glow { from { box-shadow: 0 0 0 0 var(--win); } to { box-shadow: 0 0 0 14px transparent; } }
+@keyframes score-delta {
+  0% { opacity: 0; transform: translateY(6px); }
+  20%, 75% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: translateY(-6px); }
+}

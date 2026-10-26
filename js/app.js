@@ -269,6 +269,48 @@ function setBackgroundInert(on) {
   for (const el of document.querySelectorAll("body > :not(#modal)")) el.inert = on;
 }
 
+// --- Animations -----------------------------------------------------------------------------
+// Les animations CSS sont coupées en low-tech et si l'appareil demande moins d'animations ; les effets
+// pilotés en JavaScript (compteur de score, cascade) vérifient la même condition.
+function motionAllowed() {
+  return !isLowTech() && !matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+let lastRoute = null; // dernier écran affiché, pour n'animer que les changements d'écran
+let justRevealed = null; // { code, seat } du joueur que l'on vient de désigner ou d'éliminer
+const scoreSeen = new Map(); // score affiché par partie, pour animer sa progression
+let onModalClosed = null;
+
+// Score de l'équipe : si un nombre a augmenté depuis le dernier affichage, il défile jusqu'à sa
+// nouvelle valeur et « +N » apparaît. Si une fenêtre est ouverte (résultat d'une désignation),
+// l'animation attend sa fermeture pour être vue.
+function animateScore(code) {
+  const strongs = [...app.querySelectorAll(".team-score-value strong")];
+  const values = strongs.map((el) => Number(el.textContent));
+  const previous = scoreSeen.get(code);
+  scoreSeen.set(code, values);
+  if (!previous || previous.length !== values.length || !motionAllowed()) return;
+  const gains = values.map((v, i) => v - previous[i]);
+  if (!gains.some((g) => g > 0)) return;
+  strongs.forEach((el, i) => gains[i] > 0 && (el.textContent = previous[i]));
+  const run = () => {
+    strongs.forEach((el, i) => {
+      if (gains[i] <= 0 || !el.isConnected) return;
+      const start = performance.now();
+      const step = (now) => {
+        const t = Math.min(1, (now - start) / 600);
+        el.textContent = Math.round(previous[i] + gains[i] * t);
+        if (t < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+      el.classList.add("bump");
+      el.insertAdjacentHTML("afterend", `<span class="score-delta" aria-hidden="true">+${gains[i]}</span>`);
+      el.nextElementSibling.addEventListener("animationend", (e) => e.target.remove());
+    });
+  };
+  setTimeout(() => (modal.hidden ? run() : (onModalClosed = run)), 0);
+}
+
 function openModal(html) {
   if (modal.hidden) modalOpener = document.activeElement;
   modal.innerHTML = `<div class="modal-box" role="dialog" aria-modal="true">${html}</div>`;
@@ -305,6 +347,9 @@ function closeModal(restoreFocus = true) {
   // Après un nouveau rendu, l'élément d'origine peut avoir disparu : on se rabat sur le titre de l'écran.
   if (restoreFocus) (modalOpener?.isConnected ? modalOpener : app.querySelector("h1"))?.focus({ preventScroll: true });
   modalOpener = null;
+  const then = onModalClosed;
+  onModalClosed = null;
+  then?.();
 }
 
 document.addEventListener("keydown", (e) => {
@@ -915,8 +960,15 @@ function viewCards() {
   const toggles = [...app.querySelectorAll(".rule-toggle")];
   const isOpen = (t) => t.getAttribute("aria-expanded") === "true";
   const setOpen = (t, open) => {
+    const panel = document.getElementById(t.getAttribute("aria-controls"));
+    if (open && panel.hidden && motionAllowed()) {
+      // Cascade rapide : chaque carte arrive 20 ms après la précédente (plafonnée à 20 cartes).
+      panel.querySelectorAll(".grid").forEach((grid) => [...grid.children].forEach((el, i) => el.style.setProperty("--i", Math.min(i, 20))));
+      panel.classList.add("panel-enter");
+      setTimeout(() => panel.classList.remove("panel-enter"), 1000);
+    }
     t.setAttribute("aria-expanded", String(open));
-    document.getElementById(t.getAttribute("aria-controls")).hidden = !open;
+    panel.hidden = !open;
   };
   const toggleAll = document.getElementById("toggle-all");
   const syncToggleAll = () => {
@@ -1225,7 +1277,7 @@ function viewHost(code) {
             // Coopératif : un civil désigné à tort est disculpé et reste en jeu.
             const status = !out ? "" : coop ? (r.role === "undercover" ? " · démasqué" : " · disculpé") : " · éliminé";
             return `
-            <li class="${out && !coop ? "out" : ""}">
+            <li class="${out && !coop ? "out" : ""} ${justRevealed?.code === code && justRevealed.seat === r.seat ? "row-just" : ""}">
               <span class="seat">${r.seat}</span>
               <input class="name" id="host-name-${r.seat}" data-seat="${r.seat}" maxlength="${MAX_NAME_LENGTH}" value="${esc(state.names[r.seat] || "")}" placeholder="Joueur ${r.seat}" aria-label="Prénom du joueur ${r.seat}">
               ${
@@ -1273,6 +1325,8 @@ function viewHost(code) {
   };
   document.getElementById("seat-qrs").onclick = () => showSeatQrs(code, game, hostState(code));
   if (!result) mountTimer(`${code}:${state.round}`);
+  justRevealed = null;
+  animateScore(code);
 
   // Un prénom modifié ici est intégré au QR code : les joueurs qui le scannent ensuite le verront.
   app.querySelectorAll("input.name").forEach((input) =>
@@ -1385,6 +1439,7 @@ function eliminate(code, game, deal, seat) {
 
   document.getElementById("do-eliminate").onclick = () => {
     state.eliminated.push(seat);
+    justRevealed = { code, seat };
     const result = roundOutcome(game, deal, state.eliminated);
     if (result) {
       state.finished = result;
@@ -1841,6 +1896,14 @@ function render() {
       viewHome();
   }
   hydrateQr(app);
+  // Fondu d'entrée uniquement quand on change d'écran (pas à chaque mise à jour du même écran).
+  const routeKey = location.hash.split("~")[0];
+  if (routeKey !== lastRoute) {
+    app.classList.remove("view-enter");
+    void app.offsetWidth; // relance l'animation
+    app.classList.add("view-enter");
+  }
+  lastRoute = routeKey;
   window.scrollTo(0, 0);
   announceView();
   paintWeight();
