@@ -737,8 +737,8 @@ function viewRules() {
       <ol>
         <li>L'animateur crée une partie : prénoms des joueurs, règles d'or à jouer, nombre de manches. L'animateur ne joue pas : il ne se compte pas parmi les joueurs.</li>
         <li>Il affiche le <strong>QR code</strong> (ou le code de la partie).</li>
-        <li>Chacun scanne le QR code et touche <strong>son prénom</strong>. Avec le code saisi à la main, on choisit son <strong>numéro</strong>, affiché à côté de son prénom sur l'écran de l'animateur. Chaque prénom ou numéro ne doit être pris qu'une fois.</li>
-        <li>Sa carte s'affiche face cachée : on la retourne en maintenant le doigt dessus, ou avec le bouton « Afficher ma carte ».</li>
+        <li>Chacun scanne le QR code et sélectionne <strong>son prénom</strong>, ou choisit un <strong>numéro de place</strong> si aucun prénom n'a été établi avant de lancer la partie. Chaque prénom ou numéro ne doit être pris qu'une fois. Il n'y a pas de contrôle automatisé des participants pour garder le système de jeu le plus simple possible.</li>
+        <li>Sur l'appareil du participant (téléphone ou ordinateur), la carte distribuée pour la manche actuelle est affichée face cachée : on la retourne soit en maintenant le doigt dessus (sur téléphone), soit en cliquant longuement dessus, soit en cliquant ou en tapant sur « Afficher ma carte ».</li>
       </ol>
       <p class="hint">Aucune connexion entre téléphones n'est nécessaire : chaque téléphone calcule sa propre carte à partir du code.
       Pas assez de téléphones ? Utilisez le mode « Distribuer sur ce téléphone ».</p>
