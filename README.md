@@ -116,7 +116,7 @@ Chaque carte indique son jeu :
 - `deck: "base"` : **jeu de base**, les 44 cartes du jeu imprimé, validées ;
 - `deck: "ext"` : **extension**, 88 cartes à valider en atelier, avec le métier dont la situation est tirée (`job`).
 
-À la création d'une partie, l'animateur choisit de jouer avec le jeu de base seul ou avec l'extension. Le catalogue « Toutes les cartes » peut n'afficher que l'un ou l'autre, et les cartes de l'extension y sont marquées « Extension à valider », comme au débrief (jamais pendant le jeu, pour ne pas aider à deviner un rôle). Une fois une carte validée, passez son `deck` à `"base"`.
+À la création d'une partie, l'animateur choisit de jouer avec le jeu de base seul ou avec l'extension. Le catalogue « Toutes les cartes » peut n'afficher que l'un ou l'autre, et les cartes de l'extension y sont marquées « Extension », comme au débrief (jamais pendant le jeu, pour ne pas aider à deviner un rôle). Une fois une carte validée, passez son `deck` à `"base"`.
 
 Les dos de cartes sont dans [`img/dos/`](img/dos) (WebP 640 px, coins transparents).
 Après une modification, incrémentez `VERSION` dans `sw.js` pour que les téléphones récupèrent la nouvelle version (et republiez l'image Docker si vous l'utilisez).

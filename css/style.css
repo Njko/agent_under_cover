@@ -741,6 +741,33 @@ section > .chips { flex-wrap: wrap; margin: 8px 0 16px; }
 .rule-summary { margin: 0 0 8px; font-style: italic; color: var(--muted); max-width: 70ch; }
 .round-bar .rule-summary { margin-bottom: 4px; }
 
+/* Catalogue des cartes : une section repliable par règle */
+.rule-section { border-top: 1px solid var(--border); }
+.rule-section > summary { display: flex; align-items: center; gap: 12px; min-height: 44px; padding: 12px 0; cursor: pointer; list-style: none; }
+.rule-section > summary::-webkit-details-marker { display: none; }
+.rule-section > summary::after {
+  content: ""; flex: none; margin: 0 8px 0 auto; width: 10px; height: 10px;
+  border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg);
+}
+.rule-section[open] > summary::after { transform: rotate(-135deg); }
+.rule-section-title { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.rule-section-title .rule-title { margin: 0; }
+.rule-section-title small { color: var(--muted); }
+.cards-sub { font-size: 1rem; margin: 18px 0 8px; }
+.rule-section > .grid:last-child { margin-bottom: 20px; }
+.uc-pair { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.uc-pair .why { margin: 0; }
+/* Toutes les cartes ont la hauteur de la plus haute (--card-h, calculée par equalizeCards), texte en haut. */
+#app[data-view="cards"] .grid { align-items: start; }
+#app[data-view="cards"] .grid .card { min-height: 0; height: var(--card-h, auto); }
+#app[data-view="cards"] .card-text { margin: 0 0 auto; }
+#app[data-view="cards"] .back--grid { height: var(--card-h, auto); aspect-ratio: auto; object-fit: contain; }
+#app[data-view="cards"] .lt-back.back--grid .lt-icon { flex: 1 1 0; min-height: 0; width: auto; max-width: 65%; }
+/* Sur une colonne, le dos de carte prendrait un écran entier : la vignette de l'en-tête suffit. */
+@media (max-width: 599px) {
+  #app[data-view="cards"] .grid > .back--grid { display: none; }
+}
+
 /* Joueur qui a rejoint par le code : vérification de son numéro */
 .seat-check { margin: 4px 0 0; }
 .reuse-names { margin-top: 10px; }

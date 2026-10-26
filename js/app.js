@@ -328,8 +328,8 @@ function confirmForget(code, label) {
 }
 
 function cardHtml({ ruleId, text, kind = "civilian", label, theme, summary, note, card }) {
-  // card : objet carte de js/cards.js. Ses métadonnées (extension, métier) ne sont montrées qu'au
-  // catalogue et au débrief, jamais pendant le jeu : elles pourraient aider à deviner un rôle.
+  // card : objet carte de js/cards.js. Sa mention « Extension » n'est montrée qu'au catalogue et au
+  // débrief, jamais pendant le jeu : elle pourrait aider à deviner un rôle.
   const ext = card?.deck === "ext";
   return `
     <article class="card card--rule${ruleId} ${kind === "undercover" ? "card--undercover" : ""}" data-deck="${card?.deck || ""}">
@@ -337,7 +337,7 @@ function cardHtml({ ruleId, text, kind = "civilian", label, theme, summary, note
       ${theme ? `<p class="card-theme">${esc(theme)}</p>` : ""}
       ${summary ? `<p class="card-summary">${esc(summary)}</p>` : ""}
       <p class="card-text">${esc(text ?? card.text)}</p>
-      ${ext ? `<p class="card-deck">${DECKS.ext} à valider${card.job ? ` · ${esc(card.job)}` : ""}</p>` : ""}
+      ${ext ? `<p class="card-deck">${DECKS.ext}</p>` : ""}
       ${note ? `<p class="card-note">${note}</p>` : ""}
       ${kind === "undercover" ? `<footer class="card-foot">UNDERCOVER</footer>` : ""}
       ${label ? `<footer class="card-label">${esc(label)}</footer>` : ""}
@@ -861,9 +861,11 @@ function countCards(deck) {
 
 function viewCards() {
   const filter = store.get("cardsFilter", "all");
+  const opened = new Set(store.get("cardsOpen", []));
   const shown = (card) => filter === "all" || card.deck === filter;
+  const count = (n, one, many) => `${n} ${n > 1 ? many : one}`;
   app.innerHTML = `
-    <section>
+    <section class="catalog">
       <h1>Toutes les cartes</h1>
       <p>${countCards("ext")} cartes : ${countCards("base")} dans le ${DECKS.base.toLowerCase()}, validées, et ${countCards("ext") - countCards("base")} dans l'${DECKS.ext.toLowerCase()}, à valider en atelier.</p>
       <div class="chips" role="group" aria-label="Cartes affichées">
@@ -871,23 +873,56 @@ function viewCards() {
           .map(([value, text]) => `<button type="button" class="chip" data-filter="${value}" aria-pressed="${filter === value}">${text}</button>`)
           .join("")}
       </div>
+      <p><button type="button" class="btn btn--small" id="toggle-all"></button></p>
       ${RULES.map((r) => {
         const civilians = r.civilians.filter(shown);
         const undercovers = r.undercovers.filter(shown);
         return `
-        <h2 class="rule-title">Règle d'or ${r.id} · ${esc(r.theme)}</h2>
-        <p class="rule-summary">${esc(r.summary)}</p>
-        <div class="grid">
-          ${backImg(r, "back back--grid")}
-          ${civilians.map((c) => cardHtml({ ruleId: r.id, card: c })).join("")}
-          ${undercovers.map((u) => cardHtml({ ruleId: r.id, card: u, kind: "undercover" })).join("")}
-        </div>
-        ${undercovers
-          .map((u) => `<p class="why"><strong>Pourquoi l'undercover${undercovers.length > 1 ? ` « ${esc(shorten(u.text))} »` : ""} enfreint la règle :</strong> ${esc(u.why)}</p>`)
-          .join("")}`;
+        <details class="rule-section" data-rule="${r.id}" ${opened.has(r.id) ? "open" : ""}>
+          <summary>
+            ${backImg(r, "back back--thumb", { small: true })}
+            <span class="rule-section-title">
+              <h2 class="rule-title">Règle d'or ${r.id} · ${esc(r.theme)}</h2>
+              <small>${count(civilians.length, "bonne pratique", "bonnes pratiques")} · ${count(undercovers.length, "carte undercover", "cartes undercover")}</small>
+            </span>
+          </summary>
+          <p class="rule-summary">${esc(r.summary)}</p>
+          <h3 class="cards-sub">Bonnes pratiques (cartes des civils)</h3>
+          <div class="grid">
+            ${backImg(r, "back back--grid")}
+            ${civilians.map((c) => cardHtml({ ruleId: r.id, card: c })).join("")}
+          </div>
+          <h3 class="cards-sub">Cartes undercover</h3>
+          <div class="grid">
+            ${undercovers
+              .map(
+                (u) => `<div class="uc-pair">
+                  ${cardHtml({ ruleId: r.id, card: u, kind: "undercover" })}
+                  <p class="why"><strong>Pourquoi elle enfreint la règle :</strong> ${esc(u.why)}</p>
+                </div>`
+              )
+              .join("")}
+          </div>
+        </details>`;
       }).join("")}
       <p><a class="btn" href="#/">Retour</a></p>
     </section>`;
+
+  const sections = [...app.querySelectorAll(".rule-section")];
+  const toggleAll = document.getElementById("toggle-all");
+  const syncToggleAll = () => {
+    const allOpen = sections.every((d) => d.open);
+    toggleAll.textContent = allOpen ? "Tout replier" : "Tout déplier";
+    store.set("cardsOpen", sections.filter((d) => d.open).map((d) => Number(d.dataset.rule)));
+  };
+  toggleAll.onclick = () => {
+    const open = !sections.every((d) => d.open);
+    sections.forEach((d) => (d.open = open));
+    syncToggleAll();
+  };
+  sections.forEach((d) => d.addEventListener("toggle", syncToggleAll));
+  syncToggleAll();
+
   app.querySelector(".chips").addEventListener("click", (e) => {
     const chip = e.target.closest("[data-filter]");
     if (!chip) return;
@@ -895,10 +930,28 @@ function viewCards() {
     render();
     app.querySelector(`[data-filter="${chip.dataset.filter}"]`).focus();
   });
+  equalizeCards();
 }
 
-function shorten(text, max = 48) {
-  return text.length <= max ? text : text.slice(0, text.lastIndexOf(" ", max)) + "…";
+// Catalogue : toutes les cartes (et les dos) prennent la hauteur de la carte la plus haute, c'est-à-dire
+// celle dont le texte est le plus long. Recalculé quand la largeur ou la taille du texte change.
+let equalizeFrame = 0;
+function equalizeCards() {
+  if (app.dataset.view !== "cards") return window.removeEventListener("resize", onCatalogResize);
+  app.style.removeProperty("--card-h");
+  // Les sections repliées ne sont pas mises en page : on les ouvre le temps de la mesure, sans rendu
+  // intermédiaire (tout se passe dans la même tâche).
+  const closed = [...app.querySelectorAll(".rule-section:not([open])")];
+  closed.forEach((d) => (d.open = true));
+  const heights = [...app.querySelectorAll(".grid .card")].map((card) => card.getBoundingClientRect().height);
+  closed.forEach((d) => (d.open = false));
+  if (heights.length) app.style.setProperty("--card-h", `${Math.ceil(Math.max(...heights))}px`);
+  window.addEventListener("resize", onCatalogResize);
+}
+
+function onCatalogResize() {
+  cancelAnimationFrame(equalizeFrame);
+  equalizeFrame = requestAnimationFrame(equalizeCards);
 }
 
 function viewHostSetup() {
