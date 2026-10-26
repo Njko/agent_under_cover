@@ -847,3 +847,25 @@ section > .chips { flex-wrap: wrap; margin: 8px 0 16px; }
   20%, 75% { opacity: 1; transform: none; }
   100% { opacity: 0; transform: translateY(-6px); }
 }
+
+/* Deuxième lot : accueil, débrief, fin de partie (mêmes conditions que ci-dessus). */
+@media (prefers-reduced-motion: no-preference) {
+  /* Accueil : l'éventail s'ouvre depuis un paquet fermé ; au survol, une carte se soulève. */
+  :root:not([data-lowtech]) .fan img { animation: fan-open 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both; transition: translate 0.2s ease; }
+  @media (hover: hover) {
+    :root:not([data-lowtech]) .fan img:hover { translate: 0 -10px; }
+  }
+
+  /* Débrief : la carte undercover d'abord, puis son explication, puis les cartes des civils et les
+     questions. --i (posé par viewDebrief) décale chaque carte des civils de 40 ms. */
+  :root:not([data-lowtech]) #app[data-view="debrief"] .debrief-uc > .card { animation: rise-in 0.35s ease-out both; }
+  :root:not([data-lowtech]) #app[data-view="debrief"] .debrief-uc > .why { animation: rise-in 0.35s ease-out 0.35s both; }
+  :root:not([data-lowtech]) #app[data-view="debrief"] .debrief-civ .grid > .card { animation: rise-in 0.3s ease-out both; animation-delay: calc(0.55s + var(--i, 0) * 40ms); }
+  :root:not([data-lowtech]) #app[data-view="debrief"] .debrief-civ > :is(h2, .timer, .questions) { animation: rise-in 0.3s ease-out 0.8s both; }
+
+  /* Fin de partie : le score monte depuis 0 (compteur en JavaScript), puis le verdict et les manches
+     apparaissent une à une. */
+  :root:not([data-lowtech]) .team-score--big .team-score-value + p { animation: rise-in 0.35s ease-out 0.7s both; }
+  :root:not([data-lowtech]) .results-rounds .recap li { animation: rise-in 0.3s ease-out both; animation-delay: calc(0.4s + var(--i, 0) * 60ms); }
+}
+@keyframes fan-open { from { transform: rotate(0deg) translateY(8px); } }

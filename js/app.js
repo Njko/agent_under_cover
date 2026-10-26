@@ -296,19 +296,32 @@ function animateScore(code) {
   const run = () => {
     strongs.forEach((el, i) => {
       if (gains[i] <= 0 || !el.isConnected) return;
-      const start = performance.now();
-      const step = (now) => {
-        const t = Math.min(1, (now - start) / 600);
-        el.textContent = Math.round(previous[i] + gains[i] * t);
-        if (t < 1) requestAnimationFrame(step);
-      };
-      requestAnimationFrame(step);
+      countUp(el, previous[i], values[i]);
       el.classList.add("bump");
       el.insertAdjacentHTML("afterend", `<span class="score-delta" aria-hidden="true">+${gains[i]}</span>`);
       el.nextElementSibling.addEventListener("animationend", (e) => e.target.remove());
     });
   };
   setTimeout(() => (modal.hidden ? run() : (onModalClosed = run)), 0);
+}
+
+// Fait défiler un nombre affiché de « from » à « to ».
+function countUp(el, from, to, duration = 600) {
+  const start = performance.now();
+  const step = (now) => {
+    const t = Math.min(1, (now - start) / duration);
+    el.textContent = Math.round(from + (to - from) * t);
+    if (t < 1 && el.isConnected) requestAnimationFrame(step);
+  };
+  el.textContent = from;
+  requestAnimationFrame(step);
+}
+
+// Fin de partie et résultats : le score de l'équipe monte depuis 0 ; les manches arrivent une à une.
+function animateFinalScore() {
+  app.querySelectorAll(".results-rounds .recap li").forEach((li, i) => li.style.setProperty("--i", Math.min(i, 16)));
+  if (!motionAllowed()) return;
+  app.querySelectorAll(".team-score--big .team-score-value strong").forEach((el) => countUp(el, 0, Number(el.textContent), 900));
 }
 
 function openModal(html) {
@@ -1548,6 +1561,7 @@ function viewDebrief(code) {
         <a class="btn btn--primary" href="#/host/${code}">Retour à la partie</a>
       </div>
     </section>`;
+  app.querySelectorAll(".debrief-civ .grid > .card").forEach((card, i) => card.style.setProperty("--i", Math.min(i, 16)));
   mountTimer(`debrief:${code}:${state.round}`, "debrief");
 }
 
@@ -1631,6 +1645,7 @@ function viewEnd(code) {
     }
   };
   document.getElementById("forget").onclick = () => confirmForget(code, "cette partie");
+  animateFinalScore();
 }
 
 function viewResults(code, token) {
@@ -1654,6 +1669,7 @@ function viewResults(code, token) {
       </div>
     </section>`;
   document.getElementById("forget").onclick = () => confirmForget(game.code, "cette partie");
+  animateFinalScore();
 }
 
 function viewJoin(prefill, seatPrefill, namesToken) {

@@ -71,7 +71,7 @@ Le texte grossit légèrement sur grand écran (17 px, puis 18 px à partir de 1
 
 Audit WCAG 2.1 AA réalisé sur les deux thèmes (normal et low-tech, clair et sombre) : scan axe-core sur 13 écrans × 4 thèmes sans violation, puis tests manuels.
 
-- **Animations** (thème normal) : courtes (0,2 à 0,4 s) et limitées aux moments clés : retournement de la carte secrète, fondu au changement d'écran, rôle révélé et score qui progresse après une désignation, dépliage du catalogue. Elles sont coupées en mode low-tech et quand l'appareil demande de limiter les animations (`prefers-reduced-motion`).
+- **Animations** (thème normal) : courtes (0,2 à 0,4 s) et limitées aux moments clés : retournement de la carte secrète, fondu au changement d'écran, éventail de l'accueil qui s'ouvre, rôle révélé et score qui progresse après une désignation, débrief dévoilé dans l'ordre (carte undercover, explication, cartes des civils), score final qui monte depuis 0, dépliage du catalogue. Elles sont coupées en mode low-tech et quand l'appareil demande de limiter les animations (`prefers-reduced-motion`).
 - **Carte secrète** : en plus de l'appui long, un bouton « Afficher ma carte » (clavier, lecteur d'écran) révèle la carte et y place le focus.
 - **Modales** : nom accessible, page derrière inerte, fermeture par Échap, focus rendu à l'élément d'origine.
 - **Changement d'écran** : titre de l'onglet mis à jour et focus placé sur le titre de l'écran.
