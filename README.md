@@ -14,7 +14,7 @@ L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveu
   - **Coopératif** (par défaut) : l'application ne révèle aucun rôle (celui qui a la carte undercover peut la reconnaître, mais la lit comme les autres). Chacun **lit sa carte à voix haute**, l'équipe débat puis désigne un suspect ; un civil désigné à tort est disculpé et reste en jeu. **Score d'équipe** : 3 points si l'undercover est trouvé au premier vote, 2 au deuxième, 1 au troisième, 0 ensuite.
   - **Compétitif** : l'undercover **sait qu'il l'est** en retournant sa carte et bluffe. Chacun peut garder sa carte sous les yeux mais la **décrit avec ses mots**. Vote, élimination ; le score compte les **manches gagnées par chaque camp** (civils contre undercover).
 - Débat **chronométré** (30 s à 2 min, 1 min par défaut, avec signal sonore), puis **débrief** : l'app affiche la règle, la carte undercover, *pourquoi* elle enfreint la règle, des questions de discussion (dont une propre à chaque règle) et un minuteur de discussion (3, 5 ou 10 min).
-- **Fin de partie** : score de l'équipe (ou des deux camps) et récapitulatif des manches sur l'écran de l'animateur, avec un QR code qui transmet les résultats aux téléphones des joueurs.
+- **Fin de partie** : score de l'équipe (ou des deux camps) et récapitulatif des manches sur l'écran de l'animateur, avec un QR code qui transmet les résultats aux téléphones des joueurs. En touchant une manche, on rouvre son débrief : qui avait quelle carte, et pourquoi la carte undercover enfreint la règle.
 - Chaque partie peut être **supprimée** du téléphone (accueil, tableau de bord ou fin de partie).
 
 ## Comment ça marche sans serveur ?

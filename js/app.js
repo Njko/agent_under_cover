@@ -874,7 +874,7 @@ function viewRules() {
       <h2>Équité</h2>
       <p>D'une manche à l'autre, l'application fait tourner le rôle d'undercover et le joueur qui commence : un même joueur peut les avoir deux fois de suite, mais c'est rare.</p>
       <h2>Fin de partie</h2>
-      <p>Après la dernière manche, l'animateur affiche le score et un QR code : en le scannant, chaque joueur retrouve les résultats sur son téléphone.</p>
+      <p>Après la dernière manche, l'animateur affiche le score et un QR code : en le scannant, chaque joueur retrouve les résultats sur son téléphone. En touchant une manche, on revoit les cartes distribuées et qui les avait.</p>
       <h2>Débrief</h2>
       <p>À la fin de chaque manche, l'animateur affiche la règle, la carte undercover et pourquoi elle l'enfreint. C'est le moment d'échanger sur les pratiques réelles des équipes.</p>
       <p><button class="btn" id="back">Retour</button></p>
@@ -1551,17 +1551,26 @@ function showSeatQrs(code, game, state) {
   show();
 }
 
-function viewDebrief(code) {
+/**
+ * Débrief d'une manche : qui avait quelle carte, pourquoi l'undercover enfreint la règle, questions.
+ * Sans option : manche en cours de l'animateur. Avec round : revue d'une manche depuis la fin de partie
+ * (animateur) ou depuis les résultats reçus par QR code (joueur : names et back fournis, pas de minuteur).
+ */
+function viewDebrief(code, { round, names, back, mySeat = null } = {}) {
   const game = decodeCode(code);
   if (!game) return viewInvalid(code);
+  app.dataset.view = "debrief"; // mise en page grand écran du débrief, quel que soit le lien d'accès
   const state = hostState(code);
-  const deal = dealRound(game, state.round);
+  const shown = round >= 1 && round <= game.rounds ? round : state.round;
+  const deal = dealRound(game, shown);
   const rule = deal.rule;
+  const label = (seat) => (names ? names[seat] || `Joueur ${seat}` : playerName(state, seat)) + (seat === mySeat ? " (toi)" : "");
   const holders = (text) =>
     deal.roles
       .filter((r) => r.card === text)
-      .map((r) => playerName(state, r.seat))
+      .map((r) => label(r.seat))
       .join(", ");
+  const [backHref, backText] = back || (round ? [`#/end/${code}`, "Retour aux résultats"] : [`#/host/${code}`, "Retour à la partie"]);
   const distributed = rule.civilians.filter((c) => holders(c.text));
 
   app.innerHTML = `
@@ -1569,7 +1578,7 @@ function viewDebrief(code) {
       <div class="debrief-head">
         ${backImg(rule, "back back--round", { lazy: false, small: true })}
         <div>
-          <p class="label">Manche ${state.round} / ${game.rounds} · débrief</p>
+          <p class="label">Manche ${shown} / ${game.rounds} · débrief</p>
           <h1>Règle d'or ${rule.id} · ${esc(rule.theme)}</h1>
           <p class="rule-summary">${esc(rule.summary)}</p>
         </div>
@@ -1588,7 +1597,7 @@ function viewDebrief(code) {
       </div>
 
       <h2>Questions pour la discussion</h2>
-      ${timerHtml(game.mode === "coop", "debrief")}
+      ${names ? "" : timerHtml(game.mode === "coop", "debrief")}
       <ul class="questions">
         <li><strong>${esc(rule.question)}</strong></li>
         <li>Quelle phrase précise de la carte undercover enfreint la règle ? Citez-la.</li>
@@ -1599,15 +1608,16 @@ function viewDebrief(code) {
       </div>
 
       <div class="actions">
-        <a class="btn btn--primary" href="#/host/${code}">Retour à la partie</a>
+        <a class="btn btn--primary" href="${backHref}">${backText}</a>
       </div>
     </section>`;
   app.querySelectorAll(".debrief-civ .grid > .card").forEach((card, i) => card.style.setProperty("--i", Math.min(i, 16)));
-  mountTimer(`debrief:${code}:${state.round}`, "debrief");
+  if (!names) mountTimer(`debrief:${code}:${shown}`, "debrief");
 }
 
 // Classement et récapitulatif des manches, partagés par l'écran animateur et les téléphones.
-function resultsHtml(game, names, results, mySeat) {
+// roundHref(round) : lien vers le débrief de la manche (qui avait quelle carte).
+function resultsHtml(game, names, results, mySeat, roundHref) {
   const label = (seat) => names[seat] || `Joueur ${seat}`;
   const rounds = Object.keys(results).map(Number).sort((a, b) => a - b);
 
@@ -1617,6 +1627,7 @@ function resultsHtml(game, names, results, mySeat) {
       rounds.length
         ? `<div class="results-rounds">
           <h2 class="section-title">Les manches</h2>
+          ${roundHref ? `<p class="hint">Touchez une manche pour revoir les cartes distribuées et qui les avait.</p>` : ""}
           <ol class="recap">
             ${rounds
               .map((round) => {
@@ -1624,10 +1635,14 @@ function resultsHtml(game, names, results, mySeat) {
                 const undercovers = deal.roles.filter((r) => r.role === "undercover").map((r) => label(r.seat) + (r.seat === mySeat ? " (toi)" : ""));
                 const res = results[round];
                 return `
-                <li>
+                <li class="${roundHref ? "recap-item--link" : ""}">
                   ${backImg(deal.rule, "back back--thumb", { small: true })}
                   <div>
-                    <p class="recap-title">Manche ${round} · ${esc(deal.rule.theme)}</p>
+                    <p class="recap-title">${
+                      roundHref
+                        ? `<a class="recap-link" href="${roundHref(round)}">Manche ${round} · ${esc(deal.rule.theme)}</a>`
+                        : `Manche ${round} · ${esc(deal.rule.theme)}`
+                    }</p>
                     <p class="small">Undercover : <strong>${esc(undercovers.join(", "))}</strong></p>
                   </div>
                   <span class="result result--${resultClass(res)}">${resultLabel(res)}</span>
@@ -1653,7 +1668,7 @@ function viewEnd(code) {
     <section class="end">
       <p class="label center-text">Partie ${esc(prettyCode(code))}</p>
       <h1 class="center-text">Fin de partie</h1>
-      ${resultsHtml(game, state.names, results, null)}
+      ${resultsHtml(game, state.names, results, null, (round) => `#/debrief/${code}/${round}`)}
 
       <div class="share share--results">
         ${qrSlot(shareUrl, "QR code des résultats de la partie")}
@@ -1689,18 +1704,23 @@ function viewEnd(code) {
   animateFinalScore();
 }
 
-function viewResults(code, token) {
+function viewResults(code, token, round) {
   const game = decodeCode(code);
   const data = game && token && decodeResults(token, game.players);
   if (!game || !data) return viewInvalid(code);
   const me = store.get("lastPlayer", null);
   const mySeat = me?.code === game.code ? me.seat : null;
+  const resultsHref = `#results-${game.code}~${token}`;
+  // Revue d'une manche jouée : même écran que le débrief, avec les prénoms reçus par QR code.
+  if (round && data.results[round]) {
+    return viewDebrief(game.code, { round, names: data.names, mySeat, back: [resultsHref, "Retour aux résultats"] });
+  }
 
   app.innerHTML = `
     <section class="end">
       <p class="label center-text">Partie ${esc(prettyCode(game.code))}</p>
       <h1 class="center-text">Résultats</h1>
-      ${resultsHtml(game, data.names, data.results, mySeat)}
+      ${resultsHtml(game, data.names, data.results, mySeat, (r) => `${resultsHref}~${r}`)}
       <div class="actions">
         <a class="btn btn--primary" href="#/">Accueil</a>
         <a class="btn" href="#/cards">Revoir toutes les cartes</a>
@@ -1909,24 +1929,24 @@ function render() {
   clearInterval(timer.interval);
   const hash = location.hash.replace(/^#/, "");
   const join = hash.match(/^join-([A-Za-z0-9]+)(?:-(\d+))?(?:~([A-Za-z0-9_-]+))?$/);
-  const results = hash.match(/^results-([A-Za-z0-9]+)~([A-Za-z0-9_-]+)$/);
+  const results = hash.match(/^results-([A-Za-z0-9]+)~([A-Za-z0-9_-]+)(?:~(\d+))?$/);
   const [, route = "", a, b, c] = join
     ? ["", "join", join[1], join[2], join[3]]
     : results
-      ? ["", "results", results[1], results[2]]
+      ? ["", "results", results[1], results[2], results[3]]
       : hash.split("/");
   switch (route) {
     case "host":
       a ? viewHost(a) : viewHostSetup();
       break;
     case "debrief":
-      viewDebrief(a);
+      viewDebrief(a, { round: Number(b) || undefined });
       break;
     case "end":
       viewEnd(a);
       break;
     case "results":
-      viewResults(a, b);
+      viewResults(a, b, Number(c) || undefined);
       break;
     case "join":
       viewJoin(a, Number(b), c);
@@ -1954,7 +1974,7 @@ function render() {
   }
   hydrateQr(app);
   // Fondu d'entrée uniquement quand on change d'écran (pas à chaque mise à jour du même écran).
-  const routeKey = location.hash.split("~")[0];
+  const routeKey = location.hash.replace(/~[A-Za-z0-9_-]{8,}/, "");
   if (routeKey !== lastRoute) {
     app.classList.remove("view-enter");
     void app.offsetWidth; // relance l'animation

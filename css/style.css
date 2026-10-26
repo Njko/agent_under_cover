@@ -417,10 +417,36 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
 .ranking .rank { width: 28px; height: 28px; flex: none; border-radius: 50%; background: var(--bg); display: flex; align-items: center; justify-content: center; font-weight: 700; font-variant-numeric: tabular-nums; }
 .ranking .who { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .ranking .pts { font-weight: 700; font-variant-numeric: tabular-nums; }
-.recap li { display: flex; align-items: center; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; }
-.recap li > div { flex: 1; min-width: 0; }
+/* Vignette | titre et undercover, puis badge de résultat en dessous | flèche (manche cliquable) :
+   le titre garde toute la largeur disponible, même sur un petit écran. */
+.recap li {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 6px 12px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px;
+}
+.recap li > .back { grid-column: 1; grid-row: 1 / span 2; }
+.recap li > div { grid-column: 2; min-width: 0; }
+.recap li > .result { grid-column: 2; justify-self: start; max-width: 100%; }
+.recap li::after { grid-column: 3; grid-row: 1 / span 2; }
 .recap p { margin: 0; }
 .recap-title { font-weight: 600; }
+/* Manche cliquable (fin de partie, résultats) : toute la ligne ouvre son débrief. */
+.recap-item--link { position: relative; }
+.recap-item--link::after {
+  content: ""; flex: none; width: 8px; height: 8px; margin-left: 4px;
+  border-right: 2px solid var(--primary); border-top: 2px solid var(--primary); transform: rotate(45deg);
+}
+.recap-link { color: inherit; text-decoration: none; }
+.recap-link::before { content: ""; position: absolute; inset: 0; border-radius: inherit; }
+/* Focus visible sur toute la ligne (le lien garde son propre contour si :has() n'est pas pris en charge). */
+@supports selector(:has(*)) {
+  .recap-link:focus-visible { outline: none; }
+  .recap-item--link:has(.recap-link:focus-visible) { outline: 3px solid var(--focus); outline-offset: 2px; }
+}
+@media (hover: hover) {
+  .recap-item--link:hover { border-color: var(--primary); }
+  .recap-item--link:hover .recap-link { text-decoration: underline; }
+}
+[data-lowtech] .recap-item--link::after { border-color: var(--text); }
 .result { font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 999px; text-align: center; flex: none; max-width: 40%; }
 .result--c { background: var(--win-bg); color: var(--win); }
 .result--i { background: var(--danger-bg); color: var(--danger); }
