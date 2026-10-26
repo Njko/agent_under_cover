@@ -3,7 +3,7 @@
 // Chaque règle contient :
 //   - theme       : nom de la règle d'or (tel qu'imprimé au dos des cartes)
 //   - summary     : énoncé court de la règle d'or, rappelé sur les cartes et à l'écran
-//                   (rédigé à partir des cartes, à valider par le référent IA responsable)
+//                   (formulation exacte du pilier correspondant de la charte IA responsable)
 //   - question    : question de débrief propre à la règle, sur les notions souvent mal comprises
 //   - back        : image du dos de carte (img/dos/)
 //   - civilians   : cartes « bonne pratique » distribuées aux civils
@@ -17,7 +17,7 @@ export const RULES = [
     id: 1,
     theme: "Contrôle humain & Responsabilité",
     back: "img/dos/regle-1.webp",
-    summary: "L'IA assiste, l'humain décide : chaque résultat est vérifié par une personne qui en est responsable.",
+    summary: "L'IA reste sous contrôle humain à chaque étape de son utilisation.",
     question:
       "Vérifier chaque résultat de l'IA (règle 1) ou surveiller le système dans la durée (règle 2) : qui fait quoi chez vous ?",
     civilians: [
@@ -35,7 +35,7 @@ export const RULES = [
     id: 2,
     theme: "Sécurité & Robustesse",
     back: "img/dos/regle-2.webp",
-    summary: "Un système d'IA est testé avant sa mise en service, surveillé ensuite, et peut être arrêté en cas de problème.",
+    summary: "Utilisation de systèmes d'IA performants, fiables et sécurisés.",
     question:
       "Tester, surveiller, pouvoir arrêter le système (règle 2) : en quoi est-ce différent de vérifier chaque résultat avant de l'utiliser (règle 1) ?",
     civilians: [
@@ -55,9 +55,9 @@ export const RULES = [
     id: 3,
     theme: "Gouvernance des données et de l'IA",
     back: "img/dos/regle-3.webp",
-    summary: "Tout projet d'IA est déclaré, documenté et validé par la gouvernance avant d'être mis à disposition.",
+    summary: "Instances mises en place pour garantir le contrôle et l'application des politiques d'IA.",
     question:
-      "Chez vous, qui doit déclarer un projet d'IA, à quel moment et auprès de qui ?",
+      "Quelles instances contrôlent les projets d'IA chez vous, et à quel moment faut-il les solliciter ?",
     civilians: [
       "Avant de mettre le chatbot en production, l'équipe présente le projet devant un comité qui vérifie son alignement avec les politiques IA du Groupe.",
       "Une équipe Data Science a documenté son modèle : objectif ; données utilisées ; responsables ; risques identifiés. La documentation est mise à jour à chaque évolution.",
@@ -74,9 +74,9 @@ export const RULES = [
     id: 4,
     theme: "Impact environnemental",
     back: "img/dos/regle-4.webp",
-    summary: "On choisit la solution d'IA la plus sobre qui répond au besoin, et on mesure son impact sur l'environnement.",
+    summary: "Engagement pour stabiliser les émissions de carbone liées aux opérations d'IA.",
     question:
-      "Comment mesurer l'impact d'un usage de l'IA : calculatrice carbone, taille du modèle, nombre de requêtes… ? Qu'utilisez-vous déjà ?",
+      "Comment suivre les émissions de carbone liées à vos usages de l'IA : calculatrice carbone, taille du modèle, nombre de requêtes… ? Qu'utilisez-vous déjà ?",
     civilians: [
       "L'équipe limite les générations inutiles. Elle affine progressivement ses prompts au lieu de lancer des dizaines de requêtes successives.",
       "Avant de lancer un nouveau projet IA, l'équipe utilise la calculatrice carbone du Groupe afin d'estimer l'impact environnemental de la solution envisagée.",
@@ -93,9 +93,9 @@ export const RULES = [
     id: 5,
     theme: "Confiance & Transparence",
     back: "img/dos/regle-5.webp",
-    summary: "On sait toujours quand on échange avec une IA, ses limites sont annoncées, et les problèmes sont signalés sans chercher de coupable.",
+    summary: "Une information claire et systématique est fournie lors des interactions avec les systèmes d'IA.",
     question:
-      "« Sans chercher de coupable » : que se passe-t-il chez vous quand quelqu'un signale une erreur de l'IA ? Oserait-on le faire ?",
+      "Dans vos outils, l'utilisateur sait-il toujours qu'il échange avec une IA, et connaît-il ses limites ?",
     civilians: [
       "L'application informe clairement l'utilisateur que l'IA peut commettre des erreurs et que certaines réponses doivent être vérifiées.",
       "Lorsqu'un compte-rendu est généré automatiquement, une mention indique qu'il a été produit avec l'aide d'une IA et invite l'utilisateur à le relire avant diffusion.",
@@ -114,9 +114,9 @@ export const RULES = [
     id: 6,
     theme: "Équité & Inclusion",
     back: "img/dos/regle-6.webp",
-    summary: "Tous les collaborateurs, quels que soient leur métier et leur niveau, ont accès à la formation et à l'accompagnement sur l'IA.",
+    summary: "Des formations sur l'IA responsable, l'éthique et la durabilité sont proposées à tous.",
     question:
-      "Au-delà de la formation, qu'est-ce qui permet à chaque métier d'utiliser l'IA : accompagnement, entraide, outils adaptés… ?",
+      "Les formations sur l'IA responsable sont-elles vraiment accessibles à tous chez vous, quels que soient le métier et le niveau ?",
     civilians: [
       "Une nouvelle formation IA est proposée à l'ensemble des collaborateurs, quel que soit leur métier ou leur niveau technique. Des parcours débutant, intermédiaire et avancé sont disponibles.",
       "Tous les collaborateurs concernés suivent un module obligatoire sur les usages responsables de l'IA, les risques et les bonnes pratiques.",
@@ -133,7 +133,7 @@ export const RULES = [
     id: 7,
     theme: "L'IA au cœur de l'humain",
     back: "img/dos/regle-7.webp",
-    summary: "L'IA répond à un vrai besoin et libère du temps pour l'humain : elle n'est pas utilisée pour l'effet vitrine.",
+    summary: "Chaque système d'IA doit créer de la valeur pour les clients, les collaborateurs et la société.",
     question:
       "Quel besoin concret justifie cet usage de l'IA, et comment vérifier qu'il libère vraiment du temps ?",
     civilians: [
