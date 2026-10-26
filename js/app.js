@@ -733,6 +733,8 @@ function viewRules() {
   app.innerHTML = `
     <section class="prose">
       <h1>Comment jouer ?</h1>
+      <h2>Objectif</h2>
+      <p>Undercover IA responsable est un <strong>serious game</strong> : en démasquant la pratique qui enfreint la règle, on <strong>apprend ou on se rappelle les 7 règles d'or</strong> de l'IA responsable, et on <strong>challenge nos pratiques actuelles</strong> en les confrontant à ces règles.</p>
       <h2>Mise en place</h2>
       <ol>
         <li>L'animateur crée une partie : prénoms des joueurs, règles d'or à jouer, nombre de manches. L'animateur ne joue pas : il ne se compte pas parmi les joueurs.</li>
