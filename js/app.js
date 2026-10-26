@@ -31,7 +31,7 @@ function resultLabel(res) {
     const pts = Number(res);
     return pts ? `Trouvé au ${COOP_MAX_POINTS + 1 - pts}${pts === COOP_MAX_POINTS ? "er" : "e"} vote · +${pts}` : "Trouvé · +0";
   }
-  return { c: "Victoire des civils", i: "Victoire de l'undercover", r: "Rôles révélés", s: "Manche passée" }[res] || "";
+  return { c: "Victoire des civils", i: "Victoire de l'undercover", r: "Rôles révélés", s: "Manche passée", n: "Non jouée" }[res] || "";
 }
 
 function resultClass(res) {
@@ -40,7 +40,12 @@ function resultClass(res) {
 
 // Score collectif : total de l'équipe (coopératif) ou manches gagnées par camp (compétitif).
 // « rounds » : nombre de manches sur lequel calculer le maximum (toute la partie, ou les manches jouées).
-function teamScore(game, results, rounds = Object.keys(results).length) {
+// Manches comptées dans le score : toutes sauf celles jamais jouées (« n », partie terminée plus tôt).
+function countedRounds(results) {
+  return Object.values(results).filter((r) => r !== "n").length;
+}
+
+function teamScore(game, results, rounds = countedRounds(results)) {
   const codes = Object.values(results);
   if (game.mode === "coop") {
     return { points: codes.reduce((sum, r) => sum + (/^\d$/.test(r) ? Number(r) : 0), 0), max: rounds * COOP_MAX_POINTS };
@@ -50,7 +55,7 @@ function teamScore(game, results, rounds = Object.keys(results).length) {
 
 function teamScoreHtml(game, results, big = false) {
   // Pendant la partie, le maximum porte sur toutes les manches prévues ; à la fin, sur les manches jouées.
-  const score = teamScore(game, results, big ? Object.keys(results).length : game.rounds);
+  const score = teamScore(game, results, big ? countedRounds(results) : game.rounds);
   if (game.mode === "coop") {
     const ratio = score.max ? score.points / score.max : 0;
     const verdict = !score.max ? "" : ratio >= 0.8 ? "Excellent travail d'équipe !" : ratio >= 0.5 ? "Bonne enquête collective." : "L'undercover vous a donné du fil à retordre.";
@@ -179,7 +184,7 @@ function joinUrl(code, seat, names = {}, players = 0) {
 
 // Lien des résultats : prénoms, scores et issue de chaque manche.
 function resultsUrl(code, game, state) {
-  const results = Array.from({ length: playedRounds(state) }, (_, i) => state.results[i + 1] || "s").join("");
+  const results = Array.from({ length: game.rounds }, (_, i) => (i < playedRounds(state) ? state.results[i + 1] || "s" : "n")).join("");
   const scores = "";
   return `${baseUrl()}#results-${code}~${toBase64Url([nameList(state.names, game.players).join("|"), scores, results].join("\n"))}`;
 }
@@ -874,7 +879,7 @@ function viewRules() {
       <h2>Équité</h2>
       <p>D'une manche à l'autre, l'application fait tourner le rôle d'undercover et le joueur qui commence : un même joueur peut les avoir deux fois de suite, mais c'est rare.</p>
       <h2>Fin de partie</h2>
-      <p>Après la dernière manche, l'animateur affiche le score et un QR code : en le scannant, chaque joueur retrouve les résultats sur son téléphone. En touchant une manche, on revoit les cartes distribuées et qui les avait.</p>
+      <p>Après la dernière manche, l'animateur affiche le score et un QR code : en le scannant, chaque joueur retrouve les résultats sur son téléphone. En touchant une manche, on revoit les cartes distribuées et qui les avait. Si la partie a été terminée plus tôt, les manches non jouées restent consultables, hors score.</p>
       <h2>Débrief</h2>
       <p>À la fin de chaque manche, l'animateur affiche la règle, la carte undercover et pourquoi elle l'enfreint. C'est le moment d'échanger sur les pratiques réelles des équipes.</p>
       <p><button class="btn" id="back">Retour</button></p>
@@ -1444,7 +1449,9 @@ function viewHost(code) {
   });
   document.getElementById("end-now")?.addEventListener("click", () =>
     confirmModal(
-      `Terminer la partie maintenant ? Les manches ${state.round + 1} à ${game.rounds} ne seront pas jouées.`,
+      state.round + 1 === game.rounds
+        ? `Terminer la partie maintenant ? La manche ${game.rounds} ne sera pas jouée : elle ne comptera pas dans le score, mais ses cartes resteront consultables en fin de partie.`
+        : `Terminer la partie maintenant ? Les manches ${state.round + 1} à ${game.rounds} ne seront pas jouées : elles ne compteront pas dans le score, mais leurs cartes resteront consultables en fin de partie.`,
       "Terminer",
       endGame
     )
@@ -1556,7 +1563,7 @@ function showSeatQrs(code, game, state) {
  * Sans option : manche en cours de l'animateur. Avec round : revue d'une manche depuis la fin de partie
  * (animateur) ou depuis les résultats reçus par QR code (joueur : names et back fournis, pas de minuteur).
  */
-function viewDebrief(code, { round, names, back, mySeat = null } = {}) {
+function viewDebrief(code, { round, names, back, mySeat = null, unplayed = false } = {}) {
   const game = decodeCode(code);
   if (!game) return viewInvalid(code);
   app.dataset.view = "debrief"; // mise en page grand écran du débrief, quel que soit le lien d'accès
@@ -1578,12 +1585,13 @@ function viewDebrief(code, { round, names, back, mySeat = null } = {}) {
       <div class="debrief-head">
         ${backImg(rule, "back back--round", { lazy: false, small: true })}
         <div>
-          <p class="label">Manche ${shown} / ${game.rounds} · débrief</p>
+          <p class="label">Manche ${shown} / ${game.rounds} · ${unplayed ? "non jouée" : "débrief"}</p>
           <h1>Règle d'or ${rule.id} · ${esc(rule.theme)}</h1>
           <p class="rule-summary">${esc(rule.summary)}</p>
         </div>
       </div>
 
+      ${unplayed ? `<p class="hint unplayed-note">Cette manche n'a pas été jouée : voici les cartes qui auraient été distribuées, pour en discuter quand même.</p>` : ""}
       <div class="debrief-uc">
       <h2>La carte undercover</h2>
       ${cardHtml({ ruleId: rule.id, card: deal.undercover, kind: "undercover", label: holders(deal.undercover.text) })}
@@ -1643,7 +1651,9 @@ function resultsHtml(game, names, results, mySeat, roundHref) {
                         ? `<a class="recap-link" href="${roundHref(round)}">Manche ${round} · ${esc(deal.rule.theme)}</a>`
                         : `Manche ${round} · ${esc(deal.rule.theme)}`
                     }</p>
-                    <p class="small">Undercover : <strong>${esc(undercovers.join(", "))}</strong></p>
+                    <p class="small">${
+                      res === "n" ? "Cartes qui auraient été distribuées" : `Undercover : <strong>${esc(undercovers.join(", "))}</strong>`
+                    }</p>
                   </div>
                   <span class="result result--${resultClass(res)}">${resultLabel(res)}</span>
                 </li>`;
@@ -1659,8 +1669,9 @@ function viewEnd(code) {
   const game = decodeCode(code);
   if (!game) return viewInvalid(code);
   const state = hostState(code);
+  // Partie terminée plus tôt : les manches jamais jouées restent consultables (« Non jouée », hors score).
   const results = Object.fromEntries(
-    Array.from({ length: playedRounds(state) }, (_, i) => [i + 1, state.results[i + 1] || "s"])
+    Array.from({ length: game.rounds }, (_, i) => [i + 1, i < playedRounds(state) ? state.results[i + 1] || "s" : "n"])
   );
   const shareUrl = resultsUrl(code, game, state);
 
@@ -1713,7 +1724,7 @@ function viewResults(code, token, round) {
   const resultsHref = `#results-${game.code}~${token}`;
   // Revue d'une manche jouée : même écran que le débrief, avec les prénoms reçus par QR code.
   if (round && data.results[round]) {
-    return viewDebrief(game.code, { round, names: data.names, mySeat, back: [resultsHref, "Retour aux résultats"] });
+    return viewDebrief(game.code, { round, names: data.names, mySeat, back: [resultsHref, "Retour aux résultats"], unplayed: data.results[round] === "n" });
   }
 
   app.innerHTML = `
@@ -1939,9 +1950,11 @@ function render() {
     case "host":
       a ? viewHost(a) : viewHostSetup();
       break;
-    case "debrief":
-      viewDebrief(a, { round: Number(b) || undefined });
+    case "debrief": {
+      const round = Number(b) || undefined;
+      viewDebrief(a, { round, unplayed: Boolean(round) && round > playedRounds(hostState(a)) });
       break;
+    }
     case "end":
       viewEnd(a);
       break;

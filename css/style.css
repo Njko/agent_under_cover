@@ -450,7 +450,9 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
 .result { font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 999px; text-align: center; flex: none; max-width: 40%; }
 .result--c { background: var(--win-bg); color: var(--win); }
 .result--i { background: var(--danger-bg); color: var(--danger); }
-.result--r, .result--s { background: var(--bg); color: var(--muted); }
+.result--r, .result--s, .result--n { background: var(--bg); color: var(--muted); }
+.result--n { border: 1px dashed var(--muted); }
+.unplayed-note { margin: 12px 0 0; }
 .share--results { margin-top: 20px; }
 .share--results p { margin: 4px 0 0; }
 
@@ -555,7 +557,7 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
 /* États : le texte et le style de trait remplacent la couleur */
 [data-lowtech] .role, [data-lowtech] .result { background: transparent; color: var(--text); border: 1px solid var(--text); }
 [data-lowtech] .role--undercover, [data-lowtech] .result--i { border-style: double; border-width: 3px; }
-[data-lowtech] .result--r, [data-lowtech] .result--s { border-style: dashed; color: var(--muted); }
+[data-lowtech] .result--r, [data-lowtech] .result--s, [data-lowtech] .result--n { border-style: dashed; color: var(--muted); }
 [data-lowtech] .banner { background: transparent; color: var(--text); border: 2px solid var(--text); }
 [data-lowtech] .banner--lose { border-style: double; border-width: 4px; }
 [data-lowtech] .role-reveal { border: 2px solid var(--text); }
@@ -752,7 +754,7 @@ body { overflow-wrap: anywhere; hyphens: auto; }
   #app[data-view="debrief"] > section {
     display: grid; grid-template-columns: minmax(300px, 400px) minmax(0, 1fr); column-gap: 40px; align-items: start;
   }
-  #app[data-view="debrief"] .debrief-head, #app[data-view="debrief"] > section > .actions { grid-column: 1 / -1; }
+  #app[data-view="debrief"] .debrief-head, #app[data-view="debrief"] .unplayed-note, #app[data-view="debrief"] > section > .actions { grid-column: 1 / -1; }
   #app[data-view="debrief"] .debrief-head h1 { font-size: clamp(1.9rem, 2.6vw, 2.6rem); }
   #app[data-view="debrief"] .debrief-head .back--round { width: 120px; }
   #app[data-view="debrief"] .debrief-uc { display: block; grid-column: 1; position: sticky; top: 16px; }
