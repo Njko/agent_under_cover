@@ -177,11 +177,11 @@ input[type="number"], input.code-input, input.name {
 .round-bar, .debrief-head { display: flex; gap: 16px; align-items: center; }
 .round-bar > div, .debrief-head > div { min-width: 0; }
 /* Éventail de l'accueil. --w : largeur d'une carte, --h : sa hauteur, --m : chevauchement (marge
-   négative). overflow-x: clip rogne les côtés mais laisse déborder vers le bas la carte présentée. */
+   négative). Aucun rognage ici : la carte présentée doit passer par-dessus le titre sans être coupée
+   pendant l'animation. C'est le bloc .hero (overflow: hidden) qui rogne les côtés de l'éventail. */
 .fan {
   --w: 72px; --h: 100px; --m: -19px;
   position: relative; z-index: 1; display: flex; justify-content: center; height: 150px; margin: 0 auto 4px; padding-top: 12px;
-  overflow: hidden; overflow-x: clip; overflow-y: visible;
 }
 /* Position de chaque carte dans l'éventail (classes plutôt qu'attributs style, interdits par la CSP). */
 .fan-0 { --i: -3; } .fan-1 { --i: -2; } .fan-2 { --i: -1; } .fan-3 { --i: 0; } .fan-4 { --i: 1; } .fan-5 { --i: 2; } .fan-6 { --i: 3; }
