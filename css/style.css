@@ -176,10 +176,33 @@ input[type="number"], input.code-input, input.name {
 .back--grid { align-self: start; }
 .round-bar, .debrief-head { display: flex; gap: 16px; align-items: center; }
 .round-bar > div, .debrief-head > div { min-width: 0; }
-.fan { display: flex; justify-content: center; height: 150px; margin: 0 auto 4px; padding-top: 12px; overflow: hidden; }
+/* Éventail de l'accueil. --w : largeur d'une carte, --h : sa hauteur, --m : chevauchement (marge
+   négative). overflow-x: clip rogne les côtés mais laisse déborder vers le bas la carte présentée. */
+.fan {
+  --w: 72px; --h: 100px; --m: -19px;
+  position: relative; z-index: 1; display: flex; justify-content: center; height: 150px; margin: 0 auto 4px; padding-top: 12px;
+  overflow: hidden; overflow-x: clip; overflow-y: visible;
+}
 /* Position de chaque carte dans l'éventail (classes plutôt qu'attributs style, interdits par la CSP). */
 .fan-0 { --i: -3; } .fan-1 { --i: -2; } .fan-2 { --i: -1; } .fan-3 { --i: 0; } .fan-4 { --i: 1; } .fan-5 { --i: 2; } .fan-6 { --i: 3; }
-.fan img { width: 72px; height: 100px; margin: 0 -19px; transform-origin: 50% 160%; transform: rotate(calc(var(--i) * 6deg)); filter: drop-shadow(0 3px 6px rgba(10, 18, 38, 0.3)); }
+.fan-card {
+  position: relative; flex: none; display: block; width: var(--w); height: var(--h); margin: 0 var(--m); padding: 0;
+  border: 0; background: none; transform-origin: 50% 160%;
+  /* Même liste de fonctions que la carte présentée, pour une transition fluide entre les deux. */
+  transform: translateX(0) translateY(0) rotate(calc(var(--i) * 6deg)) scale(1);
+}
+.fan-card { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.fan-card img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 3px 6px rgba(10, 18, 38, 0.3)); }
+/* Carte présentée : redressée, agrandie et centrée, devant les autres.
+   Le pivot est sous la carte (160 %) : translateY compense la montée due à l'agrandissement. */
+.fan { --s: 1.9; }
+.fan-card--presented {
+  z-index: 2; translate: none;
+  transform: translateX(calc(var(--i) * -1 * (var(--w) + 2 * var(--m)))) translateY(calc(var(--h) * 1.1 * (var(--s) - 1) + var(--h) * 0.5)) rotate(0deg) scale(var(--s));
+}
+/* Ombre portée par la carte et non par l'image : drop-shadow sur une image agrandie laisse un halo
+   rectangulaire autour de l'éventail. Rayon proche des coins arrondis du dos de carte. */
+.fan-card--presented { border-radius: 7% / 5%; box-shadow: 0 8px 20px rgba(10, 18, 38, 0.4); }
 
 /* Carte secrète du joueur */
 .secret { position: relative; margin: 16px auto 8px; width: min(340px, 100%); aspect-ratio: 640 / 893; user-select: none; -webkit-user-select: none; touch-action: none; }
@@ -662,8 +685,10 @@ body { overflow-wrap: anywhere; hyphens: auto; }
   #app[data-view="home"] .hero h1 { font-size: clamp(2.4rem, 3.6vw, 3.6rem); margin-top: 24px; }
   #app[data-view="home"] .hero p { font-size: 1.25rem; max-width: 36ch; }
   /* La taille des cartes suit la largeur de la colonne pour que l'éventail ne soit jamais rogné. */
-  #app[data-view="home"] .fan { --fan-w: clamp(84px, 8.4vw, 132px); height: calc(var(--fan-w) * 2.25); padding-top: 24px; }
-  #app[data-view="home"] .fan img { width: var(--fan-w); height: calc(var(--fan-w) * 1.395); margin: 0 calc(var(--fan-w) * -0.26); }
+  #app[data-view="home"] .fan {
+    --fan-w: clamp(84px, 8.4vw, 132px); --w: var(--fan-w); --h: calc(var(--fan-w) * 1.395); --m: calc(var(--fan-w) * -0.26); --s: 1.8;
+    height: calc(var(--fan-w) * 2.25); padding-top: 24px;
+  }
   #app[data-view="home"] .lt-logo { font-size: 3.2rem; }
   #app[data-view="home"] .tiles { grid-template-columns: 1fr; }
 
@@ -851,9 +876,12 @@ section > .chips { flex-wrap: wrap; margin: 8px 0 16px; }
 /* Deuxième lot : accueil, débrief, fin de partie (mêmes conditions que ci-dessus). */
 @media (prefers-reduced-motion: no-preference) {
   /* Accueil : l'éventail s'ouvre depuis un paquet fermé ; au survol, une carte se soulève. */
-  :root:not([data-lowtech]) .fan img { animation: fan-open 0.6s cubic-bezier(0.2, 0.8, 0.3, 1) both; transition: translate 0.2s ease; }
+  :root:not([data-lowtech]) .fan-card {
+    animation: fan-open 0.6s cubic-bezier(0.2, 0.8, 0.3, 1); /* sans « fill » : la transition reprend la main ensuite */
+    transition: translate 0.2s ease, transform 0.45s cubic-bezier(0.2, 0.8, 0.3, 1);
+  }
   @media (hover: hover) {
-    :root:not([data-lowtech]) .fan img:hover { translate: 0 -10px; }
+    :root:not([data-lowtech]) .fan-card:not(.fan-card--presented):hover { translate: 0 -10px; }
   }
 
   /* Débrief : la carte undercover d'abord, puis son explication, puis les cartes des civils et les
@@ -868,4 +896,4 @@ section > .chips { flex-wrap: wrap; margin: 8px 0 16px; }
   :root:not([data-lowtech]) .team-score--big .team-score-value + p { animation: rise-in 0.35s ease-out 0.7s both; }
   :root:not([data-lowtech]) .results-rounds .recap li { animation: rise-in 0.3s ease-out both; animation-delay: calc(0.4s + var(--i, 0) * 60ms); }
 }
-@keyframes fan-open { from { transform: rotate(0deg) translateY(8px); } }
+@keyframes fan-open { from { transform: translateX(0) translateY(8px) rotate(0deg) scale(1); } }

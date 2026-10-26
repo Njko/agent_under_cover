@@ -698,6 +698,44 @@ function mountTimer(key, kind = "debate") {
 
 // --- Écrans -----------------------------------------------------------------------------------
 
+// --- Éventail de l'accueil ------------------------------------------------------------------
+// Pure décoration, pour le plaisir : masqué aux technologies d'assistance (aria-hidden) et hors du
+// parcours clavier. Au survol une carte se soulève (CSS) ; au clic elle est présentée (redressée,
+// agrandie, centrée), sans être retournée. Un second clic, un clic ailleurs ou Échap la remet en place.
+let unpresentFan = null;
+
+function bindFan() {
+  const fan = app.querySelector(".fan");
+  unpresentFan = null;
+  if (!fan) return;
+  const present = (card) => {
+    fan.querySelectorAll(".fan-card").forEach((c) => c.classList.toggle("fan-card--presented", c === card));
+    fan.classList.toggle("is-presenting", Boolean(card));
+    // Agrandie, la vignette serait floue : on charge l'image en taille réelle à la première présentation.
+    const img = card?.querySelector("img[data-full]");
+    if (img) {
+      img.src = img.dataset.full;
+      img.removeAttribute("data-full");
+    }
+  };
+  fan.addEventListener("click", (e) => {
+    const card = e.target.closest(".fan-card");
+    if (card) present(card.classList.contains("fan-card--presented") ? null : card);
+  });
+  unpresentFan = () => {
+    if (!fan.isConnected || !fan.classList.contains("is-presenting")) return false;
+    present(null);
+    return true;
+  };
+}
+
+document.addEventListener("click", (e) => {
+  if (!e.target.closest?.(".fan-card")) unpresentFan?.();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && modal.hidden) unpresentFan?.();
+});
+
 function viewHome() {
   const lastHost = store.get("lastHost", null);
   const lastPlayer = store.get("lastPlayer", null);
@@ -711,7 +749,9 @@ function viewHome() {
         isLowTech()
           ? `<p class="lt-logo" aria-hidden="true">UNDER←COVER</p>`
           : `<div class="fan" aria-hidden="true">
-              ${RULES.map((r, i) => `<img class="fan-${i}" src="${r.back.replace(".webp", "-mini.webp")}" alt="" width="200" height="279" draggable="false">`).join("")}
+              ${RULES.map(
+                (r, i) => `<span class="fan-card fan-${i}"><img src="${r.back.replace(".webp", "-mini.webp")}" data-full="${r.back}" alt="" width="200" height="279" draggable="false"></span>`
+              ).join("")}
             </div>`
       }
       <h1>Qui enfreint la règle ?</h1>
@@ -788,6 +828,7 @@ function viewHome() {
       true
     )
   );
+  bindFan();
 }
 
 const TRASH_ICON = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>`;
