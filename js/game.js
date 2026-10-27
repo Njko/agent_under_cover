@@ -49,17 +49,21 @@ function shuffle(array, rand) {
 }
 
 // --- Code de partie -----------------------------------------------------------------------
-// Bits : graine (15) | jeu de cartes (1) | mode (1) | joueurs-3 (4) | undercovers-1 (1)
-//        | règles jouées (7) | ordre des règles (1) | manches-1 (4) | contrôle (6)
+// Bits : graine (14) | jeu de cartes (1) | cartes undercover (1) | mode (1) | joueurs-3 (4)
+//        | undercovers-1 (1) | règles jouées (7) | ordre des règles (1) | manches-1 (4) | contrôle (6)
 // Les valeurs dépassent 32 bits : on calcule avec des multiplications plutôt qu'avec << et |.
 
 export const MODES = ["coop", "compet"]; // coopératif (par défaut) ou compétitif
 // Jeu de cartes : "base" (cartes validées) ou "ext" (jeu de base + extension à valider).
 export const DECK_CHOICES = ["base", "ext"];
+// Cartes des undercovers quand ils sont deux : la même carte, ou une carte différente chacun
+// (possible seulement si la règle en a au moins deux, c'est-à-dire avec l'extension).
+export const UC_CARDS = ["same", "distinct"];
 
 const FIELDS = [
-  ["seed", 15],
+  ["seed", 14],
   ["deck", 1],
+  ["ucCards", 1],
   ["mode", 1],
   ["players", 4],
   ["undercovers", 1],
@@ -71,7 +75,7 @@ const CHECK_BITS = 6;
 
 function checksum(payload) {
   // Le sel change avec le format du code : les codes de l'ancien format sont refusés.
-  return hash32(payload % 2 ** 32, Math.floor(payload / 2 ** 32), 0xc0de7) % 2 ** CHECK_BITS;
+  return hash32(payload % 2 ** 32, Math.floor(payload / 2 ** 32), 0xc0de8) % 2 ** CHECK_BITS;
 }
 
 export function validateSettings({ players, undercovers, rules = [1], rounds = 1, mode = "coop" }) {
@@ -96,13 +100,14 @@ export function validateSettings({ players, undercovers, rules = [1], rounds = 1
   return null;
 }
 
-export function encodeCode({ seed, players, undercovers, rules, ordered = false, rounds = 7, mode = "coop", deck = "base" }) {
+export function encodeCode({ seed, players, undercovers, rules, ordered = false, rounds = 7, mode = "coop", deck = "base", ucCards = "same" }) {
   rules = rules ?? RULES.map((r) => r.id);
   const error = validateSettings({ players, undercovers, rules, rounds, mode });
   if (error) throw new Error(error);
   const values = {
-    seed: seed % 2 ** 15,
+    seed: seed % 2 ** 14,
     deck: Math.max(0, DECK_CHOICES.indexOf(deck)),
+    ucCards: Math.max(0, UC_CARDS.indexOf(ucCards)),
     mode: Math.max(0, MODES.indexOf(mode)),
     players: players - MIN_PLAYERS,
     undercovers: undercovers - 1,
@@ -151,13 +156,14 @@ export function decodeCode(raw) {
     rounds: v.rounds + 1,
     mode: MODES[v.mode],
     deck: DECK_CHOICES[v.deck],
+    ucCards: UC_CARDS[v.ucCards],
   };
   if (validateSettings(settings)) return null;
   return { code, ...settings };
 }
 
 export function newCode(settings, random = Math.random) {
-  const seed = Math.floor(random() * 2 ** 15);
+  const seed = Math.floor(random() * 2 ** 14);
   return encodeCode({ ...settings, seed });
 }
 
@@ -219,14 +225,17 @@ function dealOne(game, round, ucCounts, starterCounts, usage) {
   }
   seats = [...impostors, ...seats.filter((s) => !impostors.includes(s))];
   const pool = rulePool(rule, game.deck);
-  const undercover = freshFirst(pool.undercovers, usage, rand)[0];
+  // Une carte undercover par undercover si demandé et si la règle en a assez, sinon la même pour tous.
+  const ucDeck = freshFirst(pool.undercovers, usage, rand);
+  const ucCount = game.ucCards === "distinct" ? Math.min(undercovers, ucDeck.length) : 1;
+  const undercoverCards = ucDeck.slice(0, ucCount);
   const civilianCards = freshFirst(pool.civilians, usage, rand);
 
   const roles = new Array(players + 1);
   let civilianIndex = 0;
   seats.forEach((seat, i) => {
     if (i < undercovers) {
-      roles[seat] = { seat, role: "undercover", card: undercover.text };
+      roles[seat] = { seat, role: "undercover", card: undercoverCards[i % ucCount].text };
     } else {
       // S'il y a plus de civils que de cartes de la règle, les cartes sont réutilisées.
       const card = civilianCards[civilianIndex % civilianCards.length].text;
@@ -242,12 +251,12 @@ function dealOne(game, round, ucCounts, starterCounts, usage) {
     rand
   );
 
-  return { round, rule, roles: roles.slice(1), starter, undercover };
+  return { round, rule, roles: roles.slice(1), starter, undercover: undercoverCards[0], undercovers: undercoverCards };
 }
 
 /**
- * Calcule la manche complète : règle jouée, rôle et carte de chaque joueur, carte undercover
- * (avec son explication), premier joueur.
+ * Calcule la manche complète : règle jouée, rôle et carte de chaque joueur, cartes undercover
+ * distribuées (undercovers, avec leur explication ; undercover est la première), premier joueur.
  * Les joueurs sont numérotés à partir de 1. Les manches précédentes sont recalculées pour
  * répartir le rôle d'undercover et la prise de parole.
  */

@@ -9,7 +9,7 @@ L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveu
 - Il choisit le **nombre de manches** et les **règles d'or** jouées (toutes, quelques-unes ou une seule), au hasard ou dans l'ordre.
 - À chaque manche, une règle est tirée parmi celles choisies (toutes passent avant qu'une revienne) et annoncée : les cartes apparaissent face cachée avec le dos de la règle.
 - Les **civils** reçoivent chacun une bonne pratique de cette règle (cartes différentes tant que possible).
-- L'**undercover** reçoit la carte « UNDERCOVER » de la règle : elle parle du même sujet mais *enfreint* la règle.
+- L'**undercover** reçoit la carte « UNDERCOVER » de la règle : elle parle du même sujet mais *enfreint* la règle. Avec 2 undercovers, l'animateur choisit s'ils ont la même carte ou une carte différente chacun (possible avec l'extension, qui compte 4 cartes undercover par règle).
 - Deux **modes de jeu**, choisis à la création :
   - **Coopératif** (par défaut) : l'application ne révèle aucun rôle (celui qui a la carte undercover peut la reconnaître, mais la lit comme les autres). Chacun **lit sa carte à voix haute**, l'équipe débat puis désigne un suspect ; un civil désigné à tort est disculpé et reste en jeu. **Score d'équipe** : 3 points si l'undercover est trouvé au premier vote, 2 au deuxième, 1 au troisième, 0 ensuite.
   - **Compétitif** : l'undercover **sait qu'il l'est** en retournant sa carte et bluffe. Chacun peut garder sa carte sous les yeux mais la **décrit avec ses mots**. Vote, élimination ; le score compte les **manches gagnées par chaque camp** (civils contre undercover).
@@ -22,7 +22,7 @@ L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveu
 GitHub Pages ne sert que des fichiers statiques : les téléphones ne peuvent pas échanger de données entre eux.
 L'app utilise donc une **distribution déterministe** :
 
-1. L'animateur crée une partie. L'app génère un **code de 8 caractères** (ex. `BVWA RY5W`) qui contient une graine aléatoire et les paramètres (mode de jeu, nombre de joueurs, undercovers, règles jouées, ordre, nombre de manches), plus une somme de contrôle contre les fautes de frappe.
+1. L'animateur crée une partie. L'app génère un **code de 8 caractères** (ex. `BVWA RY5W`) qui contient une graine aléatoire et les paramètres (mode de jeu, jeu de cartes, nombre de joueurs, undercovers et leurs cartes, règles jouées, ordre, nombre de manches), plus une somme de contrôle contre les fautes de frappe.
 2. Les joueurs scannent le **QR code** et touchent **leur prénom** : les prénoms sont inclus dans le lien du QR code. Avec le code saisi à la main, ils choisissent leur numéro.
 3. Chaque téléphone recalcule seul, à partir de *(code, manche, numéro)*, exactement la même distribution que celle de l'animateur. Aucune donnée ne circule.
 4. Pour la manche suivante, l'animateur et les joueurs appuient sur « Manche suivante » : pas besoin de rescanner.

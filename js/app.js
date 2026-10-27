@@ -846,7 +846,7 @@ function viewRules() {
       <p>Undercover IA responsable est un <strong>serious game</strong> : en démasquant la pratique qui enfreint la règle, on <strong>apprend ou on se rappelle les 7 règles d'or</strong> de l'IA responsable, et on <strong>challenge nos pratiques actuelles</strong> en les confrontant à ces règles.</p>
       <h2>Mise en place</h2>
       <ol>
-        <li>L'animateur crée une partie : prénoms des joueurs, règles d'or à jouer, nombre de manches et cartes (le jeu de base, validé, ou le jeu de base avec l'extension, dont les cartes tirées des métiers de l'assurance sont encore à valider). L'animateur ne joue pas : il ne se compte pas parmi les joueurs.</li>
+        <li>L'animateur crée une partie : prénoms des joueurs, règles d'or à jouer, nombre de manches et cartes (le jeu de base, validé, ou le jeu de base avec l'extension, dont les cartes tirées des métiers de l'assurance sont encore à valider). Avec 2 undercovers, il choisit s'ils ont la même carte ou une carte différente chacun (avec l'extension, qui compte plusieurs cartes undercover par règle). L'animateur ne joue pas : il ne se compte pas parmi les joueurs.</li>
         <li>Il affiche le <strong>QR code</strong> (ou le code de la partie).</li>
         <li>Chacun scanne le QR code et sélectionne <strong>son prénom</strong>, ou choisit un <strong>numéro de place</strong> si aucun prénom n'a été établi avant de lancer la partie. Chaque prénom ou numéro ne doit être pris qu'une fois. Il n'y a pas de contrôle automatisé des participants pour garder le système de jeu le plus simple possible.</li>
         <li>Sur l'appareil du participant (téléphone ou ordinateur), la carte distribuée pour la manche actuelle est affichée face cachée : on la retourne soit en maintenant le doigt dessus (sur téléphone), soit en cliquant longuement dessus, soit en cliquant ou en tapant sur « Afficher ma carte ».</li>
@@ -1087,6 +1087,7 @@ function viewHostSetup() {
     rounds: 5,
     mode: "coop",
     deck: "base",
+    ucCards: "same",
     names: {},
     ...store.get("hostPrefs", {}),
   };
@@ -1168,6 +1169,12 @@ function viewHostSetup() {
           <legend>Undercovers</legend>
           <label class="radio"><input type="radio" name="undercovers" value="1" ${prefs.undercovers === 1 ? "checked" : ""}> <span>1 undercover</span></label>
           <label class="radio"><input type="radio" name="undercovers" value="2" ${prefs.undercovers === 2 ? "checked" : ""}> <span>2 undercovers <small>(à partir de 7 joueurs)</small></span></label>
+          <fieldset class="uc-cards" id="uc-cards" ${prefs.undercovers === 2 ? "" : "hidden"}>
+            <legend>Cartes des 2 undercovers</legend>
+            <label class="radio"><input type="radio" name="ucCards" value="same" ${prefs.ucCards !== "distinct" ? "checked" : ""}> <span>La même carte pour les deux</span></label>
+            <label class="radio"><input type="radio" name="ucCards" value="distinct" ${prefs.ucCards === "distinct" ? "checked" : ""}> <span>Une carte différente chacun</span></label>
+            <p class="hint" id="uc-cards-hint" aria-live="polite"></p>
+          </fieldset>
         </fieldset>
 
         <p class="error" id="setup-error" role="alert"></p>
@@ -1235,6 +1242,18 @@ function viewHostSetup() {
             : `Chaque règle d'or choisie sera jouée une fois.`;
     hint.classList.toggle("rules-hint--warn", rules > 0 && rounds > 0 && rounds < rules);
   };
+  // Cartes des undercovers : le choix n'a de sens qu'avec 2 undercovers, et le jeu de base n'a qu'une
+  // carte undercover par règle.
+  const syncUcCards = () => {
+    const two = form.elements.undercovers.value === "2";
+    document.getElementById("uc-cards").hidden = !two;
+    document.getElementById("uc-cards-hint").textContent =
+      two && form.elements.ucCards.value === "distinct" && form.elements.deck.value === "base"
+        ? "Le jeu de base n'a qu'une carte undercover par règle : les deux undercovers auront la même. Choisissez « Jeu de base et extension » pour que chacun ait la sienne."
+        : "";
+  };
+  form.addEventListener("change", syncUcCards);
+  syncUcCards();
   form.addEventListener("input", syncRulesHint);
   form.addEventListener("change", syncRulesHint);
   syncRulesHint();
@@ -1250,6 +1269,7 @@ function viewHostSetup() {
       rounds: Number(form.elements.rounds.value),
       mode: form.elements.mode.value,
       deck: form.elements.deck.value,
+      ucCards: form.elements.undercovers.value === "2" ? form.elements.ucCards.value : "same",
     };
     const error = validateSettings(settings);
     if (error) {
@@ -1288,7 +1308,9 @@ function viewHost(code) {
         <div>
           <p class="label">Code de la partie</p>
           <p class="code">${esc(prettyCode(code))}</p>
-          <p class="small">Mode ${coop ? "coopératif" : "compétitif"} · ${game.players} joueurs · ${game.undercovers} undercover${game.undercovers > 1 ? "s" : ""} · ${game.rounds} manche${game.rounds > 1 ? "s" : ""} · ${rulesSummary} · ${game.deck === "ext" ? `${DECKS.base.toLowerCase()} et ${DECKS.ext.toLowerCase()}` : DECKS.base.toLowerCase()}</p>
+          <p class="small">Mode ${coop ? "coopératif" : "compétitif"} · ${game.players} joueurs · ${game.undercovers} undercover${game.undercovers > 1 ? "s" : ""}${
+            game.undercovers > 1 && game.ucCards === "distinct" && game.deck === "ext" ? " (une carte chacun)" : ""
+          } · ${game.rounds} manche${game.rounds > 1 ? "s" : ""} · ${rulesSummary} · ${game.deck === "ext" ? `${DECKS.base.toLowerCase()} et ${DECKS.ext.toLowerCase()}` : DECKS.base.toLowerCase()}</p>
           <button class="btn btn--small" id="copy">Copier le lien</button>
           <button class="btn btn--small" id="seat-qrs">QR par joueur</button>
         </div>
@@ -1592,10 +1614,14 @@ function viewDebrief(code, { round, names, back, mySeat = null, unplayed = false
       </div>
 
       ${unplayed ? `<p class="hint unplayed-note">Cette manche n'a pas été jouée : voici les cartes qui auraient été distribuées, pour en discuter quand même.</p>` : ""}
-      <div class="debrief-uc">
-      <h2>La carte undercover</h2>
-      ${cardHtml({ ruleId: rule.id, card: deal.undercover, kind: "undercover", label: holders(deal.undercover.text) })}
-      <p class="why"><strong>Pourquoi elle enfreint la règle :</strong> ${esc(deal.undercover.why)}</p>
+      <div class="debrief-uc ${deal.undercovers.length > 1 ? "debrief-uc--multi" : ""}">
+      <h2>${deal.undercovers.length > 1 ? "Les cartes undercover" : "La carte undercover"}</h2>
+      ${deal.undercovers
+        .map(
+          (u) => `${cardHtml({ ruleId: rule.id, card: u, kind: "undercover", label: holders(u.text) })}
+      <p class="why"><strong>Pourquoi elle enfreint la règle :</strong> ${esc(u.why)}</p>`
+        )
+        .join("")}
       </div>
 
       <div class="debrief-civ">

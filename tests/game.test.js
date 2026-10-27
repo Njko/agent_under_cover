@@ -33,16 +33,18 @@ test("le code encode et décode les paramètres", () => {
       if (players - undercovers < 2) continue;
       for (const rounds of [1, 5, 16]) {
         for (const mode of players < 4 ? ["coop"] : ["coop", "compet"]) {
-          const seed = (players * 7919 + undercovers * 31 + rounds) % 2 ** 15;
+          const seed = (players * 7919 + undercovers * 31 + rounds) % 2 ** 14;
           const rules = [1, 3, 7];
           const deck = rounds === 5 ? "ext" : "base";
-          const code = encodeCode({ seed, players, undercovers, rules, ordered: true, rounds, mode, deck });
+          const ucCards = rounds === 16 ? "distinct" : "same";
+          const code = encodeCode({ seed, players, undercovers, rules, ordered: true, rounds, mode, deck, ucCards });
           assert.match(code, /^[2-9A-HJ-NP-Z]{8}$/);
-          assert.deepEqual(decodeCode(code), { code, seed, players, undercovers, rules, ordered: true, rounds, mode, deck });
+          assert.deepEqual(decodeCode(code), { code, seed, players, undercovers, rules, ordered: true, rounds, mode, deck, ucCards });
         }
         const code = encodeCode({ seed: 1, players, undercovers, rounds });
         assert.equal(decodeCode(code).mode, "coop", "coopératif par défaut");
         assert.equal(decodeCode(code).deck, "base", "jeu de base par défaut");
+        assert.equal(decodeCode(code).ucCards, "same", "même carte pour les undercovers par défaut");
         assert.equal(decodeCode(code.toLowerCase().replace(/(....)/, "$1 ")).code, code);
       }
     }
@@ -200,5 +202,30 @@ test("la distribution tient compte des manches précédentes de façon détermin
     const deal = dealRound(game, round);
     assert.deepEqual(deal, dealRound(game, round));
     assert.equal(deal.roles.filter((r) => r.role === "undercover").length, 2);
+  }
+});
+
+test("deux undercovers : même carte, ou une carte chacun si la règle en a assez", () => {
+  for (let seed = 0; seed < 40; seed++) {
+    const settings = { seed, players: 8, undercovers: 2, rounds: 7 };
+    const cardsOf = (deal) => deal.roles.filter((r) => r.role === "undercover").map((r) => r.card);
+    // Par défaut : la même carte pour les deux.
+    for (const deck of ["base", "ext"]) {
+      const deal = dealRound(decodeCode(encodeCode({ ...settings, deck })), 1);
+      assert.equal(new Set(cardsOf(deal)).size, 1);
+      assert.equal(deal.undercovers.length, 1);
+    }
+    // Une carte chacun avec l'extension (4 cartes undercover par règle).
+    const ext = decodeCode(encodeCode({ ...settings, deck: "ext", ucCards: "distinct" }));
+    for (let round = 1; round <= 7; round++) {
+      const deal = dealRound(ext, round);
+      const cards = cardsOf(deal);
+      assert.equal(new Set(cards).size, 2, `graine ${seed}, manche ${round}`);
+      assert.deepEqual(deal.undercovers.map((u) => u.text).sort(), [...cards].sort());
+      assert.ok(deal.undercovers.every((u) => u.why));
+    }
+    // Le jeu de base n'a qu'une carte undercover par règle : les deux gardent la même.
+    const base = dealRound(decodeCode(encodeCode({ ...settings, deck: "base", ucCards: "distinct" })), 1);
+    assert.equal(new Set(cardsOf(base)).size, 1);
   }
 });

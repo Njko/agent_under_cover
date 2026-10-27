@@ -126,6 +126,10 @@ main { max-width: 760px; margin: 0 auto; padding-block: 16px 48px; padding-left:
 .form label.radio, .form label.check { flex-direction: row; align-items: center; gap: 10px; font-weight: 400; }
 fieldset { border: 1px solid var(--border); border-radius: var(--radius); padding: 8px 14px 12px; display: flex; flex-direction: column; gap: 8px; }
 legend { font-weight: 600; padding: 0 6px; }
+/* Choix imbriqué (cartes des 2 undercovers) : sans cadre, en retrait sous le choix principal. */
+.uc-cards { border: 0; border-left: 3px solid var(--border); border-radius: 0; padding: 0 0 0 12px; margin: 4px 0 0 4px; }
+.uc-cards legend { padding: 0; font-weight: 600; font-size: 0.95rem; }
+.uc-cards .hint:empty { display: none; }
 input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--primary); }
 input[type="number"], input.code-input, input.name {
   font: inherit; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text);
@@ -758,6 +762,8 @@ body { overflow-wrap: anywhere; hyphens: auto; }
   #app[data-view="debrief"] .debrief-head h1 { font-size: clamp(1.9rem, 2.6vw, 2.6rem); }
   #app[data-view="debrief"] .debrief-head .back--round { width: 120px; }
   #app[data-view="debrief"] .debrief-uc { display: block; grid-column: 1; position: sticky; top: 16px; }
+  /* Deux cartes undercover : trop haut pour rester fixé à l'écran. */
+  #app[data-view="debrief"] .debrief-uc--multi { position: static; }
   #app[data-view="debrief"] .debrief-civ { display: block; grid-column: 2; }
   #app[data-view="debrief"] .questions { font-size: 1.1rem; }
 
