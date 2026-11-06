@@ -869,7 +869,7 @@ function viewRules() {
       <p>Undercover IA responsable est un <strong>serious game</strong> : en démasquant la pratique qui enfreint la règle, on <strong>apprend ou on se rappelle les 7 règles d'or</strong> de l'IA responsable, et on <strong>challenge nos pratiques actuelles</strong> en les confrontant à ces règles.</p>
       <h2>Mise en place</h2>
       <ol>
-        <li>L'animateur crée une partie : prénoms des joueurs, règles d'or à jouer, nombre de manches et cartes (le jeu de base, validé, ou le jeu de base avec l'extension, dont les cartes tirées des métiers de l'assurance sont encore à valider). À partir de 7 joueurs, il peut prévoir 2 undercovers, avec la même carte ou une carte différente chacun. L'animateur ne joue pas : il ne se compte pas parmi les joueurs.</li>
+        <li>L'animateur crée une partie : prénoms des joueurs, règles d'or à jouer, nombre de manches et cartes (le jeu de base, validé, ou le jeu de base avec l'extension, dont les cartes tirées des métiers de l'assurance sont encore à valider). À partir de 7 joueurs, il peut prévoir 2 undercovers, avec la même carte ou une carte différente chacun.</li>
         <li>Il affiche le <strong>QR code</strong> (ou le code de la partie).</li>
         <li>Chacun scanne le QR code et sélectionne <strong>son prénom</strong>, ou choisit un <strong>numéro de place</strong> si aucun prénom n'a été établi avant de lancer la partie. Chaque prénom ou numéro ne doit être pris qu'une fois. Il n'y a pas de contrôle automatisé des participants pour garder le système de jeu le plus simple possible.</li>
         <li>Sur l'appareil du participant (téléphone ou ordinateur), la carte distribuée pour la manche actuelle est affichée face cachée : on la retourne en la touchant, en cliquant dessus ou en la faisant glisser, ou avec le bouton « Afficher ma carte ». Le même geste la cache de nouveau.</li>
@@ -1205,13 +1205,13 @@ function viewHostSetup() {
         </fieldset>
 
         <fieldset class="fs-players">
-          <legend>Joueurs (sans l'animateur)</legend>
+          <legend>Joueurs</legend>
           <div class="stepper" data-target="players">
             <button type="button" data-step="-1" aria-label="Un joueur de moins">−</button>
-            <input id="players" name="players" type="number" inputmode="numeric" min="${MIN_PLAYERS}" max="${MAX_PLAYERS}" value="${prefs.players}" aria-label="Nombre de joueurs, sans compter l'animateur" aria-describedby="players-hint">
+            <input id="players" name="players" type="number" inputmode="numeric" min="${MIN_PLAYERS}" max="${MAX_PLAYERS}" value="${prefs.players}" aria-label="Nombre de joueurs" aria-describedby="players-hint">
             <button type="button" data-step="1" aria-label="Un joueur de plus">+</button>
           </div>
-          <p class="hint" id="players-hint">Comptez uniquement les personnes qui reçoivent une carte : l'animateur ne joue pas. Saisissez leurs prénoms : chacun retrouvera le sien en scannant le QR code, et l'écran de l'animateur affiche le numéro de chacun.</p>
+          <p class="hint" id="players-hint">Comptez les personnes qui reçoivent une carte. Saisissez leurs prénoms : chacun retrouvera le sien en scannant le QR code, et l'écran de l'animateur affiche le numéro de chacun.</p>
           <ol class="name-list" id="name-list"></ol>
           ${
             lastNames.length

@@ -5,7 +5,7 @@ L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveu
 
 ## Principe du jeu
 
-- L'animateur saisit les **prénoms** des joueurs (3 à 10, sans compter l'animateur) : chacun touche son prénom en rejoignant la partie.
+- L'animateur saisit les **prénoms** des joueurs (3 à 10) : chacun touche son prénom en rejoignant la partie.
 - Il choisit le **nombre de manches** et les **règles d'or** jouées (toutes, quelques-unes ou une seule), au hasard ou dans l'ordre.
 - À chaque manche, une règle est tirée parmi celles choisies (toutes passent avant qu'une revienne) et annoncée : les cartes apparaissent face cachée avec le dos de la règle.
 - Les **civils** reçoivent chacun une bonne pratique de cette règle : deux joueurs n'ont jamais la même carte. Au-delà de 5 joueurs, l'extension est obligatoire, le jeu de base seul n'ayant pas assez de cartes différentes (4 bonnes pratiques pour la règle 1).
