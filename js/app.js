@@ -7,6 +7,7 @@ import {
   MIN_PLAYERS,
   MAX_PLAYERS,
   MAX_BASE_PLAYERS,
+  MIN_PLAYERS_TWO_UNDERCOVERS,
   decodeCode,
   dealRound,
   COOP_MAX_POINTS,
@@ -868,7 +869,7 @@ function viewRules() {
       <p>Undercover IA responsable est un <strong>serious game</strong> : en démasquant la pratique qui enfreint la règle, on <strong>apprend ou on se rappelle les 7 règles d'or</strong> de l'IA responsable, et on <strong>challenge nos pratiques actuelles</strong> en les confrontant à ces règles.</p>
       <h2>Mise en place</h2>
       <ol>
-        <li>L'animateur crée une partie : prénoms des joueurs, règles d'or à jouer, nombre de manches et cartes (le jeu de base, validé, ou le jeu de base avec l'extension, dont les cartes tirées des métiers de l'assurance sont encore à valider). Avec 2 undercovers, il choisit s'ils ont la même carte ou une carte différente chacun (avec l'extension, qui compte plusieurs cartes undercover par règle). L'animateur ne joue pas : il ne se compte pas parmi les joueurs.</li>
+        <li>L'animateur crée une partie : prénoms des joueurs, règles d'or à jouer, nombre de manches et cartes (le jeu de base, validé, ou le jeu de base avec l'extension, dont les cartes tirées des métiers de l'assurance sont encore à valider). À partir de 7 joueurs, il peut prévoir 2 undercovers, avec la même carte ou une carte différente chacun. L'animateur ne joue pas : il ne se compte pas parmi les joueurs.</li>
         <li>Il affiche le <strong>QR code</strong> (ou le code de la partie).</li>
         <li>Chacun scanne le QR code et sélectionne <strong>son prénom</strong>, ou choisit un <strong>numéro de place</strong> si aucun prénom n'a été établi avant de lancer la partie. Chaque prénom ou numéro ne doit être pris qu'une fois. Il n'y a pas de contrôle automatisé des participants pour garder le système de jeu le plus simple possible.</li>
         <li>Sur l'appareil du participant (téléphone ou ordinateur), la carte distribuée pour la manche actuelle est affichée face cachée : on la retourne en la touchant, en cliquant dessus ou en la faisant glisser, ou avec le bouton « Afficher ma carte ». Le même geste la cache de nouveau.</li>
@@ -1263,12 +1264,11 @@ function viewHostSetup() {
         <fieldset class="fs-undercovers">
           <legend>Undercovers</legend>
           <label class="radio"><input type="radio" name="undercovers" value="1" ${prefs.undercovers === 1 ? "checked" : ""}> <span>1 undercover</span></label>
-          <label class="radio"><input type="radio" name="undercovers" value="2" ${prefs.undercovers === 2 ? "checked" : ""}> <span>2 undercovers <small>(à partir de 7 joueurs)</small></span></label>
+          <label class="radio"><input type="radio" name="undercovers" value="2" ${prefs.undercovers === 2 ? "checked" : ""}> <span>2 undercovers <small>(à partir de ${MIN_PLAYERS_TWO_UNDERCOVERS} joueurs)</small></span></label>
           <fieldset class="uc-cards" id="uc-cards" ${prefs.undercovers === 2 ? "" : "hidden"}>
             <legend>Cartes des 2 undercovers</legend>
             <label class="radio"><input type="radio" name="ucCards" value="same" ${prefs.ucCards !== "distinct" ? "checked" : ""}> <span>La même carte pour les deux</span></label>
             <label class="radio"><input type="radio" name="ucCards" value="distinct" ${prefs.ucCards === "distinct" ? "checked" : ""}> <span>Une carte différente chacun</span></label>
-            <p class="hint" id="uc-cards-hint" aria-live="polite"></p>
           </fieldset>
         </fieldset>
 
@@ -1338,15 +1338,15 @@ function viewHostSetup() {
             : `Chaque règle d'or choisie sera jouée une fois.`;
     hint.classList.toggle("rules-hint--warn", rules > 0 && rounds > 0 && rounds < rules);
   };
-  // Cartes des undercovers : le choix n'a de sens qu'avec 2 undercovers, et le jeu de base n'a qu'une
-  // carte undercover par règle.
+  // Undercovers : 2 seulement à partir de 7 joueurs (le choix reste visible, mais indisponible) ; le
+  // choix de leurs cartes n'apparaît qu'avec 2 undercovers.
   const syncUcCards = () => {
-    const two = form.elements.undercovers.value === "2";
-    document.getElementById("uc-cards").hidden = !two;
-    document.getElementById("uc-cards-hint").textContent =
-      two && form.elements.ucCards.value === "distinct" && form.elements.deck.value === "base"
-        ? "Le jeu de base n'a qu'une carte undercover par règle : les deux undercovers auront la même. Choisissez « Jeu de base et extension » pour que chacun ait la sienne."
-        : "";
+    const players = Number(form.elements.players.value) || MIN_PLAYERS;
+    const one = form.querySelector('input[name="undercovers"][value="1"]');
+    const two = form.querySelector('input[name="undercovers"][value="2"]');
+    two.disabled = players < MIN_PLAYERS_TWO_UNDERCOVERS;
+    if (two.disabled && two.checked) one.checked = true;
+    document.getElementById("uc-cards").hidden = !two.checked;
   };
   form.addEventListener("change", syncUcCards);
   syncUcCards();

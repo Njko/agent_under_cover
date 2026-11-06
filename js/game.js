@@ -15,6 +15,8 @@ export const MAX_PLAYERS = 10;
 // Au-delà de ce nombre de joueurs, le jeu de base n'a pas assez de cartes différentes : l'extension
 // est obligatoire.
 export const MAX_BASE_PLAYERS = 5;
+// Deux undercovers seulement à partir de ce nombre de joueurs.
+export const MIN_PLAYERS_TWO_UNDERCOVERS = 7;
 export const MIN_COMPET_PLAYERS = 4;
 
 // --- Aléatoire reproductible ------------------------------------------------------------
@@ -90,6 +92,9 @@ export function validateSettings({ players, undercovers, rules = [1], rounds = 1
   }
   if (players - undercovers < 2) {
     return "Il faut au moins 2 civils : ajoutez des joueurs ou retirez un undercover.";
+  }
+  if (undercovers === 2 && players < MIN_PLAYERS_TWO_UNDERCOVERS) {
+    return `Deux undercovers, c'est à partir de ${MIN_PLAYERS_TWO_UNDERCOVERS} joueurs : ajoutez des joueurs ou choisissez 1 undercover.`;
   }
   if (mode === "compet" && players < MIN_COMPET_PLAYERS) {
     return `En compétitif, il faut au moins ${MIN_COMPET_PLAYERS} joueurs : à 3, un seul civil éliminé à tort fait perdre la manche. Choisissez le mode coopératif.`;
