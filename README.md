@@ -124,12 +124,7 @@ Chaque carte indique son jeu :
 
 Le bouton **« Exporter en Excel »** du catalogue (ou `npm run cartes:export`) produit un classeur `.xlsx` : un onglet « Cartes » (une ligne par carte : identifiant, règle, type, jeu, métier, texte, explication, longueur du texte), un onglet « Règles » (thème, énoncé, question de débrief) et un mode d'emploi. On y modifie les textes, ajoute une ligne pour une nouvelle carte (identifiant vide) ou supprime une ligne pour retirer une carte, puis on enregistre au format `.xlsx`.
 
-```bash
-npm run cartes:import -- cartes.xlsx --essai   # liste les modifications sans rien écrire
-npm run cartes:import -- cartes.xlsx           # reporte les modifications dans js/cards.js
-```
-
-L'import vérifie le classeur avant d'écrire quoi que ce soit (règle et type connus, explication pour chaque carte undercover, métier pour l'extension, pas de texte en double).
+Le classeur modifié est reporté dans `js/cards.js` par un **agent de code** (Claude Code, Codex…), à qui on le transmet avec la demande : il liste les modifications, vérifie le classeur, met à jour le fichier et publie. La procédure qu'il suit est décrite dans [AGENTS.md](AGENTS.md#importer-un-classeur-excel-de-cartes).
 
 Les dos de cartes sont dans [`img/dos/`](img/dos) (WebP 640 px, coins transparents).
 Après une modification, incrémentez `VERSION` dans `sw.js` pour que les téléphones récupèrent la nouvelle version (et republiez l'image Docker si vous l'utilisez).
@@ -140,7 +135,6 @@ Après une modification, incrémentez `VERSION` dans `sw.js` pour que les télé
 npm start              # serveur local sur http://localhost:8000
 npm test               # tests du moteur et de l'export Excel (Node 18+)
 npm run cartes:export  # classeur Excel des cartes
-npm run cartes:import -- fichier.xlsx   # reporte un classeur modifié dans js/cards.js
 npm run docker:build   # image Docker undercover:local
 npm run docker:run     # conteneur durci sur http://localhost:8080
 npm run k8s:render     # manifestes Kubernetes rendus par Kustomize
@@ -157,7 +151,7 @@ Structure :
 | `js/cards.js` | Contenu du jeu |
 | `js/changelog.js` | Notes de version (page « Nouveautés ») |
 | `js/xlsx.js` | Export Excel des cartes, chargé à la demande |
-| `scripts/` | Import et export Excel des cartes (Node, non servis) |
+| `scripts/` | Export Excel des cartes en ligne de commande (Node, non servi) |
 | `img/dos/regle-N.webp`, `-mini.webp` | Dos des cartes : grand format et vignette |
 | `js/icons.js` | Dessins simplifiés des 7 illustrations (mode low-tech) |
 | `js/game.js` | Moteur déterministe : code de partie, distribution, conditions de victoire |

@@ -2,8 +2,8 @@
 //
 // Un fichier .xlsx est une archive ZIP de fichiers XML (format Office Open XML). Les fichiers sont
 // stockés sans compression : l'archive reste petite (quelques dizaines de Ko) et le code simple.
-// Ce module sert au navigateur (bouton « Exporter en Excel » du catalogue) et aux scripts Node
-// (scripts/cartes-import.mjs relit le fichier modifié).
+// Ce module sert au navigateur (bouton « Exporter en Excel » du catalogue) et à npm run cartes:export.
+// Le classeur modifié est reporté dans js/cards.js par un agent de code (voir AGENTS.md).
 
 // --- Contenu : les cartes et les règles d'or ----------------------------------------------------
 
@@ -43,7 +43,7 @@ const HOW_TO = [
   "Ne modifiez pas les identifiants : ils relient chaque ligne à sa carte.",
   "Longueur conseillée : 100 à 170 caractères, la même pour les cartes civiles et undercover (une carte undercover plus longue se repère trop vite).",
   "",
-  "Pour mettre le jeu à jour, transmettez le fichier modifié (enregistré au format Excel .xlsx) : la commande « npm run cartes:import -- fichier.xlsx » reporte les modifications dans js/cards.js.",
+  "Pour mettre le jeu à jour, enregistrez le fichier au format Excel (.xlsx) et transmettez-le à la personne qui maintient le jeu : elle demande à un agent de code de reporter les modifications.",
 ];
 
 /** Classeur des cartes : onglets « Cartes », « Règles » et « Mode d'emploi ». */
