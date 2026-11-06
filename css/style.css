@@ -213,7 +213,9 @@ input[type="number"], input.code-input, input.name {
 .fan-card--presented { border-radius: 7% / 5%; box-shadow: 0 8px 20px rgba(10, 18, 38, 0.4); }
 
 /* Carte secrète du joueur */
-.secret { position: relative; margin: 16px auto 8px; width: min(340px, 100%); aspect-ratio: 640 / 893; user-select: none; -webkit-user-select: none; touch-action: none; cursor: pointer; }
+.secret { position: relative; margin: 16px auto 8px; width: min(340px, 100%); aspect-ratio: 640 / 893; user-select: none; -webkit-user-select: none; cursor: pointer;
+  /* Le navigateur garde le défilement vertical ; touches et glissements horizontaux vont au script. */
+  touch-action: pan-y; }
 .secret .card { height: 100%; min-height: 0; }
 .secret .card-text { overflow: auto; }
 .secret-cover.secret-cover--back { background: none; padding: 0; }

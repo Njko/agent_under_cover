@@ -491,7 +491,9 @@ function secretHtml(rule, front) {
     <p class="secret-hint"><span aria-hidden="true">👆 </span>Touche la carte ou fais-la glisser pour la retourner, puis de nouveau pour la cacher. Cache ton écran des autres joueurs.</p>`;
 }
 
-// Carte secrète : une touche, un clic ou un glissement la retourne, un second geste la cache.
+// Carte secrète : une touche, un clic ou un glissement horizontal la retourne, un second geste la cache.
+// Un glissement vertical fait défiler la page, comme ailleurs (touch-action: pan-y) : le navigateur
+// annule alors le geste (pointercancel), et un mouvement surtout vertical ne retourne jamais la carte.
 // Le bouton « Afficher ma carte » fait de même au clavier et pour les lecteurs d'écran.
 function bindSecret() {
   const secret = document.getElementById("secret");
@@ -507,13 +509,18 @@ function bindSecret() {
     if (on && focus) document.getElementById("secret-content").focus({ preventScroll: true });
   };
   secret.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    start = { x: e.clientX, id: e.pointerId };
+    if (e.pointerType === "mouse") e.preventDefault(); // pas de sélection de texte à la souris
+    start = { x: e.clientX, y: e.clientY, id: e.pointerId };
   });
   secret.addEventListener("pointerup", (e) => {
     if (!start || e.pointerId !== start.id) return;
-    // Un glissement fait tourner la carte dans le sens du doigt ; une touche, vers la gauche.
     const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (Math.abs(dy) > 20 && Math.abs(dy) > Math.abs(dx)) {
+      start = null; // geste de défilement (page trop courte pour défiler) : la carte ne bouge pas
+      return;
+    }
+    // Un glissement fait tourner la carte dans le sens du doigt ; une touche, vers la gauche.
     secret.style.setProperty("--flip", Math.abs(dx) > 20 && dx > 0 ? -1 : 1);
     start = null;
     set(!revealed);
