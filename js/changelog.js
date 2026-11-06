@@ -11,6 +11,7 @@ export const CHANGELOG = [
     items: [
       "La carte se retourne d'une touche, d'un clic ou d'un glissement, et le même geste la cache : plus besoin de garder le doigt appuyé.",
       "Faire glisser le doigt de haut en bas sur la carte fait défiler la page, comme ailleurs sur le site.",
+      "L'en-tête de chaque carte affiche le numéro et le titre de sa règle d'or ; l'énoncé de la règle apparaît dans un bandeau distinct.",
       "Deux joueurs ne reçoivent plus jamais la même carte dans une manche.",
       "2 undercovers à partir de 7 joueurs seulement : en dessous, le choix reste visible mais n'est pas disponible.",
       "10 joueurs au maximum. Au-delà de 5 joueurs, le jeu de base et l'extension sont obligatoires : le jeu de base seul n'a pas assez de cartes différentes (4 bonnes pratiques seulement pour la règle 1).",

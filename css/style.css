@@ -162,11 +162,15 @@ input[type="number"], input.code-input, input.name {
 .card--rule5 { --rule: var(--rule5); --rule-accent: var(--rule5-accent); }
 .card--rule6 { --rule: var(--rule6); --rule-accent: var(--rule6-accent); }
 .card--rule7 { --rule: var(--rule7); --rule-accent: var(--rule7-accent); }
+/* En-tête de carte : numéro de la règle (petites capitales) et son titre, dans un même bloc coloré. */
 .card-head {
-  background: var(--rule); color: #fff; font-weight: 800; font-size: 0.8rem; letter-spacing: 0.04em;
-  padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;
+  background: var(--rule); color: #fff;
+  padding: 12px 16px 13px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
 }
-.card-head i { width: 10px; height: 10px; border-radius: 50%; background: var(--rule-accent, var(--accent)); }
+.card-rule { margin: 0; display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.card-rule-num { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+.card-rule-title { font-size: 1rem; font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; hyphens: auto; }
+.card-head i { flex: none; margin-top: 3px; width: 10px; height: 10px; border-radius: 50%; background: var(--rule-accent, var(--accent)); }
 .card-text { padding: 16px 18px; margin: auto 0; font-size: 1.02rem; }
 .card-foot {
   margin: 0 18px 14px; padding-top: 8px; border-top: 2px solid var(--accent);
@@ -255,7 +259,6 @@ input[type="number"], input.code-input, input.name {
 input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
 
 /* Règle d'or annoncée */
-.card-theme { margin: 0; padding: 8px 18px 0; font-size: 0.8rem; font-weight: 700; color: var(--rule); text-transform: uppercase; letter-spacing: 0.04em; }
 .round-theme { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 6px 0 8px; font-size: 1.15rem; font-weight: 700; color: var(--text); }
 .round-theme span { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: #fff; background: var(--rule1); padding: 3px 8px; border-radius: 6px; }
 .round-theme--2 span { background: var(--rule2); }
@@ -551,7 +554,6 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
 [data-lowtech] .card { --muted: inherit; --border: inherit; background: transparent; color: var(--text); border: 1px solid var(--text); }
 [data-lowtech] .card-head { background: transparent; color: var(--text); border-bottom: 1px solid var(--text); }
 [data-lowtech] .card-head i { display: none; }
-[data-lowtech] .card-theme { color: var(--text); }
 [data-lowtech] .card-foot { border-top: 1px dashed var(--text); color: var(--text); }
 [data-lowtech] .card--undercover { outline: 3px double var(--text); }
 [data-lowtech] .round-theme span { background: transparent; color: var(--text); border: 1px solid var(--text); }
@@ -808,7 +810,13 @@ body { overflow-wrap: anywhere; hyphens: auto; }
 }
 
 /* Énoncé de la règle d'or (cartes, tableau de bord, débrief, catalogue) */
-.card-summary { margin: 0; padding: 4px 18px 0; font-size: 0.82rem; font-style: italic; color: var(--muted); }
+/* Énoncé de la règle : bandeau teinté de la couleur de la règle, séparé de l'en-tête et du texte. */
+.card-summary {
+  margin: 0; padding: 10px 18px 10px 15px; font-size: 0.85rem; font-style: italic; line-height: 1.4; color: #13213c;
+  background: #eef1f7; background: color-mix(in srgb, var(--rule) 9%, #ffffff);
+  border-left: 3px solid var(--rule); border-bottom: 1px solid var(--border);
+}
+[data-lowtech] .card-summary { background: transparent; color: var(--text); border-left-color: var(--text); border-bottom: 1px dashed var(--text); }
 .card-deck { align-self: flex-start; margin: 0 18px 12px; padding: 2px 8px; font-size: 0.78rem; font-weight: 700; color: var(--muted); border: 1px dashed var(--muted); border-radius: 6px; }
 [data-lowtech] .card-deck { border-radius: 0; }
 section > .chips { flex-wrap: wrap; margin: 8px 0 16px; }

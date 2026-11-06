@@ -397,10 +397,14 @@ function cardHtml({ ruleId, text, kind = "civilian", label, theme, summary, note
   // card : objet carte de js/cards.js. Sa mention « Extension » n'est montrée qu'au catalogue et au
   // débrief, jamais pendant le jeu : elle pourrait aider à deviner un rôle.
   const ext = card?.deck === "ext";
+  // L'en-tête nomme la règle d'or (numéro et titre), sur toutes les cartes.
+  const ruleTheme = theme ?? RULES.find((r) => r.id === ruleId)?.theme ?? "";
   return `
     <article class="card card--rule${ruleId} ${kind === "undercover" ? "card--undercover" : ""}" data-deck="${card?.deck || ""}">
-      <header class="card-head"><span>RÈGLE ${ruleId}</span><i></i></header>
-      ${theme ? `<p class="card-theme">${esc(theme)}</p>` : ""}
+      <header class="card-head">
+        <p class="card-rule"><span class="card-rule-num">Règle ${ruleId}</span><span class="visually-hidden"> : </span><span class="card-rule-title">${esc(ruleTheme)}</span></p>
+        <i></i>
+      </header>
       ${summary ? `<p class="card-summary">${esc(summary)}</p>` : ""}
       <p class="card-text">${esc(text ?? card.text)}</p>
       ${ext ? `<p class="card-deck">${DECKS.ext}</p>` : ""}
