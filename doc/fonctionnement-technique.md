@@ -71,6 +71,7 @@ Tout est stocké dans le `localStorage` du navigateur, sur l'appareil, et n'en s
 | `player:CODE:N` | Manche affichée par le joueur N | Joueur |
 | `lastPlayer` | Dernière partie rejointe | Joueur |
 | `lowtech`, `timerDuration`, `debriefDuration` | Préférences d'affichage et durées des minuteurs (débat, discussion du débrief) | Tous |
+| `cardsFilter`, `cardsOpen`, `seenChangelog` | Catalogue (filtre, règles dépliées) et dernière page « Nouveautés » vue | Tous |
 
 Le service worker garde aussi une copie des fichiers de l'application (Cache Storage) pour fonctionner hors ligne.
 
@@ -82,7 +83,8 @@ Toutes les requêtes sont des `GET` vers le site de l'application :
 
 | Fichiers | Quand |
 | --- | --- |
-| `index.html`, `css/style.css`, `js/boot.js`, `js/app.js`, `js/game.js`, `js/cards.js`, `js/icons.js` | À l'ouverture |
+| `index.html`, `css/style.css`, `js/boot.js`, `js/app.js`, `js/game.js`, `js/cards.js`, `js/changelog.js`, `js/icons.js` | À l'ouverture |
+| `js/xlsx.js` | Uniquement au clic sur « Exporter en Excel » (catalogue) : le classeur est créé sur l'appareil, rien n'est envoyé |
 | `img/dos/regle-N-mini.webp`, `img/dos/regle-N.webp` | Selon les écrans affichés (aucune en mode low-tech) |
 | `vendor/qrcode.min.js` | Uniquement sur les écrans qui affichent un QR code (animateur) |
 | `sw.js`, `manifest.webmanifest`, `icons/icon.svg` | Service worker et installation sur l'écran d'accueil |

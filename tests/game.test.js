@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { RULES } from "../js/cards.js";
-import { MIN_COMPET_PLAYERS, coopFound, rulePool, coopPoints, decodeCode, dealRound, encodeCode, newCode, outcome, roundPoints, ruleForRound, wrongGuesses } from "../js/game.js";
+import { MAX_BASE_PLAYERS, MAX_PLAYERS, MIN_COMPET_PLAYERS, validateSettings, coopFound, rulePool, coopPoints, decodeCode, dealRound, encodeCode, newCode, outcome, roundPoints, ruleForRound, wrongGuesses } from "../js/game.js";
 
 const base = { seed: 4242, players: 5, undercovers: 1 };
 
@@ -20,27 +20,31 @@ test("chaque règle a ses cartes civiles et undercover, un dos et ses textes", (
     }
     for (const u of r.undercovers) assert.ok(u.why, `explication manquante : ${u.text}`);
   }
-  const count = (deck) => RULES.reduce((n, r) => n + r.civilians.concat(r.undercovers).filter((c) => c.deck === deck).length, 0);
-  assert.equal(count("base"), 44, "le jeu de base (PDF) contient 44 cartes");
-  assert.equal(count("base") + count("ext"), 132, "l'extension triple le nombre de cartes");
+  // Les textes évoluent (import Excel) : on vérifie ce dont le jeu a besoin, pas un nombre exact.
+  // Avec l'extension, chaque règle doit fournir une carte différente à chaque civil d'une partie à 10.
+  for (const r of RULES) {
+    assert.ok(rulePool(r, "ext").civilians.length >= MAX_PLAYERS - 1, `règle ${r.id} : pas assez de cartes pour ${MAX_PLAYERS} joueurs`);
+  }
   const texts = RULES.flatMap((r) => r.civilians.concat(r.undercovers).map((c) => c.text));
   assert.equal(new Set(texts).size, texts.length, "chaque carte est unique");
 });
 
 test("le code encode et décode les paramètres", () => {
-  for (let players = 3; players <= 18; players++) {
+  for (let players = 3; players <= MAX_PLAYERS; players++) {
     for (const undercovers of [1, 2]) {
       if (players - undercovers < 2) continue;
       for (const rounds of [1, 5, 16]) {
         for (const mode of players < 4 ? ["coop"] : ["coop", "compet"]) {
           const seed = (players * 7919 + undercovers * 31 + rounds) % 2 ** 14;
           const rules = [1, 3, 7];
-          const deck = rounds === 5 ? "ext" : "base";
+          // Jeu de base quand il suffit (au plus 6 joueurs, assez de cartes), sinon l'extension.
+          const deck = rounds === 5 || validateSettings({ players, undercovers, rules, deck: "base" }) ? "ext" : "base";
           const ucCards = rounds === 16 ? "distinct" : "same";
           const code = encodeCode({ seed, players, undercovers, rules, ordered: true, rounds, mode, deck, ucCards });
           assert.match(code, /^[2-9A-HJ-NP-Z]{8}$/);
           assert.deepEqual(decodeCode(code), { code, seed, players, undercovers, rules, ordered: true, rounds, mode, deck, ucCards });
         }
+        if (validateSettings({ players, undercovers, rules: RULES.map((r) => r.id) })) continue;
         const code = encodeCode({ seed: 1, players, undercovers, rounds });
         assert.equal(decodeCode(code).mode, "coop", "coopératif par défaut");
         assert.equal(decodeCode(code).deck, "base", "jeu de base par défaut");
@@ -73,20 +77,20 @@ test("un code mal saisi est rejeté", () => {
 
 test("la distribution est identique sur tous les appareils et respecte les rôles et le jeu choisi", () => {
   for (const deck of ["base", "ext"]) {
-    const code = newCode({ players: 8, undercovers: 2, rounds: 10, deck });
+    const code = newCode({ players: 6, undercovers: 2, rounds: 10, deck });
     const game = decodeCode(code);
     for (let round = 1; round <= 10; round++) {
       const a = dealRound(game, round);
       assert.deepEqual(a, dealRound(decodeCode(code), round));
       assert.equal(a.roles.filter((r) => r.role === "undercover").length, 2);
-      assert.equal(a.roles.filter((r) => r.role === "civilian").length, 6);
+      assert.equal(a.roles.filter((r) => r.role === "civilian").length, 4);
       const pool = rulePool(a.rule, deck);
       assert.ok(pool.undercovers.includes(a.undercover));
       for (const r of a.roles) {
         if (r.role === "undercover") assert.equal(r.card, a.undercover.text);
         else assert.ok(pool.civilians.some((c) => c.text === r.card));
       }
-      assert.ok(a.starter >= 1 && a.starter <= 8);
+      assert.ok(a.starter >= 1 && a.starter <= 6);
     }
   }
 });
@@ -207,7 +211,7 @@ test("la distribution tient compte des manches précédentes de façon détermin
 
 test("deux undercovers : même carte, ou une carte chacun si la règle en a assez", () => {
   for (let seed = 0; seed < 40; seed++) {
-    const settings = { seed, players: 8, undercovers: 2, rounds: 7 };
+    const settings = { seed, players: 6, undercovers: 2, rounds: 7 };
     const cardsOf = (deal) => deal.roles.filter((r) => r.role === "undercover").map((r) => r.card);
     // Par défaut : la même carte pour les deux.
     for (const deck of ["base", "ext"]) {
@@ -228,4 +232,40 @@ test("deux undercovers : même carte, ou une carte chacun si la règle en a asse
     const base = dealRound(decodeCode(encodeCode({ ...settings, deck: "base", ucCards: "distinct" })), 1);
     assert.equal(new Set(cardsOf(base)).size, 1);
   }
+});
+
+test("deux joueurs ne reçoivent jamais la même carte", () => {
+  const allRules = RULES.map((r) => r.id);
+  let games = 0;
+  for (let players = 3; players <= MAX_PLAYERS; players++) {
+    for (const undercovers of [1, 2]) {
+      for (const deck of ["base", "ext"]) {
+        for (const ucCards of ["same", "distinct"]) {
+          if (validateSettings({ players, undercovers, rules: allRules, deck })) continue;
+          for (let seed = 0; seed < 12; seed++) {
+            const game = decodeCode(encodeCode({ seed: seed * 101 + players, players, undercovers, rounds: 14, deck, ucCards }));
+            for (let round = 1; round <= 14; round++) {
+              const civilians = dealRound(game, round).roles.filter((r) => r.role === "civilian").map((r) => r.card);
+              assert.equal(new Set(civilians).size, civilians.length, `${players} joueurs, ${deck}, manche ${round}`);
+            }
+            games++;
+          }
+        }
+      }
+    }
+  }
+  assert.ok(games > 200);
+});
+
+test("10 joueurs au plus, et l'extension est obligatoire au-delà de 6 joueurs", () => {
+  assert.equal(MAX_PLAYERS, 10);
+  assert.equal(MAX_BASE_PLAYERS, 6);
+  assert.throws(() => encodeCode({ ...base, players: 11, deck: "ext" }));
+  assert.ok(encodeCode({ ...base, players: 10, deck: "ext" }));
+  assert.throws(() => encodeCode({ ...base, players: 7, deck: "base" }), /Au-delà de 6 joueurs/);
+  assert.ok(encodeCode({ ...base, players: 7, deck: "ext" }));
+  // À 6 joueurs et 1 undercover, la règle 1 du jeu de base n'a que 4 bonnes pratiques pour 5 civils.
+  assert.match(validateSettings({ players: 6, undercovers: 1, rules: [1], deck: "base" }), /règle d'or 1 n'a que 4/);
+  assert.equal(validateSettings({ players: 6, undercovers: 2, rules: [1], deck: "base" }), null);
+  assert.equal(validateSettings({ players: 6, undercovers: 1, rules: [2], deck: "base" }), null);
 });

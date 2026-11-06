@@ -6,6 +6,8 @@
   "scripts": {
     "test": "node --test tests/*.test.js",
     "start": "python3 -m http.server 8000",
+    "cartes:export": "node scripts/cartes-export.mjs",
+    "cartes:import": "node scripts/cartes-import.mjs",
     "docker:build": "docker build -t undercover:local .",
     "docker:run": "docker run --rm -p 8080:8080 --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges undercover:local",
     "k8s:render": "kubectl kustomize deploy/kubernetes"

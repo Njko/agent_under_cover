@@ -5,7 +5,9 @@ Undercover IA responsable est un serious game web, en français, joué sur les t
 ## Commandes
 
 ```bash
-npm test               # tests du moteur de jeu (node --test), à lancer après toute modification de js/
+npm test               # tests du moteur de jeu et de l'export Excel (node --test), à lancer après toute modification de js/
+npm run cartes:export  # classeur Excel des cartes (édition des textes)
+npm run cartes:import -- fichier.xlsx [--essai]   # reporte un classeur modifié dans js/cards.js
 npm start              # serveur local : http://localhost:8000
 npm run docker:build   # image Docker
 npm run docker:run     # conteneur durci : http://localhost:8080
@@ -21,7 +23,10 @@ npm run k8s:render     # rendu Kustomize des manifestes Kubernetes
 | `js/app.js` | Écrans, routeur (fragment d'URL `#/…`), minuteur, accessibilité |
 | `js/game.js` | Moteur déterministe : code de partie, distribution, conditions de victoire, scores |
 | `js/cards.js` | Contenu des 7 règles d'or et des 132 cartes : 44 du jeu de base (`deck: "base"`, validées) et 88 de l'extension (`deck: "ext"`, à valider) |
+| `js/changelog.js` | Notes de version (page « Nouveautés ») |
+| `js/xlsx.js` | Export Excel des cartes (navigateur et scripts), sans dépendance |
 | `js/icons.js` | Dessins SVG du mode low-tech |
+| `scripts/` | Import et export Excel des cartes (Node, non servis) |
 | `css/style.css` | Styles des deux thèmes (normal et low-tech, clair et sombre) |
 | `sw.js` | Service worker (hors ligne) |
 | `vendor/qrcode.min.js` | Bibliothèque QR, hébergée localement |
@@ -43,6 +48,7 @@ C'est un engagement documenté dans `doc/fonctionnement-technique.md`. Ne le cas
 ### Versions et compatibilité
 
 - À **chaque modification** d'un fichier servi, incrémentez `VERSION` dans `sw.js`. Sinon, les téléphones gardent l'ancienne version en cache.
+- À chaque mise à jour **visible des joueurs ou de l'animateur**, ajoutez une entrée en tête de `js/changelog.js` (date de mise en ligne, changements du point de vue des joueurs) : c'est la page « Nouveautés ».
 - Un nouveau fichier servi doit être ajouté à `ASSETS` dans `sw.js` (s'il fait partie du cœur de l'application) et, s'il est dans un nouveau dossier, au `Dockerfile` et au `.dockerignore`.
 - Changer le format du code de partie (`FIELDS` dans `js/game.js`) invalide les parties en cours : signalez-le à l'utilisateur.
 

@@ -87,6 +87,8 @@ h2 { font-size: 1.15rem; margin: 1.4em 0 0.5em; }
   width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.7); color: #ffffff;
   display: flex; align-items: center; justify-content: center; text-decoration: none; font-weight: 800; justify-self: end;
 }
+/* Aide ouverte : le « ? » apparaît enfoncé (couleurs inversées) et la referme d'un appui. */
+.topbar-help--open { background: #ffffff; color: var(--bar); border-color: #ffffff; }
 .brand small { font-weight: 400; opacity: 0.85; }
 @media (max-width: 440px) { .brand small { display: none; } }
 
@@ -129,7 +131,7 @@ legend { font-weight: 600; padding: 0 6px; }
 /* Choix imbriqué (cartes des 2 undercovers) : sans cadre, en retrait sous le choix principal. */
 .uc-cards { border: 0; border-left: 3px solid var(--border); border-radius: 0; padding: 0 0 0 12px; margin: 4px 0 0 4px; }
 .uc-cards legend { padding: 0; font-weight: 600; font-size: 0.95rem; }
-.uc-cards .hint:empty { display: none; }
+.hint:empty { display: none; }
 input[type="radio"], input[type="checkbox"] { width: 22px; height: 22px; accent-color: var(--primary); }
 input[type="number"], input.code-input, input.name {
   font: inherit; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text);
@@ -209,7 +211,7 @@ input[type="number"], input.code-input, input.name {
 .fan-card--presented { border-radius: 7% / 5%; box-shadow: 0 8px 20px rgba(10, 18, 38, 0.4); }
 
 /* Carte secrète du joueur */
-.secret { position: relative; margin: 16px auto 8px; width: min(340px, 100%); aspect-ratio: 640 / 893; user-select: none; -webkit-user-select: none; touch-action: none; }
+.secret { position: relative; margin: 16px auto 8px; width: min(340px, 100%); aspect-ratio: 640 / 893; user-select: none; -webkit-user-select: none; touch-action: none; cursor: pointer; }
 .secret .card { height: 100%; min-height: 0; }
 .secret .card-text { overflow: auto; }
 .secret-cover.secret-cover--back { background: none; padding: 0; }
@@ -395,6 +397,9 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
 .tile::after { content: "›"; margin-left: auto; font-size: 1.6rem; color: var(--primary); }
 .tile-icon { font-size: 1.8rem; line-height: 1; }
 .tile strong { display: block; color: var(--primary); }
+/* Pastille « Nouveau » (notes de version pas encore lues) */
+.badge-new { display: inline-block; margin-left: 6px; padding: 1px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 800; vertical-align: middle; background: var(--primary); color: var(--primary-text); }
+[data-lowtech] .badge-new { border-radius: 0; }
 .tile small { display: block; color: var(--muted); font-size: 0.85rem; }
 .center-small { text-align: center; margin: 24px 0 0; }
 .link-btn { font: inherit; font-size: 0.85rem; color: var(--muted); background: none; border: none; text-decoration: underline; cursor: pointer; padding: 8px; }
@@ -515,6 +520,10 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
 [data-lowtech] .brand-logo { display: none; }
 [data-lowtech] .brand span { font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
 [data-lowtech] .mode-toggle, [data-lowtech] .topbar-help { color: var(--text); border-color: var(--text); background: transparent; }
+/* Les états survol et appui ne doivent pas effacer l'état « aide ouverte » (texte invisible sinon). */
+.topbar-help.topbar-help--open:is(:hover, :active, .is-pressed) { background-color: #e6e8ff; color: var(--bar); }
+[data-lowtech] .topbar-help.topbar-help--open,
+[data-lowtech] .topbar-help.topbar-help--open:is(:hover, :active, .is-pressed) { background-color: var(--text); color: var(--bg); text-decoration: none; }
 [data-lowtech] .switch { border-color: var(--text); }
 [data-lowtech] .switch-thumb { background: var(--text); }
 [data-lowtech] .mode-toggle[aria-checked="true"] .switch { background: var(--text); }
@@ -819,6 +828,8 @@ section > .chips { flex-wrap: wrap; margin: 8px 0 16px; }
 .rule-section-title .rule-title { display: block; }
 .rule-section-title small { font-size: 0.8rem; font-weight: 400; color: var(--muted); }
 .cards-sub { font-size: 1rem; margin: 18px 0 8px; }
+.catalog-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.catalog-actions + .hint { margin-top: 6px; }
 .rule-panel > .grid:last-child { margin-bottom: 20px; }
 .uc-pair { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
 .uc-pair .why { margin: 0; }
@@ -879,8 +890,9 @@ section > .chips { flex-wrap: wrap; margin: 8px 0 16px; }
     -webkit-backface-visibility: hidden; backface-visibility: hidden;
     transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), visibility 0s linear 0.4s;
   }
-  :root:not([data-lowtech]) .secret > .secret-content { transform: rotateY(180deg); }
-  :root:not([data-lowtech]) .secret.revealed > .secret-cover { opacity: 1; transform: rotateY(-180deg); }
+  /* --flip (1 ou -1, posé par bindSecret) : sens de rotation, celui du glissement du doigt. */
+  :root:not([data-lowtech]) .secret > .secret-content { transform: rotateY(calc(180deg * var(--flip, 1))); }
+  :root:not([data-lowtech]) .secret.revealed > .secret-cover { opacity: 1; transform: rotateY(calc(-180deg * var(--flip, 1))); }
   :root:not([data-lowtech]) .secret.revealed > .secret-content {
     transform: rotateY(0deg); transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.3, 1), visibility 0s;
   }

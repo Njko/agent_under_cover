@@ -1,10 +1,12 @@
 import { DECKS, RULES } from "./cards.js";
+import { CHANGELOG, LATEST_CHANGE } from "./changelog.js";
 import { ICONS } from "./icons.js";
 import {
   CODE_LENGTH,
   MAX_ROUNDS,
   MIN_PLAYERS,
   MAX_PLAYERS,
+  MAX_BASE_PLAYERS,
   decodeCode,
   dealRound,
   COOP_MAX_POINTS,
@@ -475,9 +477,9 @@ function backImg(rule, className = "back", { lazy = true, small = false } = {}) 
   return `<img class="${className}" src="${src}" width="${w}" height="${h}" draggable="false" ${lazy ? 'loading="lazy"' : ""} alt="${small ? "" : alt}">`;
 }
 
-// Carte secrète : le dos de la carte de la règle d'or la masque ; on la retourne en maintenant le doigt.
-// Deux façons de voir sa carte : maintenir le doigt dessus (elle se recache en relâchant), ou le
-// bouton « Afficher ma carte », utilisable au clavier et avec un lecteur d'écran.
+// Carte secrète : le dos de la carte de la règle d'or la masque. On la retourne en la touchant, en
+// cliquant dessus ou en la faisant glisser (le même geste la cache), ou avec le bouton
+// « Afficher ma carte », utilisable au clavier et avec un lecteur d'écran.
 function secretHtml(rule, front) {
   return `
     <div class="secret" id="secret">
@@ -485,27 +487,41 @@ function secretHtml(rule, front) {
       <div class="secret-content" id="secret-content" tabindex="-1" aria-label="Ta carte">${front}</div>
     </div>
     <button type="button" class="btn secret-toggle" id="secret-toggle" aria-pressed="false" aria-controls="secret-content">Afficher ma carte</button>
-    <p class="secret-hint"><span aria-hidden="true">👆 </span>Maintiens le doigt sur la carte pour la retourner, ou touche « Afficher ma carte ». Cache ton écran des autres joueurs.</p>`;
+    <p class="secret-hint"><span aria-hidden="true">👆 </span>Touche la carte ou fais-la glisser pour la retourner, puis de nouveau pour la cacher. Cache ton écran des autres joueurs.</p>`;
 }
 
+// Carte secrète : une touche, un clic ou un glissement la retourne, un second geste la cache.
+// Le bouton « Afficher ma carte » fait de même au clavier et pour les lecteurs d'écran.
 function bindSecret() {
   const secret = document.getElementById("secret");
   const toggle = document.getElementById("secret-toggle");
-  let pinned = false;
-  const show = (on) => secret.classList.toggle("revealed", on || pinned);
+  let revealed = false;
+  let start = null;
+  const set = (on, focus = false) => {
+    revealed = on;
+    secret.classList.toggle("revealed", on);
+    toggle.setAttribute("aria-pressed", String(on));
+    toggle.textContent = on ? "Masquer ma carte" : "Afficher ma carte";
+    // Le lecteur d'écran lit la carte dès qu'elle est affichée.
+    if (on && focus) document.getElementById("secret-content").focus({ preventScroll: true });
+  };
   secret.addEventListener("pointerdown", (e) => {
     e.preventDefault();
-    show(true);
+    start = { x: e.clientX, id: e.pointerId };
   });
-  ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => secret.addEventListener(ev, () => show(false)));
+  secret.addEventListener("pointerup", (e) => {
+    if (!start || e.pointerId !== start.id) return;
+    // Un glissement fait tourner la carte dans le sens du doigt ; une touche, vers la gauche.
+    const dx = e.clientX - start.x;
+    secret.style.setProperty("--flip", Math.abs(dx) > 20 && dx > 0 ? -1 : 1);
+    start = null;
+    set(!revealed);
+  });
+  secret.addEventListener("pointercancel", () => (start = null));
   secret.addEventListener("contextmenu", (e) => e.preventDefault());
   toggle.addEventListener("click", () => {
-    pinned = !pinned;
-    show(pinned);
-    toggle.setAttribute("aria-pressed", String(pinned));
-    toggle.textContent = pinned ? "Masquer ma carte" : "Afficher ma carte";
-    // Le lecteur d'écran lit la carte dès qu'elle est affichée.
-    if (pinned) document.getElementById("secret-content").focus({ preventScroll: true });
+    secret.style.setProperty("--flip", 1);
+    set(!revealed, true);
   });
 }
 
@@ -807,6 +823,12 @@ function viewHome() {
         <span class="tile-icon" aria-hidden="true">🃏</span>
         <span><strong>Toutes les cartes</strong><small>Les 7 règles d'or et leurs ${countCards("ext")} cartes</small></span>
       </a>
+      <a class="tile" href="#/nouveautes">
+        <span class="tile-icon" aria-hidden="true">🆕</span>
+        <span><strong>Nouveautés${
+          store.get("seenChangelog", "") < LATEST_CHANGE ? ` <span class="badge-new">Nouveau</span>` : ""
+        }</strong><small>Mise à jour du ${formatDate(LATEST_CHANGE)} : ce qui a changé</small></span>
+      </a>
       ${
         isLowTech()
           ? `<a class="tile" href="#/lowtech">
@@ -849,7 +871,7 @@ function viewRules() {
         <li>L'animateur crée une partie : prénoms des joueurs, règles d'or à jouer, nombre de manches et cartes (le jeu de base, validé, ou le jeu de base avec l'extension, dont les cartes tirées des métiers de l'assurance sont encore à valider). Avec 2 undercovers, il choisit s'ils ont la même carte ou une carte différente chacun (avec l'extension, qui compte plusieurs cartes undercover par règle). L'animateur ne joue pas : il ne se compte pas parmi les joueurs.</li>
         <li>Il affiche le <strong>QR code</strong> (ou le code de la partie).</li>
         <li>Chacun scanne le QR code et sélectionne <strong>son prénom</strong>, ou choisit un <strong>numéro de place</strong> si aucun prénom n'a été établi avant de lancer la partie. Chaque prénom ou numéro ne doit être pris qu'une fois. Il n'y a pas de contrôle automatisé des participants pour garder le système de jeu le plus simple possible.</li>
-        <li>Sur l'appareil du participant (téléphone ou ordinateur), la carte distribuée pour la manche actuelle est affichée face cachée : on la retourne soit en maintenant le doigt dessus (sur téléphone), soit en cliquant longuement dessus, soit en cliquant ou en tapant sur « Afficher ma carte ».</li>
+        <li>Sur l'appareil du participant (téléphone ou ordinateur), la carte distribuée pour la manche actuelle est affichée face cachée : on la retourne en la touchant, en cliquant dessus ou en la faisant glisser, ou avec le bouton « Afficher ma carte ». Le même geste la cache de nouveau.</li>
       </ol>
       <p class="hint">Aucune connexion entre téléphones n'est nécessaire : chaque téléphone calcule sa propre carte à partir du code.
       Pas assez de téléphones ? Utilisez le mode « Distribuer sur ce téléphone ».</p>
@@ -882,10 +904,55 @@ function viewRules() {
       <p>Après la dernière manche, l'animateur affiche le score et un QR code : en le scannant, chaque joueur retrouve les résultats sur son téléphone. En touchant une manche, on revoit les cartes distribuées et qui les avait. Si la partie a été terminée plus tôt, les manches non jouées restent consultables, hors score.</p>
       <h2>Débrief</h2>
       <p>À la fin de chaque manche, l'animateur affiche la règle, la carte undercover et pourquoi elle l'enfreint. C'est le moment d'échanger sur les pratiques réelles des équipes.</p>
-      <p><button class="btn" id="back">Retour</button></p>
+      <p><button class="btn" id="back">Fermer l'aide</button></p>
     </section>`;
-  document.getElementById("back").onclick = () => (history.length > 1 ? history.back() : go("#/"));
+  document.getElementById("back").onclick = closeHelp;
 }
+
+// --- Notes de version ---------------------------------------------------------------------------
+
+function formatDate(iso) {
+  return new Date(`${iso}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+}
+
+function viewChangelog() {
+  // Une fois la page vue, l'accueil ne signale plus « Nouveau » jusqu'à la prochaine mise à jour.
+  store.set("seenChangelog", LATEST_CHANGE);
+  app.innerHTML = `
+    <section class="prose">
+      <h1>Nouveautés</h1>
+      <p>Ce qui a changé à chaque mise à jour de l'application, de la plus récente à la plus ancienne.</p>
+      ${CHANGELOG.map(
+        (release) => `
+        <h2>${formatDate(release.date)} · ${esc(release.title)}</h2>
+        <ul>${release.items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`
+      ).join("")}
+      <p><a class="btn" href="#/">Retour à l'accueil</a></p>
+    </section>`;
+}
+
+// Aide (« ? » de l'en-tête) : un second appui la referme et ramène à l'écran d'où on l'a ouverte.
+let helpFromApp = false;
+
+function closeHelp() {
+  if (helpFromApp) history.back();
+  else go("#/");
+}
+
+function syncHelpButton() {
+  const help = document.querySelector(".topbar-help");
+  const open = app.dataset.view === "rules";
+  help.classList.toggle("topbar-help--open", open);
+  help.setAttribute("aria-label", open ? "Fermer l'aide" : "Comment jouer ?");
+  help.title = open ? "Fermer l'aide" : "Comment jouer ?";
+}
+
+document.addEventListener("click", (e) => {
+  if (e.target.closest?.(".topbar-help") && app.dataset.view === "rules") {
+    e.preventDefault();
+    closeHelp();
+  }
+});
 
 // Mesures faites sur cette application (Chrome, profil iPhone 13, fichiers compressés comme sur GitHub Pages).
 const WEIGHT_TABLE = [
@@ -977,7 +1044,11 @@ function viewCards() {
           .map(([value, text]) => `<button type="button" class="chip" data-filter="${value}" aria-pressed="${filter === value}">${text}</button>`)
           .join("")}
       </div>
-      <p><button type="button" class="btn btn--small" id="toggle-all"></button></p>
+      <div class="catalog-actions">
+        <button type="button" class="btn btn--small" id="toggle-all"></button>
+        <button type="button" class="btn btn--small" id="export-xlsx" aria-describedby="export-xlsx-hint">Exporter en Excel</button>
+      </div>
+      <p class="hint" id="export-xlsx-hint">L'export contient toutes les cartes et les énoncés des règles, pour revoir ou modifier les textes.</p>
       ${RULES.map((r) => {
         const civilians = r.civilians.filter(shown);
         const undercovers = r.undercovers.filter(shown);
@@ -1047,6 +1118,27 @@ function viewCards() {
   );
   syncToggleAll();
 
+  // Export Excel : le module n'est chargé qu'au clic ; le fichier est créé sur l'appareil, sans réseau.
+  document.getElementById("export-xlsx").onclick = async (e) => {
+    const button = e.currentTarget;
+    button.disabled = true;
+    try {
+      const { buildXlsx, cardsWorkbook } = await import("./xlsx.js");
+      const blob = new Blob([buildXlsx(cardsWorkbook(RULES))], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "cartes-undercover-ia-responsable.xlsx";
+      document.body.append(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      announce("Classeur Excel des cartes téléchargé.");
+    } finally {
+      button.disabled = false;
+    }
+  };
+
   app.querySelector(".chips").addEventListener("click", (e) => {
     const chip = e.target.closest("[data-filter]");
     if (!chip) return;
@@ -1080,7 +1172,7 @@ function onCatalogResize() {
 
 function viewHostSetup() {
   const prefs = {
-    players: 6,
+    players: 5,
     undercovers: 1,
     rules: RULES.map((r) => r.id),
     ordered: false,
@@ -1091,6 +1183,8 @@ function viewHostSetup() {
     names: {},
     ...store.get("hostPrefs", {}),
   };
+  // Réglages enregistrés avec une ancienne limite (jusqu'à 18 joueurs) : ramenés à la limite actuelle.
+  prefs.players = Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, Number(prefs.players) || MIN_PLAYERS));
   // Les prénoms de la partie précédente ne sont pas repris d'office : une nouvelle équipe
   // risquerait de jouer sous les prénoms de la précédente. Un bouton permet de les reprendre.
   const lastNames = Object.keys(prefs.names)
@@ -1163,6 +1257,7 @@ function viewHostSetup() {
           <legend>Cartes</legend>
           <label class="radio"><input type="radio" name="deck" value="base" ${prefs.deck !== "ext" ? "checked" : ""}> <span>${DECKS.base} <small>(${countCards("base")} cartes validées)</small></span></label>
           <label class="radio"><input type="radio" name="deck" value="ext" ${prefs.deck === "ext" ? "checked" : ""}> <span>${DECKS.base} et ${DECKS.ext.toLowerCase()} <small>(${countCards("ext")} cartes, dont ${countCards("ext") - countCards("base")} à valider en atelier)</small></span></label>
+          <p class="hint" id="deck-hint" aria-live="polite"></p>
         </fieldset>
 
         <fieldset class="fs-undercovers">
@@ -1209,6 +1304,7 @@ function viewHostSetup() {
     const bulk = e.target.closest("[data-rules]");
     if (bulk) form.querySelectorAll('input[name="rules"]').forEach((c) => (c.checked = bulk.dataset.rules === "all"));
     syncRulesHint();
+    syncDeck();
   });
   form.elements.players.addEventListener("change", renderNames);
 
@@ -1249,11 +1345,35 @@ function viewHostSetup() {
     document.getElementById("uc-cards").hidden = !two;
     document.getElementById("uc-cards-hint").textContent =
       two && form.elements.ucCards.value === "distinct" && form.elements.deck.value === "base"
-        ? "Le jeu de base n'a qu'une carte undercover par règle : les deux undercovers auront la même. Choisissez « Jeu de base et extension » pour que chacun ait la sienne."
+        ? "Le jeu de base n'a qu'une carte undercover par règle : les deux undercovers auront la même. Choisissez « Jeu de base et extension » pour que chacun ait la sienne."
         : "";
   };
   form.addEventListener("change", syncUcCards);
   syncUcCards();
+
+  // Jeu de cartes : au-delà de 6 joueurs, l'extension est obligatoire (jeu de base trop petit pour que
+  // chacun ait une carte différente). En dessous, on signale une règle qui manquerait de cartes.
+  const syncDeck = () => {
+    const players = Number(form.elements.players.value) || MIN_PLAYERS;
+    const baseInput = form.querySelector('input[name="deck"][value="base"]');
+    const tooMany = players > MAX_BASE_PLAYERS;
+    baseInput.disabled = tooMany;
+    if (tooMany && baseInput.checked) form.querySelector('input[name="deck"][value="ext"]').checked = true;
+    const rules = [...form.querySelectorAll('input[name="rules"]:checked')].map((c) => Number(c.value));
+    const shortage =
+      !tooMany && baseInput.checked && rules.length
+        ? validateSettings({ players, undercovers: Number(form.elements.undercovers.value), rules, deck: "base" })
+        : null;
+    document.getElementById("deck-hint").textContent = tooMany
+      ? `Au-delà de ${MAX_BASE_PLAYERS} joueurs, l'extension est obligatoire : le jeu de base n'a pas assez de cartes pour que chacun en ait une différente.`
+      : shortage && /bonnes pratiques/.test(shortage)
+        ? shortage
+        : "";
+    syncUcCards();
+  };
+  form.addEventListener("change", syncDeck);
+  form.elements.players.addEventListener("input", syncDeck);
+  syncDeck();
   form.addEventListener("input", syncRulesHint);
   form.addEventListener("change", syncRulesHint);
   syncRulesHint();
@@ -1920,7 +2040,7 @@ function viewPass(code) {
       <section class="center pass">
         <p class="label">Manche ${state.round} / ${game.rounds} · distribution</p>
         <h1>${esc(playerName(state, seat))}</h1>
-        <p>Prends le téléphone, puis maintiens le doigt sur la carte pour la retourner.</p>
+        <p>Prends le téléphone, puis touche la carte pour la retourner. Elle sera cachée pour le joueur suivant.</p>
         ${secretHtml(deal.rule, playerCardHtml(game, deal, me))}
         <p class="hint">${playerHint(game)}</p>
         <button class="btn btn--primary" id="next-seat">J'ai vu ma carte → joueur suivant</button>
@@ -2008,12 +2128,18 @@ function render() {
     case "lowtech":
       viewLowTech();
       break;
+    case "nouveautes":
+      viewChangelog();
+      break;
     default:
       viewHome();
   }
   hydrateQr(app);
   // Fondu d'entrée uniquement quand on change d'écran (pas à chaque mise à jour du même écran).
   const routeKey = location.hash.replace(/~[A-Za-z0-9_-]{8,}/, "");
+  // Aide ouverte depuis un écran de l'application : la refermer revient en arrière dans l'historique.
+  if (app.dataset.view === "rules" && routeKey !== lastRoute) helpFromApp = lastRoute !== null;
+  syncHelpButton();
   if (routeKey !== lastRoute) {
     app.classList.remove("view-enter");
     void app.offsetWidth; // relance l'animation

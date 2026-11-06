@@ -1,6 +1,6 @@
 // Moteur du jeu, 100 % déterministe.
 //
-// Il n'y a pas de serveur : l'hôte génère un « code de partie » qui contient une graine
+// Il n'y a pas de serveur : l'hôte génère un « code de partie » qui contient une graine
 // aléatoire et les paramètres. Chaque téléphone recalcule localement la même distribution
 // à partir de (code, numéro de manche, numéro de joueur). Tous les appareils obtiennent donc
 // exactement le même résultat sans jamais communiquer entre eux.
@@ -11,7 +11,10 @@ const ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // 32 symboles, sans 0/O/1/
 export const CODE_LENGTH = 8; // 8 × 5 bits = 40 bits
 export const MAX_ROUNDS = 16;
 export const MIN_PLAYERS = 3;
-export const MAX_PLAYERS = 18;
+export const MAX_PLAYERS = 10;
+// Au-delà de ce nombre de joueurs, le jeu de base n'a pas assez de cartes différentes : l'extension
+// est obligatoire.
+export const MAX_BASE_PLAYERS = 6;
 export const MIN_COMPET_PLAYERS = 4;
 
 // --- Aléatoire reproductible ------------------------------------------------------------
@@ -78,7 +81,7 @@ function checksum(payload) {
   return hash32(payload % 2 ** 32, Math.floor(payload / 2 ** 32), 0xc0de8) % 2 ** CHECK_BITS;
 }
 
-export function validateSettings({ players, undercovers, rules = [1], rounds = 1, mode = "coop" }) {
+export function validateSettings({ players, undercovers, rules = [1], rounds = 1, mode = "coop", deck = "base" }) {
   if (!Number.isInteger(players) || players < MIN_PLAYERS || players > MAX_PLAYERS) {
     return `Le nombre de joueurs doit être compris entre ${MIN_PLAYERS} et ${MAX_PLAYERS}.`;
   }
@@ -94,6 +97,18 @@ export function validateSettings({ players, undercovers, rules = [1], rounds = 1
   if (!rules.length) {
     return "Choisissez au moins une règle d'or.";
   }
+  if (deck === "base" && players > MAX_BASE_PLAYERS) {
+    return `Au-delà de ${MAX_BASE_PLAYERS} joueurs, choisissez « Jeu de base et extension » : le jeu de base n'a pas assez de cartes différentes.`;
+  }
+  // Deux joueurs ne doivent jamais recevoir la même carte : chaque règle jouée doit avoir au moins une
+  // bonne pratique par civil.
+  const civilians = players - undercovers;
+  for (const rule of RULES.filter((r) => rules.includes(r.id))) {
+    const available = rulePool(rule, deck).civilians.length;
+    if (available < civilians) {
+      return `La règle d'or ${rule.id} n'a que ${available} bonnes pratiques dans ce jeu de cartes, pour ${civilians} civils : choisissez « Jeu de base et extension », ajoutez un undercover ou retirez cette règle.`;
+    }
+  }
   if (!Number.isInteger(rounds) || rounds < 1 || rounds > MAX_ROUNDS) {
     return `Le nombre de manches doit être compris entre 1 et ${MAX_ROUNDS}.`;
   }
@@ -102,7 +117,7 @@ export function validateSettings({ players, undercovers, rules = [1], rounds = 1
 
 export function encodeCode({ seed, players, undercovers, rules, ordered = false, rounds = 7, mode = "coop", deck = "base", ucCards = "same" }) {
   rules = rules ?? RULES.map((r) => r.id);
-  const error = validateSettings({ players, undercovers, rules, rounds, mode });
+  const error = validateSettings({ players, undercovers, rules, rounds, mode, deck });
   if (error) throw new Error(error);
   const values = {
     seed: seed % 2 ** 14,
@@ -237,8 +252,8 @@ function dealOne(game, round, ucCounts, starterCounts, usage) {
     if (i < undercovers) {
       roles[seat] = { seat, role: "undercover", card: undercoverCards[i % ucCount].text };
     } else {
-      // S'il y a plus de civils que de cartes de la règle, les cartes sont réutilisées.
-      const card = civilianCards[civilianIndex % civilianCards.length].text;
+      // validateSettings garantit au moins une carte par civil : aucune carte n'est donnée deux fois.
+      const card = civilianCards[civilianIndex].text;
       civilianIndex++;
       roles[seat] = { seat, role: "civilian", card };
     }

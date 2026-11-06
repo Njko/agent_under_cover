@@ -5,10 +5,10 @@ L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveu
 
 ## Principe du jeu
 
-- L'animateur saisit les **prénoms** des joueurs : chacun touche son prénom en rejoignant la partie.
+- L'animateur saisit les **prénoms** des joueurs (3 à 10, sans compter l'animateur) : chacun touche son prénom en rejoignant la partie.
 - Il choisit le **nombre de manches** et les **règles d'or** jouées (toutes, quelques-unes ou une seule), au hasard ou dans l'ordre.
 - À chaque manche, une règle est tirée parmi celles choisies (toutes passent avant qu'une revienne) et annoncée : les cartes apparaissent face cachée avec le dos de la règle.
-- Les **civils** reçoivent chacun une bonne pratique de cette règle (cartes différentes tant que possible).
+- Les **civils** reçoivent chacun une bonne pratique de cette règle : deux joueurs n'ont jamais la même carte. Au-delà de 6 joueurs, l'extension est obligatoire, le jeu de base seul n'ayant pas assez de cartes différentes.
 - L'**undercover** reçoit la carte « UNDERCOVER » de la règle : elle parle du même sujet mais *enfreint* la règle. Avec 2 undercovers, l'animateur choisit s'ils ont la même carte ou une carte différente chacun (possible avec l'extension, qui compte 4 cartes undercover par règle).
 - Deux **modes de jeu**, choisis à la création :
   - **Coopératif** (par défaut) : l'application ne révèle aucun rôle (celui qui a la carte undercover peut la reconnaître, mais la lit comme les autres). Chacun **lit sa carte à voix haute**, l'équipe débat puis désigne un suspect ; un civil désigné à tort est disculpé et reste en jeu. **Score d'équipe** : 3 points si l'undercover est trouvé au premier vote, 2 au deuxième, 1 au troisième, 0 ensuite.
@@ -16,6 +16,7 @@ L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveu
 - Débat **chronométré** (30 s à 2 min, 1 min par défaut, avec signal sonore), puis **débrief** : l'app affiche la règle, la carte undercover, *pourquoi* elle enfreint la règle, des questions de discussion (dont une propre à chaque règle) et un minuteur de discussion (3, 5 ou 10 min).
 - **Fin de partie** : score de l'équipe (ou des deux camps) et récapitulatif des manches sur l'écran de l'animateur, avec un QR code qui transmet les résultats aux téléphones des joueurs. En touchant une manche, on rouvre son débrief : qui avait quelle carte, et pourquoi la carte undercover enfreint la règle. Si l'animateur termine la partie plus tôt, les manches non jouées apparaissent aussi (« Non jouée », hors score) avec les cartes qui auraient été distribuées.
 - Chaque partie peut être **supprimée** du téléphone (accueil, tableau de bord ou fin de partie).
+- **Nouveautés** : une page liste ce qui a changé à chaque mise à jour ; l'accueil signale « Nouveau » tant qu'elle n'a pas été ouverte.
 
 ## Comment ça marche sans serveur ?
 
@@ -72,7 +73,7 @@ Le texte grossit légèrement sur grand écran (17 px, puis 18 px à partir de 1
 Audit WCAG 2.1 AA réalisé sur les deux thèmes (normal et low-tech, clair et sombre) : scan axe-core sur 13 écrans × 4 thèmes sans violation, puis tests manuels.
 
 - **Animations** (thème normal) : courtes (0,2 à 0,4 s) et limitées aux moments clés : retournement de la carte secrète, fondu au changement d'écran, éventail de l'accueil qui s'ouvre (au survol une carte se soulève, au clic elle est présentée en grand ; l'éventail est purement décoratif, masqué aux lecteurs d'écran et hors du parcours clavier), rôle révélé et score qui progresse après une désignation, débrief dévoilé dans l'ordre (carte undercover, explication, cartes des civils), score final qui monte depuis 0, dépliage du catalogue. Elles sont coupées en mode low-tech et quand l'appareil demande de limiter les animations (`prefers-reduced-motion`).
-- **Carte secrète** : en plus de l'appui long, un bouton « Afficher ma carte » (clavier, lecteur d'écran) révèle la carte et y place le focus.
+- **Carte secrète** : elle se retourne d'une touche, d'un clic ou d'un glissement (le même geste la cache) ; un bouton « Afficher ma carte » (clavier, lecteur d'écran) fait de même et place le focus sur la carte.
 - **Modales** : nom accessible, page derrière inerte, fermeture par Échap, focus rendu à l'élément d'origine.
 - **Changement d'écran** : titre de l'onglet mis à jour et focus placé sur le titre de l'écran.
 - **Contrastes** ≥ 4,5:1 dans les 4 thèmes (couleurs d'état déclinées par thème), focus clavier visible, cibles tactiles de 44 px minimum.
@@ -114,10 +115,21 @@ Tout le contenu est dans [`js/cards.js`](js/cards.js) : nom de chaque règle d'o
 
 Chaque carte indique son jeu :
 
-- `deck: "base"` : **jeu de base**, les 44 cartes du jeu imprimé, validées ;
-- `deck: "ext"` : **extension**, 88 cartes à valider en atelier, avec le métier dont la situation est tirée (`job`).
+- `deck: "base"` : **jeu de base**, les cartes du jeu imprimé, validées (44 au départ) ;
+- `deck: "ext"` : **extension**, cartes à valider en atelier (88 au départ), avec le métier dont la situation est tirée (`job`).
 
 À la création d'une partie, l'animateur choisit de jouer avec le jeu de base seul ou avec l'extension. Le catalogue « Toutes les cartes » peut n'afficher que l'un ou l'autre, et les cartes de l'extension y sont marquées « Extension », comme au débrief (jamais pendant le jeu, pour ne pas aider à deviner un rôle). Une fois une carte validée, passez son `deck` à `"base"`.
+
+### Modifier les textes dans Excel
+
+Le bouton **« Exporter en Excel »** du catalogue (ou `npm run cartes:export`) produit un classeur `.xlsx` : un onglet « Cartes » (une ligne par carte : identifiant, règle, type, jeu, métier, texte, explication, longueur du texte), un onglet « Règles » (thème, énoncé, question de débrief) et un mode d'emploi. On y modifie les textes, ajoute une ligne pour une nouvelle carte (identifiant vide) ou supprime une ligne pour retirer une carte, puis on enregistre au format `.xlsx`.
+
+```bash
+npm run cartes:import -- cartes.xlsx --essai   # liste les modifications sans rien écrire
+npm run cartes:import -- cartes.xlsx           # reporte les modifications dans js/cards.js
+```
+
+L'import vérifie le classeur avant d'écrire quoi que ce soit (règle et type connus, explication pour chaque carte undercover, métier pour l'extension, pas de texte en double).
 
 Les dos de cartes sont dans [`img/dos/`](img/dos) (WebP 640 px, coins transparents).
 Après une modification, incrémentez `VERSION` dans `sw.js` pour que les téléphones récupèrent la nouvelle version (et republiez l'image Docker si vous l'utilisez).
@@ -126,7 +138,9 @@ Après une modification, incrémentez `VERSION` dans `sw.js` pour que les télé
 
 ```bash
 npm start              # serveur local sur http://localhost:8000
-npm test               # tests du moteur (Node 18+)
+npm test               # tests du moteur et de l'export Excel (Node 18+)
+npm run cartes:export  # classeur Excel des cartes
+npm run cartes:import -- fichier.xlsx   # reporte un classeur modifié dans js/cards.js
 npm run docker:build   # image Docker undercover:local
 npm run docker:run     # conteneur durci sur http://localhost:8080
 npm run k8s:render     # manifestes Kubernetes rendus par Kustomize
@@ -141,6 +155,9 @@ Structure :
 | `index.html`, `css/style.css` | Page unique, design mobile-first, CSP en balise meta |
 | `js/boot.js` | Applique le mode low-tech avant le premier affichage |
 | `js/cards.js` | Contenu du jeu |
+| `js/changelog.js` | Notes de version (page « Nouveautés ») |
+| `js/xlsx.js` | Export Excel des cartes, chargé à la demande |
+| `scripts/` | Import et export Excel des cartes (Node, non servis) |
 | `img/dos/regle-N.webp`, `-mini.webp` | Dos des cartes : grand format et vignette |
 | `js/icons.js` | Dessins simplifiés des 7 illustrations (mode low-tech) |
 | `js/game.js` | Moteur déterministe : code de partie, distribution, conditions de victoire |
