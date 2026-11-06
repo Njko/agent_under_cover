@@ -1351,7 +1351,7 @@ function viewHostSetup() {
   form.addEventListener("change", syncUcCards);
   syncUcCards();
 
-  // Jeu de cartes : au-delà de 6 joueurs, l'extension est obligatoire (jeu de base trop petit pour que
+  // Jeu de cartes : au-delà de 5 joueurs, l'extension est obligatoire (jeu de base trop petit pour que
   // chacun ait une carte différente). En dessous, on signale une règle qui manquerait de cartes.
   const syncDeck = () => {
     const players = Number(form.elements.players.value) || MIN_PLAYERS;

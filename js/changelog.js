@@ -11,7 +11,7 @@ export const CHANGELOG = [
     items: [
       "La carte se retourne d'une touche, d'un clic ou d'un glissement, et le même geste la cache : plus besoin de garder le doigt appuyé.",
       "Deux joueurs ne reçoivent plus jamais la même carte dans une manche.",
-      "10 joueurs au maximum. Au-delà de 6 joueurs, le jeu de base et l'extension sont obligatoires : le jeu de base seul n'a pas assez de cartes différentes.",
+      "10 joueurs au maximum. Au-delà de 5 joueurs, le jeu de base et l'extension sont obligatoires : le jeu de base seul n'a pas assez de cartes différentes (4 bonnes pratiques seulement pour la règle 1).",
       "Un second appui sur « ? » referme l'aide et ramène à l'écran précédent.",
       "Nouvelle page « Nouveautés » : ce qui a changé à chaque mise à jour.",
       "Le catalogue des cartes s'exporte en fichier Excel, pour revoir et modifier les textes plus facilement.",

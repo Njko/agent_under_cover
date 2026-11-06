@@ -14,7 +14,7 @@ export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 10;
 // Au-delà de ce nombre de joueurs, le jeu de base n'a pas assez de cartes différentes : l'extension
 // est obligatoire.
-export const MAX_BASE_PLAYERS = 6;
+export const MAX_BASE_PLAYERS = 5;
 export const MIN_COMPET_PLAYERS = 4;
 
 // --- Aléatoire reproductible ------------------------------------------------------------

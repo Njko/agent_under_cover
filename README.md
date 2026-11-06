@@ -8,7 +8,7 @@ L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveu
 - L'animateur saisit les **prénoms** des joueurs (3 à 10, sans compter l'animateur) : chacun touche son prénom en rejoignant la partie.
 - Il choisit le **nombre de manches** et les **règles d'or** jouées (toutes, quelques-unes ou une seule), au hasard ou dans l'ordre.
 - À chaque manche, une règle est tirée parmi celles choisies (toutes passent avant qu'une revienne) et annoncée : les cartes apparaissent face cachée avec le dos de la règle.
-- Les **civils** reçoivent chacun une bonne pratique de cette règle : deux joueurs n'ont jamais la même carte. Au-delà de 6 joueurs, l'extension est obligatoire, le jeu de base seul n'ayant pas assez de cartes différentes.
+- Les **civils** reçoivent chacun une bonne pratique de cette règle : deux joueurs n'ont jamais la même carte. Au-delà de 5 joueurs, l'extension est obligatoire, le jeu de base seul n'ayant pas assez de cartes différentes (4 bonnes pratiques pour la règle 1).
 - L'**undercover** reçoit la carte « UNDERCOVER » de la règle : elle parle du même sujet mais *enfreint* la règle. Avec 2 undercovers, l'animateur choisit s'ils ont la même carte ou une carte différente chacun (possible avec l'extension, qui compte 4 cartes undercover par règle).
 - Deux **modes de jeu**, choisis à la création :
   - **Coopératif** (par défaut) : l'application ne révèle aucun rôle (celui qui a la carte undercover peut la reconnaître, mais la lit comme les autres). Chacun **lit sa carte à voix haute**, l'équipe débat puis désigne un suspect ; un civil désigné à tort est disculpé et reste en jeu. **Score d'équipe** : 3 points si l'undercover est trouvé au premier vote, 2 au deuxième, 1 au troisième, 0 ensuite.
