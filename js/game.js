@@ -92,13 +92,13 @@ export function validateSettings({ players, undercovers, rules = [1], rounds = 1
     return "Il faut 1 ou 2 undercovers.";
   }
   if (players - undercovers < 2) {
-    return "Il faut au moins 2 civils : ajoutez des joueurs ou retirez un undercover.";
+    return "Il faut au moins 2 équipiers : ajoutez des joueurs ou retirez un undercover.";
   }
   if (undercovers === 2 && players < MIN_PLAYERS_TWO_UNDERCOVERS) {
     return `Deux undercovers, c'est à partir de ${MIN_PLAYERS_TWO_UNDERCOVERS} joueurs : ajoutez des joueurs ou choisissez 1 undercover.`;
   }
   if (mode === "compet" && players < MIN_COMPET_PLAYERS) {
-    return `En compétitif, il faut au moins ${MIN_COMPET_PLAYERS} joueurs : à 3, un seul civil éliminé à tort fait perdre la manche. Choisissez le mode coopératif.`;
+    return `En compétitif, il faut au moins ${MIN_COMPET_PLAYERS} joueurs : à 3, un seul équipier éliminé à tort fait perdre la manche. Choisissez le mode coopératif.`;
   }
   if (!rules.length) {
     return "Choisissez au moins une règle d'or.";
@@ -107,12 +107,12 @@ export function validateSettings({ players, undercovers, rules = [1], rounds = 1
     return `Au-delà de ${MAX_BASE_PLAYERS} joueurs, choisissez « Jeu de base et extension » : le jeu de base n'a pas assez de cartes différentes.`;
   }
   // Deux joueurs ne doivent jamais recevoir la même carte : chaque règle jouée doit avoir au moins une
-  // bonne pratique par civil.
+  // bonne pratique par équipier.
   const civilians = players - undercovers;
   for (const rule of rulesOf(edition).filter((r) => rules.includes(r.id))) {
     const available = rulePool(rule, deck).civilians.length;
     if (available < civilians) {
-      return `La règle d'or ${rule.id} n'a que ${available} bonnes pratiques dans ce jeu de cartes, pour ${civilians} civils : choisissez « Jeu de base et extension », ajoutez un undercover ou retirez cette règle.`;
+      return `La règle d'or ${rule.id} n'a que ${available} bonnes pratiques dans ce jeu de cartes, pour ${civilians} équipiers : choisissez « Jeu de base et extension », ajoutez un undercover ou retirez cette règle.`;
     }
   }
   if (!Number.isInteger(rounds) || rounds < 1 || rounds > MAX_ROUNDS) {
@@ -261,7 +261,7 @@ function dealOne(game, round, ucCounts, starterCounts, usage) {
     if (i < undercovers) {
       roles[seat] = { seat, role: "undercover", card: undercoverCards[i % ucCount].text };
     } else {
-      // validateSettings garantit au moins une carte par civil : aucune carte n'est donnée deux fois.
+      // validateSettings garantit au moins une carte par équipier : aucune carte n'est donnée deux fois.
       const card = civilianCards[civilianIndex].text;
       civilianIndex++;
       roles[seat] = { seat, role: "civilian", card };
@@ -320,7 +320,7 @@ export function wrongGuesses(deal, designatedSeats) {
 export const POINTS = { civilian: 2, undercover: 10 };
 
 /**
- * Points gagnés sur une manche terminée : 2 points par civil si les civils gagnent,
+ * Points gagnés sur une manche terminée : 2 points par équipier si les équipiers gagnent,
  * 10 points par undercover encore en jeu si les undercovers gagnent.
  */
 export function roundPoints(deal, result, eliminatedSeats) {

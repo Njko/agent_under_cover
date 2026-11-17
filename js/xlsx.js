@@ -26,9 +26,9 @@ export const RULE_COLUMNS = [
   { key: "question", title: "Question de débrief", width: 70 },
 ];
 
-export const KINDS = { civilian: "Civil", undercover: "Undercover" };
+export const KINDS = { civilian: "Équipier", undercover: "Undercover" };
 
-/** Identifiant stable d'une carte dans l'export : R<règle>-C<n> (civil) ou R<règle>-U<n> (undercover). */
+/** Identifiant stable d'une carte dans l'export : R<règle>-C<n> (équipier) ou R<règle>-U<n> (undercover). */
 export function cardId(ruleId, kind, index) {
   return `R${ruleId}-${kind === "undercover" ? "U" : "C"}${String(index + 1).padStart(2, "0")}`;
 }
@@ -38,10 +38,10 @@ const HOW_TO = [
   "",
   "Modifier un texte : changez-le dans l'onglet « Cartes » (colonnes « Texte de la carte » et « Pourquoi elle enfreint la règle ») ou « Règles » (énoncé et question de débrief).",
   "Jeu : « base » pour une carte validée, « ext » pour une carte de l'extension, encore à valider.",
-  "Ajouter une carte : ajoutez une ligne avec la règle, le type (Civil ou Undercover), le jeu et le texte, en laissant l'identifiant vide. Une carte undercover a besoin d'une explication.",
+  "Ajouter une carte : ajoutez une ligne avec la règle, le type (Équipier ou Undercover), le jeu et le texte, en laissant l'identifiant vide. Une carte undercover a besoin d'une explication.",
   "Supprimer une carte : supprimez sa ligne.",
   "Ne modifiez pas les identifiants : ils relient chaque ligne à sa carte.",
-  "Longueur conseillée : 100 à 170 caractères, la même pour les cartes civiles et undercover (une carte undercover plus longue se repère trop vite).",
+  "Longueur conseillée : 100 à 170 caractères, la même pour les cartes des équipiers et undercover (une carte undercover plus longue se repère trop vite).",
   "",
   "Pour mettre le jeu à jour, enregistrez le fichier au format Excel (.xlsx) et transmettez-le à la personne qui maintient le jeu : elle demande à un agent de code de reporter les modifications.",
 ];

@@ -23,9 +23,9 @@ import {
 const app = document.getElementById("app");
 const modal = document.getElementById("modal");
 
-const ROLE_LABELS = { civilian: "Civil", undercover: "Undercover" };
+const ROLE_LABELS = { civilian: "Équipier", undercover: "Undercover" };
 // Issue de chaque manche, stockée en un caractère (elle voyage aussi dans le lien des résultats) :
-// coopératif : points obtenus « 0 » à « 3 » ; compétitif : « c » civils, « i » undercover ;
+// coopératif : points obtenus « 0 » à « 3 » ; compétitif : « c » équipiers, « i » undercover ;
 // dans les deux modes : « r » rôles révélés sans vainqueur, « s » manche passée.
 const RESULT_CODES = { civilians: "c", impostors: "i", revealed: "r" };
 
@@ -34,7 +34,7 @@ function resultLabel(res) {
     const pts = Number(res);
     return pts ? `Trouvé au ${COOP_MAX_POINTS + 1 - pts}${pts === COOP_MAX_POINTS ? "er" : "e"} vote · +${pts}` : "Trouvé · +0";
   }
-  return { c: "Victoire des civils", i: "Victoire de l'undercover", r: "Rôles révélés", s: "Manche passée", n: "Non jouée" }[res] || "";
+  return { c: "Victoire des équipiers", i: "Victoire de l'undercover", r: "Rôles révélés", s: "Manche passée", n: "Non jouée" }[res] || "";
 }
 
 function resultClass(res) {
@@ -72,7 +72,7 @@ function teamScoreHtml(game, results, big = false) {
   return `
     <div class="team-score ${big ? "team-score--big" : ""}">
       <p class="label">Manches gagnées</p>
-      <p class="team-score-value">Civils <strong>${score.civilians}</strong> – <strong>${score.undercover}</strong> Undercover</p>
+      <p class="team-score-value">Équipiers <strong>${score.civilians}</strong> – <strong>${score.undercover}</strong> Undercover</p>
     </div>`;
 }
 
@@ -546,8 +546,8 @@ function playerCardHtml(game, deal, me) {
   const { id: ruleId, theme, summary } = deal.rule;
   if (game.mode === "coop") return cardHtml({ ruleId, text: me.card, theme, summary });
   return me.role === "undercover"
-    ? cardHtml({ ruleId, text: me.card, theme, summary, kind: "undercover", note: "<strong>Tu es l'undercover :</strong> ta carte enfreint la règle d'or. Fais-toi passer pour un civil ! <strong>Pour bluffer :</strong> décris le contexte de ta carte (qui, quel outil, pour quoi faire) et tais le détail qui enfreint la règle." })
-    : cardHtml({ ruleId, text: me.card, theme, summary, note: "<strong>Tu es civil :</strong> ta carte respecte la règle d'or. Démasque l'undercover ! <strong>Ta mission :</strong> repère la description trop vague ou qui évite un détail, et pose une question à ce joueur pendant le débat." });
+    ? cardHtml({ ruleId, text: me.card, theme, summary, kind: "undercover", note: "<strong>Tu es l'undercover :</strong> ta carte enfreint la règle d'or. Fais-toi passer pour un équipier ! <strong>Pour bluffer :</strong> décris le contexte de ta carte (qui, quel outil, pour quoi faire) et tais le détail qui enfreint la règle." })
+    : cardHtml({ ruleId, text: me.card, theme, summary, note: "<strong>Tu es équipier :</strong> ta carte respecte la règle d'or. Démasque l'undercover ! <strong>Ta mission :</strong> repère la description trop vague ou qui évite un détail, et pose une question à ce joueur pendant le débat." });
 }
 
 // Indication visible sous la carte, même face cachée : elle ne doit pas dépendre du rôle.
@@ -892,7 +892,7 @@ function viewRules() {
       <p class="hint">Aucune connexion entre téléphones n'est nécessaire : chaque téléphone calcule sa propre carte à partir du code.
       Pas assez de téléphones ? Utilisez le mode « Distribuer sur ce téléphone ».</p>
       <h2>Deux modes de jeu</h2>
-      <p>Dans les deux modes, les <strong>civils</strong> ont une bonne pratique liée à la règle d'or de la manche ; l'<strong>undercover</strong> a une carte qui parle du même sujet mais <em>enfreint</em> la règle.</p>
+      <p>Dans les deux modes, les <strong>équipiers</strong> ont une bonne pratique liée à la règle d'or de la manche ; l'<strong>undercover</strong> a une carte qui parle du même sujet mais <em>enfreint</em> la règle.</p>
 
       <h3>Coopératif (recommandé)</h3>
       <ol>
@@ -906,11 +906,11 @@ function viewRules() {
 
       <h3>Compétitif</h3>
       <ol>
-        <li>En retournant sa carte, chacun découvre son rôle : <strong>l'undercover sait qu'il l'est</strong> et doit se faire passer pour un civil. Il faut au moins 4 joueurs : à 3, un seul civil éliminé à tort fait perdre la manche.</li>
-        <li><strong>Tour de parole</strong> : chacun peut garder sa carte sous les yeux, mais la <strong>décrit avec ses mots</strong>, sans la lire. Les civils la décrivent honnêtement : seul l'undercover a le droit de bluffer.</li>
-        <li><strong>Débat</strong> chronométré : chacun peut poser une question à un joueur dont la description lui semble floue. Les civils cherchent la description qui évite un détail ; l'undercover parle du contexte de sa carte et tait ce qui la trahit. Une description vague ou exagérée ne prouve rien : un civil peut aussi mal décrire sa carte.</li>
-        <li><strong>Vote</strong> : le joueur éliminé révèle son rôle. Si c'est un civil, la manche continue : nouveau débat, nouveau vote.</li>
-        <li>Les <strong>civils</strong> gagnent la manche s'ils éliminent l'undercover ; l'<strong>undercover</strong> la gagne s'il ne reste plus qu'un civil.</li>
+        <li>En retournant sa carte, chacun découvre son rôle : <strong>l'undercover sait qu'il l'est</strong> et doit se faire passer pour un équipier. Il faut au moins 4 joueurs : à 3, un seul équipier éliminé à tort fait perdre la manche.</li>
+        <li><strong>Tour de parole</strong> : chacun peut garder sa carte sous les yeux, mais la <strong>décrit avec ses mots</strong>, sans la lire. Les équipiers la décrivent honnêtement : seul l'undercover a le droit de bluffer.</li>
+        <li><strong>Débat</strong> chronométré : chacun peut poser une question à un joueur dont la description lui semble floue. Les équipiers cherchent la description qui évite un détail ; l'undercover parle du contexte de sa carte et tait ce qui la trahit. Une description vague ou exagérée ne prouve rien : un équipier peut aussi mal décrire sa carte.</li>
+        <li><strong>Vote</strong> : le joueur éliminé révèle son rôle. Si c'est un équipier, la manche continue : nouveau débat, nouveau vote.</li>
+        <li>Les <strong>équipiers</strong> gagnent la manche s'ils éliminent l'undercover ; l'<strong>undercover</strong> la gagne s'il ne reste plus qu'un équipier.</li>
         <li>Le score compte les <strong>manches gagnées par chaque camp</strong>.</li>
       </ol>
 
@@ -1086,7 +1086,7 @@ function viewCards(edition) {
           </h2>
           <div class="rule-panel" id="rule-panel-${r.id}" ${opened.has(r.id) ? "" : "hidden"}>
           <p class="rule-summary">${esc(r.summary)}</p>
-          <h3 class="cards-sub">Bonnes pratiques (cartes des civils)</h3>
+          <h3 class="cards-sub">Bonnes pratiques (cartes des équipiers)</h3>
           <div class="grid">
             ${backImg(r, "back back--grid")}
             ${civilians.map((c) => cardHtml({ ruleId: r.id, card: c })).join("")}
@@ -1232,7 +1232,7 @@ function viewHostSetup() {
           <label class="radio mode-pick"><input type="radio" name="mode" value="coop" ${prefs.mode !== "compet" ? "checked" : ""}>
             <span><strong>Coopératif</strong> (recommandé)<br><small>L'application ne révèle aucun rôle. Chacun lit sa carte à voix haute et l'équipe enquête ensemble. 3, 2 ou 1 point selon le nombre de votes.</small></span></label>
           <label class="radio mode-pick"><input type="radio" name="mode" value="compet" ${prefs.mode === "compet" ? "checked" : ""}>
-            <span><strong>Compétitif</strong><br><small>L'undercover sait qu'il l'est et bluffe. On décrit sa carte avec ses mots. Civils contre undercover. À partir de 4 joueurs.</small></span></label>
+            <span><strong>Compétitif</strong><br><small>L'undercover sait qu'il l'est et bluffe. On décrit sa carte avec ses mots. Équipiers contre undercover. À partir de 4 joueurs.</small></span></label>
         </fieldset>
 
         <fieldset class="fs-players">
@@ -1498,7 +1498,7 @@ function viewHost(code) {
               <p class="small">${
                 coop
                   ? "Si le suspect est disculpé, l'équipe relance le débat et désigne quelqu'un d'autre."
-                  : "Pendant le débat, chacun peut poser une question à un joueur. Une description vague ou exagérée ne prouve rien : un civil peut aussi mal décrire sa carte. Si un civil est éliminé, la manche continue : nouveau débat, nouveau vote."
+                  : "Pendant le débat, chacun peut poser une question à un joueur. Une description vague ou exagérée ne prouve rien : un équipier peut aussi mal décrire sa carte. Si un équipier est éliminé, la manche continue : nouveau débat, nouveau vote."
               }</p>
             </div>`
       }
@@ -1508,7 +1508,7 @@ function viewHost(code) {
           .map((r) => {
             const out = state.eliminated.includes(r.seat);
             const revealed = out || result;
-            // Coopératif : un civil désigné à tort est disculpé et reste en jeu.
+            // Coopératif : un équipier désigné à tort est disculpé et reste en jeu.
             const status = !out ? "" : coop ? (r.role === "undercover" ? " · démasqué" : " · disculpé") : " · éliminé";
             return `
             <li class="${out && !coop ? "out" : ""} ${justRevealed?.code === code && justRevealed.seat === r.seat ? "row-just" : ""}">
@@ -1640,9 +1640,9 @@ function resultBanner(result, tag = "p", code = "") {
     result === "found"
       ? ["🎉", `Undercover démasqué ! +${pts} point${pts > 1 ? "s" : ""} pour l'équipe.`]
       : result === "civilians"
-      ? ["🎉", "Les civils ont démasqué l'undercover !"]
+      ? ["🎉", "Les équipiers ont démasqué l'undercover !"]
       : result === "impostors"
-        ? ["🕵️", "L'undercover l'emporte : il ne reste qu'un civil."]
+        ? ["🕵️", "L'undercover l'emporte : il ne reste qu'un équipier."]
         : ["", "Rôles révélés."];
   return `<${tag} class="banner banner--${result === "civilians" || result === "found" ? "win" : "lose"}">${icon ? `<span aria-hidden="true">${icon} </span>` : ""}${text}</${tag}>`;
 }
@@ -1778,7 +1778,7 @@ function viewDebrief(code, { round, names, back, mySeat = null, unplayed = false
       </div>
 
       <div class="debrief-civ">
-      <h2>Les cartes des civils</h2>
+      <h2>Les cartes des équipiers</h2>
       <div class="grid">
         ${distributed.map((c) => cardHtml({ ruleId: rule.id, card: c, label: holders(c.text) })).join("")}
       </div>

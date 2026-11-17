@@ -6,7 +6,7 @@
 //                   (formulation exacte du pilier correspondant de la charte IA responsable)
 //   - question    : question de débrief propre à la règle, sur les notions souvent mal comprises
 //   - back        : image du dos de carte (img/dos/)
-//   - civilians   : cartes « bonne pratique » distribuées aux civils
+//   - civilians   : cartes « bonne pratique » distribuées aux équipiers
 //   - undercovers : cartes UNDERCOVER (pratiques qui enfreignent la règle), avec leur explication
 //                   (why) affichée au débrief
 //
@@ -476,8 +476,8 @@ const PO = {
   },
 };
 
-// Extension de l'édition Product Owner : 88 cartes (67 civils, 21 undercovers) réparties comme
-// celles de l'extension générique. Format : [domaine, texte] pour un civil, [domaine, texte, why]
+// Extension de l'édition Product Owner : 88 cartes (67 équipiers, 21 undercovers) réparties comme
+// celles de l'extension générique. Format : [domaine, texte] pour un équipier, [domaine, texte, why]
 // pour un undercover. Comme l'extension générique, ces cartes sont à valider en atelier.
 const PO_EXT = {
   1: {

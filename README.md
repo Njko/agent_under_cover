@@ -8,11 +8,11 @@ L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveu
 - L'animateur saisit les **prénoms** des joueurs (3 à 10) : chacun touche son prénom en rejoignant la partie.
 - Il choisit le **nombre de manches** et les **règles d'or** jouées (toutes, quelques-unes ou une seule), au hasard ou dans l'ordre.
 - À chaque manche, une règle est tirée parmi celles choisies (toutes passent avant qu'une revienne) et annoncée : les cartes apparaissent face cachée avec le dos de la règle.
-- Les **civils** reçoivent chacun une bonne pratique de cette règle : deux joueurs n'ont jamais la même carte. Au-delà de 5 joueurs, l'extension est obligatoire, le jeu de base seul n'ayant pas assez de cartes différentes (4 bonnes pratiques pour la règle 1).
+- Les **équipiers** reçoivent chacun une bonne pratique de cette règle : deux joueurs n'ont jamais la même carte. Au-delà de 5 joueurs, l'extension est obligatoire, le jeu de base seul n'ayant pas assez de cartes différentes (4 bonnes pratiques pour la règle 1).
 - L'**undercover** reçoit la carte « UNDERCOVER » de la règle : elle parle du même sujet mais *enfreint* la règle. Deux undercovers sont possibles à partir de 7 joueurs (donc avec l'extension, qui compte 4 cartes undercover par règle) : l'animateur choisit alors s'ils ont la même carte ou une carte différente chacun.
 - Deux **modes de jeu**, choisis à la création :
-  - **Coopératif** (par défaut) : l'application ne révèle aucun rôle (celui qui a la carte undercover peut la reconnaître, mais la lit comme les autres). Chacun **lit sa carte à voix haute**, l'équipe débat puis désigne un suspect ; un civil désigné à tort est disculpé et reste en jeu. **Score d'équipe** : 3 points si l'undercover est trouvé au premier vote, 2 au deuxième, 1 au troisième, 0 ensuite.
-  - **Compétitif** : l'undercover **sait qu'il l'est** en retournant sa carte et bluffe. Chacun peut garder sa carte sous les yeux mais la **décrit avec ses mots**. Vote, élimination ; le score compte les **manches gagnées par chaque camp** (civils contre undercover).
+  - **Coopératif** (par défaut) : l'application ne révèle aucun rôle (celui qui a la carte undercover peut la reconnaître, mais la lit comme les autres). Chacun **lit sa carte à voix haute**, l'équipe débat puis désigne un suspect ; un équipier désigné à tort est disculpé et reste en jeu. **Score d'équipe** : 3 points si l'undercover est trouvé au premier vote, 2 au deuxième, 1 au troisième, 0 ensuite.
+  - **Compétitif** : l'undercover **sait qu'il l'est** en retournant sa carte et bluffe. Chacun peut garder sa carte sous les yeux mais la **décrit avec ses mots**. Vote, élimination ; le score compte les **manches gagnées par chaque camp** (équipiers contre undercover).
 - Débat **chronométré** (30 s à 2 min, 1 min par défaut, avec signal sonore), puis **débrief** : l'app affiche la règle, la carte undercover, *pourquoi* elle enfreint la règle, des questions de discussion (dont une propre à chaque règle) et un minuteur de discussion (3, 5 ou 10 min).
 - **Fin de partie** : score de l'équipe (ou des deux camps) et récapitulatif des manches sur l'écran de l'animateur, avec un QR code qui transmet les résultats aux téléphones des joueurs. En touchant une manche, on rouvre son débrief : qui avait quelle carte, et pourquoi la carte undercover enfreint la règle. Si l'animateur termine la partie plus tôt, les manches non jouées apparaissent aussi (« Non jouée », hors score) avec les cartes qui auraient été distribuées.
 - Chaque partie peut être **supprimée** du téléphone (accueil, tableau de bord ou fin de partie).
@@ -62,7 +62,7 @@ L'animateur présente le jeu depuis son ordinateur, souvent projeté. À partir 
 | Accueil | Écran partagé : éventail et titre à gauche, actions à droite |
 | Création de partie | Deux colonnes : réglages à gauche, règles d'or à droite ; bouton « Générer » toujours visible |
 | Tableau de bord | Vue présentateur : règle, minuteur et joueurs (en deux colonnes) à gauche, QR code fixe à droite |
-| Débrief | Carte undercover face aux cartes des civils |
+| Débrief | Carte undercover face aux cartes des équipiers |
 | Fin de partie | Score en grand et QR code des résultats à gauche, manches à droite |
 | Règles, pages joueur | Largeur de lecture limitée, centrée |
 
@@ -72,7 +72,7 @@ Le texte grossit légèrement sur grand écran (17 px, puis 18 px à partir de 1
 
 Audit WCAG 2.1 AA réalisé sur les deux thèmes (normal et low-tech, clair et sombre) : scan axe-core sur 13 écrans × 4 thèmes sans violation, puis tests manuels.
 
-- **Animations** (thème normal) : courtes (0,2 à 0,4 s) et limitées aux moments clés : retournement de la carte secrète, fondu au changement d'écran, éventail de l'accueil qui s'ouvre (au survol une carte se soulève, au clic elle est présentée en grand ; l'éventail est purement décoratif, masqué aux lecteurs d'écran et hors du parcours clavier), rôle révélé et score qui progresse après une désignation, débrief dévoilé dans l'ordre (carte undercover, explication, cartes des civils), score final qui monte depuis 0, dépliage du catalogue. Elles sont coupées en mode low-tech et quand l'appareil demande de limiter les animations (`prefers-reduced-motion`).
+- **Animations** (thème normal) : courtes (0,2 à 0,4 s) et limitées aux moments clés : retournement de la carte secrète, fondu au changement d'écran, éventail de l'accueil qui s'ouvre (au survol une carte se soulève, au clic elle est présentée en grand ; l'éventail est purement décoratif, masqué aux lecteurs d'écran et hors du parcours clavier), rôle révélé et score qui progresse après une désignation, débrief dévoilé dans l'ordre (carte undercover, explication, cartes des équipiers), score final qui monte depuis 0, dépliage du catalogue. Elles sont coupées en mode low-tech et quand l'appareil demande de limiter les animations (`prefers-reduced-motion`).
 - **Carte secrète** : elle se retourne d'une touche, d'un clic ou d'un glissement (le même geste la cache) ; un bouton « Afficher ma carte » (clavier, lecteur d'écran) fait de même et place le focus sur la carte.
 - **Modales** : nom accessible, page derrière inerte, fermeture par Échap, focus rendu à l'élément d'origine.
 - **Changement d'écran** : titre de l'onglet mis à jour et focus placé sur le titre de l'écran.
@@ -111,7 +111,7 @@ Tout autre serveur de fichiers statiques convient aussi (Azure Static Web Apps, 
 
 ## Modifier les cartes
 
-Tout le contenu est dans [`js/cards.js`](js/cards.js) : nom de chaque règle d'or (`theme`, repris du dos des cartes), énoncé de la règle (`summary`, formulation exacte de la charte), question de débrief (`question`), image du dos (`back`), cartes civiles (`civilians`) et cartes undercover avec leur explication (`undercovers`, `why`).
+Tout le contenu est dans [`js/cards.js`](js/cards.js) : nom de chaque règle d'or (`theme`, repris du dos des cartes), énoncé de la règle (`summary`, formulation exacte de la charte), question de débrief (`question`), image du dos (`back`), cartes des équipiers (`civilians`) et cartes undercover avec leur explication (`undercovers`, `why`).
 
 Chaque carte indique son jeu :
 
