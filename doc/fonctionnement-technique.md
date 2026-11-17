@@ -48,6 +48,10 @@ Les tests automatiques (`npm test`) vérifient que deux appareils obtiennent tou
 
 Le jeu existe en plusieurs éditions (`EDITIONS` dans `js/cards.js`) : « Classique » et « Product Owner ». Elles partagent les 7 règles d'or, leurs dos de cartes et la même répartition en jeu de base et extension (44 + 88 cartes) : seules les situations changent. L'édition est stockée sur 3 bits dans le code de partie (la graine fait 16 bits) : les joueurs qui rejoignent une partie en héritent sans rien choisir. `data-edition` posé sur `<html>` change le thème (couleur verte, bandeau hachuré, badge dans la barre du haut). Pour ajouter une édition, ajouter une entrée à la fin de `EDITIONS` (8 au maximum : au-delà, recycler une édition existante) et, si besoin, un bloc `:root[data-edition="…"]` dans `css/style.css`.
 
+### Mode « Distribuer sur ce téléphone » (masqué)
+
+Héritage du jeu d'origine : l'animateur fait passer un seul téléphone, chaque joueur y découvre sa carte à son tour (route `#/pass/<code>`, écran `viewPass` dans `js/app.js`). Cette fonction est **conservée mais masquée** : le bouton a été retiré de l'écran d'animateur (`viewHost`), et l'aide ainsi que le README n'en parlent plus, car elle n'a pas de sens quand l'animateur projette son écran. La route reste active (un lien direct fonctionne encore). Pour la réactiver, remettre dans `viewHost` le lien `<a class="btn" href="#/pass/${code}">Distribuer sur ce téléphone</a>` (à l'emplacement du commentaire qui le remplace) et la phrase correspondante dans l'aide.
+
 ## Ce qui transite dans les liens et QR codes
 
 Les liens de l'application placent leurs informations **après le `#`** (le fragment d'URL) :

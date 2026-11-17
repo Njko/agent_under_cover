@@ -888,8 +888,7 @@ function viewRules() {
         <li>Chacun scanne le QR code et sélectionne <strong>son prénom</strong>, ou choisit un <strong>numéro de place</strong> si aucun prénom n'a été établi avant de lancer la partie. Chaque prénom ou numéro ne doit être pris qu'une fois. Il n'y a pas de contrôle automatisé des participants pour garder le système de jeu le plus simple possible.</li>
         <li>Sur l'appareil du participant (téléphone ou ordinateur), la carte distribuée pour la manche actuelle est affichée face cachée : on la retourne en la touchant, en cliquant dessus ou en la faisant glisser, ou avec le bouton « Afficher ma carte ». Le même geste la cache de nouveau.</li>
       </ol>
-      <p class="hint">Aucune connexion entre téléphones n'est nécessaire : chaque téléphone calcule sa propre carte à partir du code.
-      Pas assez de téléphones ? Utilisez le mode « Distribuer sur ce téléphone ».</p>
+      <p class="hint">Aucune connexion entre téléphones n'est nécessaire : chaque téléphone calcule sa propre carte à partir du code.</p>
       <h2>Deux modes de jeu</h2>
       <p>Dans les deux modes, les <strong>équipiers</strong> ont une bonne pratique liée à la règle d'or de la manche ; l'<strong>undercover</strong> a une carte qui parle du même sujet mais <em>enfreint</em> la règle.</p>
 
@@ -1532,7 +1531,7 @@ function viewHost(code) {
             ? `<a class="btn" href="#/end/${code}" id="finish">Voir les résultats</a>`
             : `<button class="btn" id="next">Manche suivante</button>`
         }
-        <a class="btn" href="#/pass/${code}">Distribuer sur ce téléphone</a>
+        ${/* Option « Distribuer sur ce téléphone » masquée : sans objet quand l'animateur projette son écran. La route #/pass reste en place. */ ""}
         ${!result ? `<button class="btn btn--ghost" id="debrief">Révéler et débriefer</button>` : ""}
       </div>
       ${!lastRound ? `<div class="actions actions--secondary"><button class="btn btn--ghost" id="end-now">Terminer la partie maintenant</button></div>` : ""}

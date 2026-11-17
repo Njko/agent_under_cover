@@ -29,7 +29,6 @@ L'app utilise donc une **distribution déterministe** :
 4. Pour la manche suivante, l'animateur et les joueurs appuient sur « Manche suivante » : pas besoin de rescanner.
 
 Le téléphone de l'animateur sert de tableau de bord : premier joueur à parler, éliminations (avec révélation du rôle), détection de la victoire, scores et débrief.
-S'il manque des téléphones, le mode **« Distribuer sur ce téléphone »** permet de faire passer un seul appareil.
 
 Une fois chargée, l'app fonctionne **hors ligne** (service worker) et peut être ajoutée à l'écran d'accueil.
 

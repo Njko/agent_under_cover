@@ -7,8 +7,9 @@
 export const CHANGELOG = [
   {
     date: "2026-11-17",
-    title: "Code de partie plus long",
+    title: "Code plus long, écran animateur allégé",
     items: [
+      "L'écran de l'animateur n'affiche plus le bouton « Distribuer sur ce téléphone », sans objet quand l'écran est projeté.",
       "Le code de partie compte désormais 9 caractères au lieu de 8, pour prévoir de nouvelles éditions spéciales. Les codes des parties en cours ne sont plus valables : créez une nouvelle partie.",
     ],
   },
