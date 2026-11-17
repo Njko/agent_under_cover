@@ -8,7 +8,7 @@
 import { EDITION_IDS, RULES, rulesOf } from "./cards.js";
 
 const ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // 32 symboles, sans 0/O/1/I
-export const CODE_LENGTH = 8; // 8 × 5 bits = 40 bits
+export const CODE_LENGTH = 9; // 9 × 5 bits = 45 bits
 export const MAX_ROUNDS = 16;
 export const MIN_PLAYERS = 3;
 export const MAX_PLAYERS = 10;
@@ -54,7 +54,7 @@ function shuffle(array, rand) {
 }
 
 // --- Code de partie -----------------------------------------------------------------------
-// Bits : graine (12) | édition (2) | jeu de cartes (1) | cartes undercover (1) | mode (1) | joueurs-3 (4)
+// Bits : graine (16) | édition (3) | jeu de cartes (1) | cartes undercover (1) | mode (1) | joueurs-3 (4)
 //        | undercovers-1 (1) | règles jouées (7) | ordre des règles (1) | manches-1 (4) | contrôle (6)
 // Les valeurs dépassent 32 bits : on calcule avec des multiplications plutôt qu'avec << et |.
 
@@ -66,8 +66,8 @@ export const DECK_CHOICES = ["base", "ext"];
 export const UC_CARDS = ["same", "distinct"];
 
 const FIELDS = [
-  ["seed", 12],
-  ["edition", 2],
+  ["seed", 16],
+  ["edition", 3],
   ["deck", 1],
   ["ucCards", 1],
   ["mode", 1],
@@ -81,7 +81,7 @@ const CHECK_BITS = 6;
 
 function checksum(payload) {
   // Le sel change avec le format du code : les codes de l'ancien format sont refusés.
-  return hash32(payload % 2 ** 32, Math.floor(payload / 2 ** 32), 0xc0de9) % 2 ** CHECK_BITS;
+  return hash32(payload % 2 ** 32, Math.floor(payload / 2 ** 32), 0xc0de10) % 2 ** CHECK_BITS;
 }
 
 export function validateSettings({ players, undercovers, rules = [1], rounds = 1, mode = "coop", deck = "base", edition = "classique" }) {
@@ -127,7 +127,7 @@ export function encodeCode({ seed, players, undercovers, rules, ordered = false,
   const error = validateSettings({ players, undercovers, rules, rounds, mode, deck, edition });
   if (error) throw new Error(error);
   const values = {
-    seed: seed % 2 ** 12,
+    seed: seed % 2 ** 16,
     edition: EDITION_IDS.indexOf(edition),
     deck: Math.max(0, DECK_CHOICES.indexOf(deck)),
     ucCards: Math.max(0, UC_CARDS.indexOf(ucCards)),
@@ -187,7 +187,7 @@ export function decodeCode(raw) {
 }
 
 export function newCode(settings, random = Math.random) {
-  const seed = Math.floor(random() * 2 ** 12);
+  const seed = Math.floor(random() * 2 ** 16);
   return encodeCode({ ...settings, seed });
 }
 

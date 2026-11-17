@@ -253,8 +253,7 @@ function hydrateQr(root = document) {
 }
 
 function prettyCode(code) {
-  const half = code.length / 2;
-  return `${code.slice(0, half)} ${code.slice(half)}`;
+  return `${code.slice(0, 4)} ${code.slice(4)}`;
 }
 
 function go(hash) {
@@ -1934,7 +1933,7 @@ function viewJoin(prefill, seatPrefill, namesToken) {
       <h1>Rejoindre une partie</h1>
       <form id="join" class="form">
         <label>Code de la partie
-          <input id="join-code" name="code" class="code-input" autocomplete="off" autocapitalize="characters" maxlength="${CODE_LENGTH + 1}" placeholder="ABCD 1234" value="${esc(game ? prettyCode(game.code) : prefill || "")}">
+          <input id="join-code" name="code" class="code-input" autocomplete="off" autocapitalize="characters" maxlength="${CODE_LENGTH + 1}" placeholder="ABCD 12345" value="${esc(game ? prettyCode(game.code) : prefill || "")}">
         </label>
         <div id="seats"></div>
         <p class="error" id="join-error" role="alert"></p>

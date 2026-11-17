@@ -35,13 +35,13 @@ test("le code encode et décode les paramètres", () => {
       if (players - undercovers < 2 || (undercovers === 2 && players < MIN_PLAYERS_TWO_UNDERCOVERS)) continue;
       for (const rounds of [1, 5, 16]) {
         for (const mode of players < 4 ? ["coop"] : ["coop", "compet"]) {
-          const seed = (players * 7919 + undercovers * 31 + rounds) % 2 ** 12;
+          const seed = (players * 7919 + undercovers * 31 + rounds) % 2 ** 16;
           const rules = [1, 3, 7];
           // Jeu de base quand il suffit (au plus 5 joueurs, assez de cartes), sinon l'extension.
           const deck = rounds === 5 || validateSettings({ players, undercovers, rules, deck: "base" }) ? "ext" : "base";
           const ucCards = rounds === 16 ? "distinct" : "same";
           const code = encodeCode({ seed, players, undercovers, rules, ordered: true, rounds, mode, deck, ucCards });
-          assert.match(code, /^[2-9A-HJ-NP-Z]{8}$/);
+          assert.match(code, /^[2-9A-HJ-NP-Z]{9}$/);
           assert.deepEqual(decodeCode(code), { code, seed, players, undercovers, rules, ordered: true, rounds, mode, deck, ucCards, edition: "classique" });
         }
         if (validateSettings({ players, undercovers, rules: RULES.map((r) => r.id) })) continue;

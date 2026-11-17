@@ -23,7 +23,7 @@ L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveu
 GitHub Pages ne sert que des fichiers statiques : les téléphones ne peuvent pas échanger de données entre eux.
 L'app utilise donc une **distribution déterministe** :
 
-1. L'animateur crée une partie. L'app génère un **code de 8 caractères** (ex. `BVWA RY5W`) qui contient une graine aléatoire et les paramètres (édition, mode de jeu, jeu de cartes, nombre de joueurs, undercovers et leurs cartes, règles jouées, ordre, nombre de manches), plus une somme de contrôle contre les fautes de frappe.
+1. L'animateur crée une partie. L'app génère un **code de 9 caractères** (ex. `BVWA RY5WK`) qui contient une graine aléatoire et les paramètres (édition, mode de jeu, jeu de cartes, nombre de joueurs, undercovers et leurs cartes, règles jouées, ordre, nombre de manches), plus une somme de contrôle contre les fautes de frappe.
 2. Les joueurs scannent le **QR code** et touchent **leur prénom** : les prénoms sont inclus dans le lien du QR code. Avec le code saisi à la main, ils choisissent leur numéro.
 3. Chaque téléphone recalcule seul, à partir de *(code, manche, numéro)*, exactement la même distribution que celle de l'animateur. Aucune donnée ne circule.
 4. Pour la manche suivante, l'animateur et les joueurs appuient sur « Manche suivante » : pas besoin de rescanner.

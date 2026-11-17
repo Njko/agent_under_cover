@@ -7,6 +7,13 @@
 export const CHANGELOG = [
   {
     date: "2026-11-17",
+    title: "Code de partie plus long",
+    items: [
+      "Le code de partie compte désormais 9 caractères au lieu de 8, pour prévoir de nouvelles éditions spéciales. Les codes des parties en cours ne sont plus valables : créez une nouvelle partie.",
+    ],
+  },
+  {
+    date: "2026-11-17",
     title: "Édition Product Owner",
     items: [
       "Les cartes undercover sont plus difficiles à repérer : 6 cartes par règle d'or au lieu de 4, dont 2 faciles, 2 moyennes et 2 difficiles. Dans les cartes difficiles, l'infraction se cache dans un détail et la formulation ressemble à celle d'une bonne pratique.",
