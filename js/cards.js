@@ -629,7 +629,7 @@ const poRule = (r) => ({
 // Catalogue des éditions. L'ordre fixe le numéro stocké dans le code de partie (2 bits, 4 éditions
 // au plus) : n'insérez une nouvelle édition qu'à la fin.
 export const EDITIONS = {
-  generique: { label: "Générique", rules: RULES },
+  classique: { label: "Classique", rules: RULES },
   po: { label: "Product Owner", rules: RULES.map(poRule) },
 };
 export const EDITION_IDS = Object.keys(EDITIONS);

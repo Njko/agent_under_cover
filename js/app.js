@@ -1039,7 +1039,7 @@ function viewLowTech() {
 }
 
 // Nombre de cartes d'un jeu (« base » ou « ext » : jeu de base et extension).
-function countCards(deck, edition = "generique") {
+function countCards(deck, edition = "classique") {
   return rulesOf(edition).reduce((n, r) => {
     const pool = rulePool(r, deck);
     return n + pool.civilians.length + pool.undercovers.length;
@@ -1047,7 +1047,7 @@ function countCards(deck, edition = "generique") {
 }
 
 function viewCards(edition) {
-  if (!EDITION_IDS.includes(edition)) edition = "generique";
+  if (!EDITION_IDS.includes(edition)) edition = "classique";
   applyEdition(edition);
   const rules = rulesOf(edition);
   const filter = store.get("cardsFilter", "all");
@@ -1201,11 +1201,11 @@ function viewHostSetup() {
     mode: "coop",
     deck: "base",
     ucCards: "same",
-    edition: "generique",
+    edition: "classique",
     names: {},
     ...store.get("hostPrefs", {}),
   };
-  if (!EDITION_IDS.includes(prefs.edition)) prefs.edition = "generique";
+  if (!EDITION_IDS.includes(prefs.edition)) prefs.edition = "classique";
   // Réglages enregistrés avec une ancienne limite (jusqu'à 18 joueurs) : ramenés à la limite actuelle.
   prefs.players = Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, Number(prefs.players) || MIN_PLAYERS));
   // Les prénoms de la partie précédente ne sont pas repris d'office : une nouvelle équipe
@@ -1223,7 +1223,7 @@ function viewHostSetup() {
           ${EDITION_IDS.map(
             (id) => `
           <label class="radio mode-pick"><input type="radio" name="edition" value="${id}" ${prefs.edition === id ? "checked" : ""}>
-            <span><strong>${esc(EDITIONS[id].label)}</strong><br><small>${id === "po" ? "Édition spéciale : toutes les cartes décrivent des situations vécues par un Product Owner." : "Pour un public large du secteur de l'assurance."}</small></span></label>`
+            <span><strong>${esc(EDITIONS[id].label)}</strong><br><small>${id === "po" ? "Édition spéciale : toutes les cartes décrivent des situations vécues par un Product Owner." : "Pour un public large."}</small></span></label>`
           ).join("")}
         </fieldset>
 
@@ -1461,7 +1461,7 @@ function viewHost(code) {
         <div>
           <p class="label">Code de la partie</p>
           <p class="code">${esc(prettyCode(code))}</p>
-          <p class="small">${game.edition === "generique" ? "" : `Édition ${esc(EDITIONS[game.edition].label)} · `}Mode ${coop ? "coopératif" : "compétitif"} · ${game.players} joueurs · ${game.undercovers} undercover${game.undercovers > 1 ? "s" : ""}${
+          <p class="small">${game.edition === "classique" ? "" : `Édition ${esc(EDITIONS[game.edition].label)} · `}Mode ${coop ? "coopératif" : "compétitif"} · ${game.players} joueurs · ${game.undercovers} undercover${game.undercovers > 1 ? "s" : ""}${
             game.undercovers > 1 && game.ucCards === "distinct" && game.deck === "ext" ? " (une carte chacun)" : ""
           } · ${game.rounds} manche${game.rounds > 1 ? "s" : ""} · ${rulesSummary} · ${game.deck === "ext" ? `${DECKS.base.toLowerCase()} et ${DECKS.ext.toLowerCase()}` : DECKS.base.toLowerCase()}</p>
           <button class="btn btn--small" id="copy">Copier le lien</button>
@@ -2115,7 +2115,7 @@ function announceView() {
 // Édition spéciale : `data-edition` sur <html> change le thème (voir css/style.css) et le badge de
 // la barre du haut. L'édition d'une partie vient de son code ; hors partie, c'est l'édition générique.
 function applyEdition(id) {
-  const special = id && id !== "generique";
+  const special = id && id !== "classique";
   if (special) document.documentElement.dataset.edition = id;
   else delete document.documentElement.dataset.edition;
   const badge = document.getElementById("edition-badge");

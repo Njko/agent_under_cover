@@ -84,7 +84,7 @@ function checksum(payload) {
   return hash32(payload % 2 ** 32, Math.floor(payload / 2 ** 32), 0xc0de9) % 2 ** CHECK_BITS;
 }
 
-export function validateSettings({ players, undercovers, rules = [1], rounds = 1, mode = "coop", deck = "base", edition = "generique" }) {
+export function validateSettings({ players, undercovers, rules = [1], rounds = 1, mode = "coop", deck = "base", edition = "classique" }) {
   if (!Number.isInteger(players) || players < MIN_PLAYERS || players > MAX_PLAYERS) {
     return `Le nombre de joueurs doit être compris entre ${MIN_PLAYERS} et ${MAX_PLAYERS}.`;
   }
@@ -121,7 +121,7 @@ export function validateSettings({ players, undercovers, rules = [1], rounds = 1
   return null;
 }
 
-export function encodeCode({ seed, players, undercovers, rules, ordered = false, rounds = 7, mode = "coop", deck = "base", ucCards = "same", edition = "generique" }) {
+export function encodeCode({ seed, players, undercovers, rules, ordered = false, rounds = 7, mode = "coop", deck = "base", ucCards = "same", edition = "classique" }) {
   if (!EDITION_IDS.includes(edition)) throw new Error("Édition inconnue.");
   rules = rules ?? RULES.map((r) => r.id);
   const error = validateSettings({ players, undercovers, rules, rounds, mode, deck, edition });

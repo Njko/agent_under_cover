@@ -46,7 +46,7 @@ Les tests automatiques (`npm test`) vérifient que deux appareils obtiennent tou
 
 ## Éditions spéciales
 
-Le jeu existe en plusieurs éditions (`EDITIONS` dans `js/cards.js`) : « Générique » et « Product Owner ». Elles partagent les 7 règles d'or, leurs dos de cartes et la même répartition en jeu de base et extension (44 + 88 cartes) : seules les situations changent. L'édition est stockée sur 2 bits dans le code de partie (la graine passe à 12 bits) : les joueurs qui rejoignent une partie en héritent sans rien choisir. `data-edition` posé sur `<html>` change le thème (couleur verte, bandeau hachuré, badge dans la barre du haut). Pour ajouter une édition, ajouter une entrée à la fin de `EDITIONS` (4 au maximum) et, si besoin, un bloc `:root[data-edition="…"]` dans `css/style.css`.
+Le jeu existe en plusieurs éditions (`EDITIONS` dans `js/cards.js`) : « Classique » et « Product Owner ». Elles partagent les 7 règles d'or, leurs dos de cartes et la même répartition en jeu de base et extension (44 + 88 cartes) : seules les situations changent. L'édition est stockée sur 2 bits dans le code de partie (la graine passe à 12 bits) : les joueurs qui rejoignent une partie en héritent sans rien choisir. `data-edition` posé sur `<html>` change le thème (couleur verte, bandeau hachuré, badge dans la barre du haut). Pour ajouter une édition, ajouter une entrée à la fin de `EDITIONS` (4 au maximum) et, si besoin, un bloc `:root[data-edition="…"]` dans `css/style.css`.
 
 ## Ce qui transite dans les liens et QR codes
 

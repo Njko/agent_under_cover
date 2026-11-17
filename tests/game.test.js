@@ -42,7 +42,7 @@ test("le code encode et décode les paramètres", () => {
           const ucCards = rounds === 16 ? "distinct" : "same";
           const code = encodeCode({ seed, players, undercovers, rules, ordered: true, rounds, mode, deck, ucCards });
           assert.match(code, /^[2-9A-HJ-NP-Z]{8}$/);
-          assert.deepEqual(decodeCode(code), { code, seed, players, undercovers, rules, ordered: true, rounds, mode, deck, ucCards, edition: "generique" });
+          assert.deepEqual(decodeCode(code), { code, seed, players, undercovers, rules, ordered: true, rounds, mode, deck, ucCards, edition: "classique" });
         }
         if (validateSettings({ players, undercovers, rules: RULES.map((r) => r.id) })) continue;
         const code = encodeCode({ seed: 1, players, undercovers, rounds });
@@ -275,10 +275,10 @@ test("deux undercovers à partir de 7 joueurs seulement", () => {
 test("édition PO : stockée dans le code, mêmes règles, mêmes effectifs que l'édition générique, cartes différentes", () => {
   const po = decodeCode(encodeCode({ ...base, edition: "po", rules: [1, 2, 3, 4, 5, 6, 7] }));
   assert.equal(po.edition, "po");
-  assert.equal(decodeCode(encodeCode(base)).edition, "generique");
+  assert.equal(decodeCode(encodeCode(base)).edition, "classique");
   assert.throws(() => encodeCode({ ...base, edition: "inconnue" }));
   for (const [i, rule] of EDITIONS.po.rules.entries()) {
-    const gen = EDITIONS.generique.rules[i];
+    const gen = EDITIONS.classique.rules[i];
     for (const deck of ["base", "ext"]) {
       const a = rulePool(rule, deck);
       const b = rulePool(gen, deck);
