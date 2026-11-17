@@ -16,6 +16,7 @@ export const CARD_COLUMNS = [
   { key: "job", title: "Métier", width: 22 },
   { key: "text", title: "Texte de la carte", width: 70 },
   { key: "why", title: "Pourquoi elle enfreint la règle (undercover)", width: 60 },
+  { key: "level", title: "Difficulté (undercover)", width: 14 },
   { key: "length", title: "Longueur du texte", width: 10 },
 ];
 
@@ -27,6 +28,7 @@ export const RULE_COLUMNS = [
 ];
 
 export const KINDS = { civilian: "Équipier", undercover: "Undercover" };
+export const LEVELS = { easy: "Facile", medium: "Moyenne", hard: "Difficile" };
 
 /** Identifiant stable d'une carte dans l'export : R<règle>-C<n> (équipier) ou R<règle>-U<n> (undercover). */
 export function cardId(ruleId, kind, index) {
@@ -39,6 +41,7 @@ const HOW_TO = [
   "Modifier un texte : changez-le dans l'onglet « Cartes » (colonnes « Texte de la carte » et « Pourquoi elle enfreint la règle ») ou « Règles » (énoncé et question de débrief).",
   "Jeu : « base » pour une carte validée, « ext » pour une carte de l'extension, encore à valider.",
   "Ajouter une carte : ajoutez une ligne avec la règle, le type (Équipier ou Undercover), le jeu et le texte, en laissant l'identifiant vide. Une carte undercover a besoin d'une explication.",
+  "Difficulté (undercover) : « Facile » si l'infraction se voit d'emblée, « Moyenne » ou « Difficile » si elle se cache dans un détail. Chaque règle compte 2 cartes de chaque niveau.",
   "Supprimer une carte : supprimez sa ligne.",
   "Ne modifiez pas les identifiants : ils relient chaque ligne à sa carte.",
   "Longueur conseillée : 100 à 170 caractères, la même pour les cartes des équipiers et undercover (une carte undercover plus longue se repère trop vite).",
@@ -60,6 +63,7 @@ export function cardsWorkbook(rules) {
         job: card.job || "",
         text: card.text,
         why: card.why || "",
+        level: LEVELS[card.level] || "",
       });
     rule.civilians.forEach((card, i) => add(card, "civilian", i));
     rule.undercovers.forEach((card, i) => add(card, "undercover", i));

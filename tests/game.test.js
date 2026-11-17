@@ -290,3 +290,13 @@ test("édition PO : stockée dans le code, mêmes règles, mêmes effectifs que 
   const deal = dealRound(po, 1);
   assert.ok(EDITIONS.po.rules.some((r) => r.undercovers.some((u) => u.text === deal.roles.find((x) => x.role === "undercover").card)));
 });
+
+test("6 cartes undercover par règle : 2 faciles, 2 moyennes, 2 difficiles, et le jeu de base ne garde qu'une facile", () => {
+  for (const [edition, { rules }] of Object.entries(EDITIONS)) {
+    for (const rule of rules) {
+      const levels = (cards) => ["easy", "medium", "hard"].map((l) => cards.filter((u) => u.level === l).length);
+      assert.deepEqual(levels(rule.undercovers), [2, 2, 2], `${edition}, règle ${rule.id}`);
+      assert.deepEqual(levels(rulePool(rule, "base").undercovers), [1, 0, 0], `${edition}, règle ${rule.id} : jeu de base`);
+    }
+  }
+});

@@ -9,6 +9,8 @@ export const CHANGELOG = [
     date: "2026-11-17",
     title: "Édition Product Owner",
     items: [
+      "Les cartes undercover sont plus difficiles à repérer : 6 cartes par règle d'or au lieu de 4, dont 2 faciles, 2 moyennes et 2 difficiles. Dans les cartes difficiles, l'infraction se cache dans un détail et la formulation ressemble à celle d'une bonne pratique.",
+      "Les nouvelles cartes undercover font partie de l'extension : le jeu de base garde une carte facile par règle.",
       "Les « civils » deviennent des « équipiers », un terme plus clair pour celles et ceux qui ne connaissent pas le jeu d'origine. L'undercover garde son nom.",
       "Nouvelle édition spéciale pour les Product Owners : mêmes 7 règles d'or, mais des cartes tirées de situations de PO (discovery, backlog, recette, roadmap, parties prenantes).",
       "Une partie en édition spéciale a un thème vert et un badge dans la barre du haut, pour la distinguer d'une session générique.",

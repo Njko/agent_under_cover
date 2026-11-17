@@ -1,6 +1,6 @@
 # Undercover · IA responsable
 
-Serious game inspiré d'**Undercover**, construit à partir du jeu de cartes « IA responsable » (7 règles, 44 cartes), complété par une **extension** de 88 cartes tirées des métiers administratifs de l'assurance (132 cartes au total).
+Serious game inspiré d'**Undercover**, construit à partir du jeu de cartes « IA responsable » (7 règles, 44 cartes), complété par une **extension** de 102 cartes tirées des métiers administratifs de l'assurance (146 cartes au total).
 L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveur ni base de données, et chaque participant joue sur son téléphone.
 
 ## Principe du jeu
@@ -116,7 +116,7 @@ Tout le contenu est dans [`js/cards.js`](js/cards.js) : nom de chaque règle d'o
 Chaque carte indique son jeu :
 
 - `deck: "base"` : **jeu de base**, les cartes du jeu imprimé, validées (44 au départ) ;
-- `deck: "ext"` : **extension**, cartes à valider en atelier (88 au départ), avec le métier dont la situation est tirée (`job`).
+- `deck: "ext"` : **extension**, cartes à valider en atelier (88 au départ, 102 avec les cartes undercover plus subtiles), avec le métier dont la situation est tirée (`job`).
 
 À la création d'une partie, l'animateur choisit de jouer avec le jeu de base seul ou avec l'extension. Le catalogue « Toutes les cartes » peut n'afficher que l'un ou l'autre, et les cartes de l'extension y sont marquées « Extension », comme au débrief (jamais pendant le jeu, pour ne pas aider à deviner un rôle). Une fois une carte validée, passez son `deck` à `"base"`.
 
