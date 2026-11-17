@@ -1060,7 +1060,6 @@ function viewCards(edition) {
       <div class="chips" role="group" aria-label="Édition">
         ${EDITION_IDS.map((id) => `<a class="chip" href="#/cards/${id}" aria-current="${id === edition}">${esc(EDITIONS[id].label)}</a>`).join("")}
       </div>
-      <p>${countCards("ext", edition)} cartes : ${countCards("base", edition)} dans le ${DECKS.base.toLowerCase()} et ${countCards("ext", edition) - countCards("base", edition)} dans l'${DECKS.ext.toLowerCase()}, à valider en atelier.</p>
       <div class="chips" role="group" aria-label="Cartes affichées">
         ${[["all", "Toutes"], ["base", DECKS.base], ["ext", DECKS.ext]]
           .map(([value, text]) => `<button type="button" class="chip" data-filter="${value}" aria-pressed="${filter === value}">${text}</button>`)
@@ -1289,7 +1288,7 @@ function viewHostSetup() {
         <fieldset class="fs-deck">
           <legend>Cartes</legend>
           <label class="radio"><input type="radio" name="deck" value="base" ${prefs.deck !== "ext" ? "checked" : ""}> <span>${DECKS.base} <small>(${countCards("base")} cartes validées)</small></span></label>
-          <label class="radio"><input type="radio" name="deck" value="ext" ${prefs.deck === "ext" ? "checked" : ""}> <span>${DECKS.base} et ${DECKS.ext.toLowerCase()} <small>(${countCards("ext")} cartes, dont ${countCards("ext") - countCards("base")} à valider en atelier)</small></span></label>
+          <label class="radio"><input type="radio" name="deck" value="ext" ${prefs.deck === "ext" ? "checked" : ""}> <span>${DECKS.base} et ${DECKS.ext.toLowerCase()} <small>(${countCards("ext")} cartes)</small></span></label>
           <p class="hint" id="deck-hint" aria-live="polite"></p>
         </fieldset>
 
