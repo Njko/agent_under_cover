@@ -25,6 +25,7 @@ npm run k8s:render     # rendu Kustomize des manifestes Kubernetes
 | `js/changelog.js` | Notes de version (page « Nouveautés ») |
 | `js/xlsx.js` | Export Excel des cartes (navigateur et scripts), sans dépendance |
 | `js/icons.js` | Dessins SVG du mode low-tech |
+| `js/entree.js`, `liens/` | Pages d'entrée des liens à partager (aperçu Teams : titre, description, image `img/apercu.png`), qui redirigent vers l'application en gardant le fragment |
 | `scripts/` | Export Excel des cartes en ligne de commande (Node, non servi) |
 | `css/style.css` | Styles des deux thèmes (normal et low-tech, clair et sombre) |
 | `sw.js` | Service worker (hors ligne) |

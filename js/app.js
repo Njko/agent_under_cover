@@ -139,6 +139,12 @@ function baseUrl() {
   return window.UNDERCOVER_SHARE_URL || location.href.split("#")[0];
 }
 
+// Les liens à partager passent par une page d'entrée (liens/<page>/) qui porte l'aperçu du lien
+// (titre, description, image) ; le fragment, lui, n'est jamais envoyé au serveur.
+function entryUrl(page) {
+  return `${baseUrl().replace(/[^/]*$/, "")}liens/${page}/`;
+}
+
 // Les prénoms et les résultats voyagent dans les liens (il n'y a pas de serveur pour les partager),
 // encodés en base64url pour rester dans des liens courts : lettres, chiffres, - _ ~.
 const MAX_NAME_LENGTH = 20;
@@ -182,14 +188,14 @@ function decodeNames(token) {
 
 function joinUrl(code, seat, names = {}, players = 0) {
   const token = encodeNames(names, players);
-  return `${baseUrl()}#join-${code}${seat ? `-${seat}` : ""}${token ? `~${token}` : ""}`;
+  return `${entryUrl("rejoindre")}#join-${code}${seat ? `-${seat}` : ""}${token ? `~${token}` : ""}`;
 }
 
 // Lien des résultats : prénoms, scores et issue de chaque manche.
 function resultsUrl(code, game, state) {
   const results = Array.from({ length: game.rounds }, (_, i) => (i < playedRounds(state) ? state.results[i + 1] || "s" : "n")).join("");
   const scores = "";
-  return `${baseUrl()}#results-${code}~${toBase64Url([nameList(state.names, game.players).join("|"), scores, results].join("\n"))}`;
+  return `${entryUrl("resultats")}#results-${code}~${toBase64Url([nameList(state.names, game.players).join("|"), scores, results].join("\n"))}`;
 }
 
 function decodeResults(token, players) {

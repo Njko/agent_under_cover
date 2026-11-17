@@ -48,6 +48,18 @@ Les tests automatiques (`npm test`) vérifient que deux appareils obtiennent tou
 
 Le jeu existe en plusieurs éditions (`EDITIONS` dans `js/cards.js`) : « Classique » et « Product Owner ». Elles partagent les 7 règles d'or, leurs dos de cartes et la même répartition en jeu de base et extension (44 + 88 cartes) : seules les situations changent. L'édition est stockée sur 3 bits dans le code de partie (la graine fait 16 bits) : les joueurs qui rejoignent une partie en héritent sans rien choisir. `data-edition` posé sur `<html>` change le thème (couleur verte, bandeau hachuré, badge dans la barre du haut). Pour ajouter une édition, ajouter une entrée à la fin de `EDITIONS` (8 au maximum : au-delà, recycler une édition existante) et, si besoin, un bloc `:root[data-edition="…"]` dans `css/style.css`.
 
+### Aperçu des liens (Teams, messageries)
+
+Teams et les messageries lisent le HTML d'un lien sans exécuter le JavaScript et ignorent le fragment (`#…`) : tous les liens `/#/…` avaient donc le même titre, celui d'`index.html`. Chaque type de lien passe maintenant par une **page d'entrée** statique, `liens/<page>/index.html`, qui porte son propre `<title>`, sa description et son image (`og:title`, `og:description`, `og:image` = `img/apercu.png`, 1200 × 630). `js/entree.js` redirige ensuite vers l'application en gardant le fragment, ou vers la route de la page (`data-route`) quand il n'y en a pas.
+
+| Page | Utilisée par | Aperçu |
+| --- | --- | --- |
+| `liens/rejoindre/` | liens et QR codes de la partie (`joinUrl`) | « Rejoindre une partie » |
+| `liens/resultats/` | lien des résultats (`resultsUrl`) | « Résultats de la partie » |
+| `liens/cartes/`, `liens/regles/`, `liens/nouveautes/` | à coller à la main (l'application ne les génère pas) | catalogue, règles, nouveautés |
+
+L'accueil (`index.html`) porte les mêmes balises. Le code de partie, les prénoms et les scores restent dans le fragment : ils ne partent ni vers le serveur ni vers Teams, et **l'aperçu ne peut donc pas décrire la partie** (édition, joueurs). Pour ajouter une page : copiez un dossier de `liens/` et changez le titre, la description et `data-route` (le test `tests/liens.test.js` contrôle titres et image). Teams garde l'aperçu en cache : les liens déjà envoyés ne changent pas. `og:image` est un chemin relatif : si une messagerie n'affiche pas l'image, remplacez-le par l'adresse absolue publique.
+
 ### Mode « Distribuer sur ce téléphone » (masqué)
 
 Héritage du jeu d'origine : l'animateur fait passer un seul téléphone, chaque joueur y découvre sa carte à son tour (route `#/pass/<code>`, écran `viewPass` dans `js/app.js`). Cette fonction est **conservée mais masquée** : le bouton a été retiré de l'écran d'animateur (`viewHost`), et l'aide ainsi que le README n'en parlent plus, car elle n'a pas de sens quand l'animateur projette son écran. La route reste active (un lien direct fonctionne encore). Pour la réactiver, remettre dans `viewHost` le lien `<a class="btn" href="#/pass/${code}">Distribuer sur ce téléphone</a>` (à l'emplacement du commentaire qui le remplace) et la phrase correspondante dans l'aide.

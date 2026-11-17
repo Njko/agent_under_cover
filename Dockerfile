@@ -22,6 +22,7 @@ COPY css/    /usr/share/nginx/html/css/
 COPY js/     /usr/share/nginx/html/js/
 COPY icons/  /usr/share/nginx/html/icons/
 COPY img/    /usr/share/nginx/html/img/
+COPY liens/  /usr/share/nginx/html/liens/
 COPY vendor/ /usr/share/nginx/html/vendor/
 USER 101
 
