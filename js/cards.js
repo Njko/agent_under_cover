@@ -375,3 +375,262 @@ export const RULES = [
     ],
   },
 ];
+
+// --- Édition spéciale « Product Owner » -----------------------------------------------------
+// Mêmes 7 règles d'or (mêmes thèmes, mêmes dos de cartes) : seules les situations changent.
+// Les cartes ne parlent que de cas d'usage qu'un Product Owner a à traiter.
+
+const PO = {
+  1: {
+    civilians: [
+      "L'IA rédige des user stories à partir des notes d'un atelier. Le PO les relit, les corrige et reste seul à décider de ce qui entre dans le backlog.",
+      "Un assistant propose une priorisation du backlog. Le PO l'utilise comme point de départ et assume l'arbitrage final devant les parties prenantes.",
+      "Les critères d'acceptation générés par l'IA sont relus avec les développeurs et les testeurs avant le sprint.",
+      "Un modèle suggère des demandes clients à traiter en priorité. Le PO vérifie les cas sensibles avant toute décision de roadmap.",
+    ],
+    undercover:
+      "Pour gagner du temps, l'équipe laisse l'IA ordonner automatiquement le backlog. Le PO valide le sprint sans relire le classement proposé.",
+    why:
+      "Le PO délègue sa décision de priorisation à l'IA : il reste responsable de la valeur livrée, l'IA doit l'assister sans décider à sa place.",
+  },
+  2: {
+    civilians: [
+      "Avant de mettre en production une fonctionnalité d'IA, le PO fait tester le modèle sur des cas réels et des cas limites, pas seulement sur le scénario de démonstration.",
+      "Les critères d'acceptation d'une fonctionnalité IA incluent le comportement attendu quand le modèle se trompe ou n'est pas sûr de sa réponse.",
+      "La fonctionnalité peut être désactivée rapidement par un interrupteur (feature flag) si un problème majeur apparaît.",
+      "Une revue de la qualité des réponses est planifiée à chaque sprint après la mise en production.",
+      "Des utilisateurs métier participent à la recette pour vérifier que les résultats sont cohérents avec leur quotidien.",
+      "L'équipe a défini des indicateurs de qualité du modèle (taux d'erreur, dérive) et surveille leur évolution.",
+    ],
+    undercover:
+      "La démo devant les sponsors est un succès. Le PO décide de livrer la fonctionnalité IA à tous les clients dès la semaine suivante, en retirant la recette prévue pour tenir la date annoncée.",
+    why:
+      "Une démo réussie ne prouve pas la fiabilité du modèle : la fonctionnalité part en production sans tests représentatifs.",
+  },
+  3: {
+    civilians: [
+      "Avant de lancer l'expérimentation d'un assistant IA, le PO déclare le projet à l'instance de gouvernance et consulte la conformité et la sécurité.",
+      "La documentation du produit précise ce que fait la fonctionnalité IA, quelles données elle utilise, qui en est responsable et quels risques sont connus. Elle est mise à jour à chaque évolution.",
+      "Le PO vérifie dans les conditions d'usage d'un fournisseur d'IA que les données de l'entreprise ne servent pas à entraîner son modèle.",
+      "Le PO anonymise les verbatims de clients avant de les confier à un outil d'IA pour les synthétiser.",
+      "Une fonctionnalité IA déjà déployée dans un autre pays est revue avec le DPO et la conformité avant d'être reprise localement.",
+    ],
+    undercover:
+      "Pour avancer vite, le PO connecte un outil d'IA grand public à l'export des tickets du support, qui contient des données clients, et prévoit de régulariser la situation une fois le gain démontré.",
+    why:
+      "C'est du « shadow AI » : des données clients sont envoyées à un outil non validé, sans déclaration ni contrôle conformité ou sécurité.",
+  },
+  4: {
+    civilians: [
+      "Avant de lancer une fonctionnalité IA, le PO fait estimer son impact environnemental avec le calculateur de l'entreprise et en tient compte dans la décision.",
+      "Pour classer les retours utilisateurs, l'équipe compare un petit modèle et un gros modèle. Elle retient le plus sobre, car les résultats sont équivalents.",
+      "Les prompts de l'équipe sont affinés avant d'être lancés en masse, plutôt que de multiplier les générations successives.",
+      "Le PO se demande si une règle simple ou une recherche classique répond au besoin avant de passer à un modèle d'IA générative.",
+      "Le PO fixe un budget de consommation (nombre d'appels, coût) pour les fonctionnalités IA, suivi à chaque revue de sprint.",
+    ],
+    undercover:
+      "Le PO exige le modèle le plus puissant du marché pour toutes les fonctionnalités IA du produit, y compris pour reformuler des libellés de boutons. Il juge que la meilleure qualité est forcément le meilleur choix.",
+    why:
+      "Le modèle est surdimensionné pour la tâche et aucune alternative plus sobre n'a été étudiée : l'impact environnemental est ignoré.",
+  },
+  5: {
+    civilians: [
+      "L'interface indique clairement quand un contenu a été généré par l'IA.",
+      "Un message rappelle à l'utilisateur que l'IA peut se tromper et qu'il doit vérifier les informations importantes.",
+      "Le PO suit les retours utilisateurs sur la qualité des réponses de l'IA et les traite comme des anomalies à corriger dans le backlog.",
+      "Quand un incident lié à l'IA survient, l'équipe alerte, corrige et tire les enseignements, sans chercher un responsable.",
+      "Les notes de version indiquent quelles fonctionnalités reposent sur l'IA et quelles sont leurs limites connues.",
+      "Le PO documente les cas où les données sources sont incomplètes ou peu fiables, pour que les décisions s'appuient dessus en connaissance de cause.",
+      "Quand un utilisateur conteste une réponse de l'IA, un canal clair lui permet de la signaler et de joindre un humain.",
+    ],
+    undercover:
+      "Les résumés d'avis clients générés par l'IA s'affichent sur la page produit sans aucune mention. Les utilisateurs pensent lire des avis rédigés par des personnes. Les retours sont excellents, donc le PO ne change rien.",
+    why:
+      "Les utilisateurs ignorent que le contenu vient de l'IA : de bons retours ne compensent pas l'absence de transparence.",
+  },
+  6: {
+    civilians: [
+      "Le PO vérifie que les jeux de données qui servent à tester une fonctionnalité IA représentent tous les profils d'utilisateurs, et pas seulement les plus fréquents.",
+      "Les personas produits avec l'aide de l'IA sont revus pour éviter les stéréotypes.",
+      "Une fonctionnalité IA est testée avec des utilisateurs de profils variés : âge, langue, handicap, aisance numérique.",
+      "Le PO prévoit une alternative non IA pour les utilisateurs qui ne souhaitent pas ou ne peuvent pas passer par l'assistant.",
+      "Toute l'équipe produit, y compris design et recette, est formée à l'usage responsable de l'IA, pas seulement les développeurs.",
+    ],
+    undercover:
+      "Les critères de priorisation de l'IA sont calibrés sur les retours des clients les plus actifs. Le PO considère que ce sont les plus représentatifs et n'examine pas les autres profils.",
+    why:
+      "Les besoins des utilisateurs moins actifs ou moins visibles sont ignorés : les critères ne sont ni vérifiés ni équitables.",
+  },
+  7: {
+    civilians: [
+      "Le PO a identifié un vrai besoin utilisateur, avec une mesure de départ, avant de proposer une fonctionnalité d'IA. L'équipe mesure ensuite le bénéfice obtenu.",
+      "L'IA prépare le contexte avant un entretien utilisateur (historique, questions déjà posées). Le PO consacre ainsi plus de temps à l'écoute.",
+      "Un assistant IA aide les nouveaux membres de l'équipe à retrouver les décisions passées et l'historique du produit.",
+      "Une fonctionnalité d'IA reformule des informations complexes en langage simple pour les utilisateurs.",
+      "L'IA génère les sous-titres et les transcriptions des ateliers pour les rendre accessibles à tous les participants.",
+    ],
+    undercover:
+      "Le PO ajoute un assistant d'IA générative au produit parce que les concurrents le font et que cela fera bien dans la prochaine communication. Aucun besoin utilisateur n'a été identifié et aucun bénéfice n'est mesuré.",
+    why:
+      "L'IA sert d'effet vitrine, sans besoin identifié ni bénéfice mesuré pour les utilisateurs.",
+  },
+};
+
+// Extension de l'édition Product Owner : 88 cartes (67 civils, 21 undercovers) réparties comme
+// celles de l'extension générique. Format : [domaine, texte] pour un civil, [domaine, texte, why]
+// pour un undercover. Comme l'extension générique, ces cartes sont à valider en atelier.
+const PO_EXT = {
+  1: {
+    civilians: [
+      ["Discovery", "Une IA synthétise vingt entretiens utilisateurs en grandes tendances. Le PO relit des verbatims bruts avant d'en tirer une conclusion sur le besoin."],
+      ["Backlog et priorisation", "L'IA découpe une epic en stories. L'équipe revoit le découpage en affinage et en modifie plusieurs avant de les planifier."],
+      ["Delivery et recette", "Un outil d'IA génère des cas de test à partir des critères d'acceptation. Le PO et les testeurs complètent les cas manquants avant la recette."],
+      ["Roadmap et pilotage", "Une IA propose un scénario de roadmap pour le trimestre. Le PO le confronte aux contraintes de l'équipe et aux attentes des métiers avant de le présenter."],
+      ["Parties prenantes", "L'IA rédige le compte rendu de la revue de sprint. Le PO le relit et corrige les décisions mal restituées avant de l'envoyer aux sponsors."],
+      ["Retours utilisateurs", "Un outil classe automatiquement les tickets du support par thème. Le PO contrôle un échantillon chaque semaine et corrige les regroupements douteux."],
+      ["Choix d'outils", "Un assistant IA compare trois solutions du marché. Le PO vérifie les informations clés auprès des fournisseurs avant de recommander un choix."],
+      ["Backlog et priorisation", "L'IA détecte des doublons dans le backlog. Le PO valide chaque fusion avant de supprimer un ticket."],
+      ["Roadmap et pilotage", "Un tableau de bord alimenté par l'IA signale un risque de retard sur une release. Le PO en discute avec l'équipe avant de décaler la date annoncée."],
+      ["Discovery", "L'IA propose des hypothèses de valeur pour une nouvelle fonctionnalité. Le PO les fait valider ou invalider par des tests auprès d'utilisateurs avant d'investir."],
+    ],
+    undercovers: [
+      ["Backlog et priorisation", "Un outil d'IA estime la complexité des stories en points. Le PO enregistre ces estimations telles quelles et l'équipe ne les discute plus en affinage.", "Les estimations sont imposées par l'IA sans échange avec l'équipe : une décision d'équipe est déléguée sans supervision humaine."],
+      ["Parties prenantes", "Un assistant IA envoie chaque semaine le point d'avancement du produit aux sponsors. Le PO le découvre quand un sponsor réagit.", "Un message qui engage le produit part sans relecture : le PO ne contrôle plus ce qui est communiqué en son nom."],
+      ["Roadmap et pilotage", "Une IA décide des demandes retenues pour la prochaine release à partir d'un score de valeur. Le PO se contente d'informer les équipes de la liste.", "L'arbitrage de la roadmap est pris par un score : le PO n'exerce plus sa responsabilité sur ce qui est livré."],
+    ],
+  },
+  2: {
+    civilians: [
+      ["Discovery", "Avant d'utiliser l'IA pour analyser des entretiens, le PO l'a testée sur une étude déjà analysée à la main et a comparé les conclusions."],
+      ["Delivery et recette", "L'équipe teste la fonctionnalité IA avec des questions piégeuses, des saisies absurdes et des tentatives de détournement avant la livraison."],
+      ["Delivery et recette", "La fonctionnalité IA est d'abord ouverte à un petit groupe d'utilisateurs, avec un suivi rapproché, avant d'être étendue à tous."],
+      ["Roadmap et pilotage", "Un indicateur de qualité des réponses de l'IA figure dans le tableau de bord du produit, avec un seuil d'alerte décidé avec l'équipe."],
+      ["Delivery et recette", "Quand le fournisseur d'IA annonce un changement de version du modèle, l'équipe rejoue ses cas de test avant de l'adopter."],
+      ["Backlog et priorisation", "Le backlog contient des stories pour le plan B : que fait le produit quand le service d'IA est indisponible ou trop lent ?"],
+      ["Choix d'outils", "Avant de choisir un fournisseur d'IA, le PO vérifie ses engagements de disponibilité, de sécurité et de réversibilité."],
+      ["Retours utilisateurs", "Les retours « la réponse de l'IA est fausse » arrivent dans un canal dédié et sont traités en priorité dans le sprint suivant."],
+      ["Delivery et recette", "Les critères d'acceptation précisent le niveau d'erreur toléré pour la fonctionnalité IA, validé avec les métiers."],
+    ],
+    undercovers: [
+      ["Delivery et recette", "Le modèle d'IA est testé sur les cas les plus courants. Le PO juge inutile de tester les cas rares et déclare la recette terminée.", "Les cas rares ne sont pas testés : la fiabilité n'est pas vérifiée là où le modèle risque justement de se tromper."],
+      ["Choix d'outils", "L'équipe branche la fonctionnalité sur le service d'IA d'un fournisseur, sans solution de repli. Si le service tombe, la fonctionnalité affiche une page d'erreur.", "Aucune solution de repli n'est prévue : une panne du fournisseur bloque le produit, la robustesse n'est pas assurée."],
+      ["Roadmap et pilotage", "Personne ne suit la qualité des réponses de l'IA après la mise en production. Le PO considère qu'elle restera la même qu'à la livraison.", "Aucune surveillance après le déploiement : une dégradation ou une dérive du modèle ne serait détectée que par les utilisateurs."],
+    ],
+  },
+  3: {
+    civilians: [
+      ["Choix d'outils", "Avant de souscrire à un outil d'IA, le PO consulte la liste des outils validés par l'entreprise et demande une validation si l'outil n'y figure pas."],
+      ["Discovery", "Avant d'enregistrer des entretiens utilisateurs pour les transcrire par IA, le PO recueille le consentement des participants et précise l'usage prévu."],
+      ["Backlog et priorisation", "Les tickets copiés dans un outil d'IA sont d'abord débarrassés des noms, des adresses mail et des numéros de contrat."],
+      ["Parties prenantes", "Le PO présente la fonctionnalité IA envisagée au comité IA de l'entreprise avant le lancement du développement."],
+      ["Delivery et recette", "Le PO s'assure que les données utilisées pour tester la fonctionnalité IA sont des données de test ou anonymisées, et non des données de production."],
+      ["Roadmap et pilotage", "Le registre des usages de l'IA de l'équipe est tenu à jour : outils utilisés, données concernées, responsable de chaque usage."],
+      ["Choix d'outils", "Le contrat avec le fournisseur d'IA précise où sont hébergées les données, combien de temps elles sont conservées et comment les récupérer."],
+      ["Parties prenantes", "Avant d'utiliser l'IA sur des documents confidentiels d'un partenaire, le PO obtient l'accord de ce dernier."],
+      ["Roadmap et pilotage", "La roadmap prévoit le temps nécessaire aux validations de conformité et de sécurité des fonctionnalités IA."],
+      ["Retours utilisateurs", "Le PO vérifie avec le DPO que la durée de conservation des retours clients analysés par IA est conforme à la politique de l'entreprise."],
+    ],
+    undercovers: [
+      ["Discovery", "Pour préparer un atelier, le PO colle dans une IA publique le compte rendu complet d'un entretien avec un client, nom et contrat compris.", "Des données personnelles d'un client sont envoyées à un outil non validé : c'est une fuite de données, sans contrôle ni base légale."],
+      ["Choix d'outils", "L'équipe teste gratuitement un outil d'IA trouvé en ligne avec les vrais tickets du support. Elle le déclarera si le test est concluant.", "L'outil est utilisé avec des données réelles avant toute déclaration : le contrôle conformité et sécurité arrive trop tard."],
+      ["Roadmap et pilotage", "Chaque membre de l'équipe utilise son outil d'IA préféré, parfois avec un compte personnel. Le PO ne tient aucune liste de ces usages.", "Aucun inventaire des usages de l'IA : l'équipe ne sait ni quels outils, ni quelles données, ni qui est responsable."],
+    ],
+  },
+  4: {
+    civilians: [
+      ["Backlog et priorisation", "Pour reformuler des tickets, l'équipe utilise un petit modèle exécuté en interne, suffisant pour cette tâche."],
+      ["Discovery", "Le PO regroupe ses demandes à l'IA en un seul prompt bien préparé plutôt que de relancer l'analyse à chaque nouvelle idée."],
+      ["Roadmap et pilotage", "Le coût énergétique d'une fonctionnalité IA figure parmi les critères de priorisation, à côté de la valeur et de l'effort."],
+      ["Delivery et recette", "L'équipe met en cache les réponses de l'IA aux questions fréquentes, au lieu de relancer le modèle à chaque fois."],
+      ["Choix d'outils", "Le PO demande aux fournisseurs d'IA des informations sur la consommation de leurs modèles et en tient compte dans son choix."],
+      ["Roadmap et pilotage", "L'équipe suit le nombre d'appels au modèle d'IA et cherche chaque trimestre à réduire ceux qui n'apportent rien."],
+      ["Delivery et recette", "La fonctionnalité IA ne s'exécute qu'à la demande de l'utilisateur, plutôt qu'à chaque affichage d'écran."],
+      ["Backlog et priorisation", "Avant d'ajouter une fonctionnalité d'IA au backlog, le PO vérifie si une règle simple ou une automatisation classique suffit."],
+      ["Discovery", "Pour tester une idée, l'équipe réalise d'abord un prototype sans IA (maquette, scénario joué à la main) avant de construire quoi que ce soit."],
+      ["Retours utilisateurs", "Le PO limite la fréquence de l'analyse automatique des retours clients : hebdomadaire plutôt qu'à chaque nouveau message."],
+    ],
+    undercovers: [
+      ["Delivery et recette", "L'équipe fait générer par l'IA des centaines de variantes de textes pour un test A/B, alors que quatre suffiraient.", "Le volume de générations dépasse le besoin : de l'énergie est consommée sans bénéfice."],
+      ["Roadmap et pilotage", "Le PO active l'assistant IA sur toutes les pages du produit pour mesurer l'engouement. Personne ne regarde la consommation.", "La consommation n'est ni mesurée ni limitée : l'impact environnemental n'est pas pris en compte."],
+      ["Choix d'outils", "Le PO choisit le fournisseur d'IA le plus connu, sans comparer avec un modèle plus léger, parce qu'il est cité dans tous les articles.", "Le choix repose sur la notoriété et non sur le besoin : aucune alternative plus sobre n'a été étudiée."],
+    ],
+  },
+  5: {
+    civilians: [
+      ["Retours utilisateurs", "Le formulaire de retour est placé juste à côté de la réponse de l'IA : pouce levé ou baissé, et commentaire libre."],
+      ["Discovery", "Le PO indique aux participants d'un atelier qu'une IA transcrit les échanges et leur envoie la transcription pour relecture."],
+      ["Parties prenantes", "Le PO explique aux sponsors ce que la fonctionnalité IA sait faire, ce qu'elle ne sait pas faire et les taux d'erreur constatés."],
+      ["Delivery et recette", "Quand l'IA ne peut pas répondre à une question, elle propose à l'utilisateur de joindre un conseiller."],
+      ["Backlog et priorisation", "Les stories d'une fonctionnalité IA incluent le texte d'information destiné à l'utilisateur, relu par le juridique."],
+      ["Roadmap et pilotage", "Les incidents liés à l'IA sont présentés en revue de sprint avec leur cause et les actions décidées, sans chercher de coupable."],
+      ["Roadmap et pilotage", "La communication sur la roadmap distingue clairement ce qui est livré, ce qui est expérimental et ce qui repose sur l'IA."],
+      ["Choix d'outils", "Le PO demande au fournisseur d'IA la documentation sur les données d'entraînement et sur les limites connues de son modèle."],
+    ],
+    undercovers: [
+      ["Parties prenantes", "Pour sa présentation aux sponsors, le PO montre les meilleures réponses de l'IA et garde pour lui les cas où elle s'est trompée.", "Les limites de l'IA sont cachées aux sponsors : une image trop flatteuse empêche de décider en connaissance de cause."],
+      ["Delivery et recette", "Un assistant répond aux utilisateurs avec un prénom et une photo. Rien n'indique qu'il s'agit d'une IA.", "Les utilisateurs croient parler à une personne : ne pas dire qu'on est une IA est un manque de transparence."],
+      ["Retours utilisateurs", "Les utilisateurs signalent des erreurs de l'IA. Le PO les range en bas du backlog en attendant d'avoir plus de données.", "Les signalements d'erreurs ne sont pas traités : une IA digne de confiance corrige et informe, elle n'attend pas."],
+    ],
+  },
+  6: {
+    civilians: [
+      ["Discovery", "Le PO recrute les participants à ses entretiens parmi des profils variés, y compris des utilisateurs peu à l'aise avec le numérique."],
+      ["Delivery et recette", "L'équipe vérifie que l'assistant IA comprend les questions mal orthographiées, les accents régionaux et les messages en langage simple."],
+      ["Backlog et priorisation", "Le PO ajoute au backlog des stories d'accessibilité pour les fonctionnalités IA : lecteur d'écran, contraste, navigation au clavier."],
+      ["Roadmap et pilotage", "La roadmap réserve du temps pour corriger les écarts de qualité constatés entre différents profils d'utilisateurs."],
+      ["Roadmap et pilotage", "Les indicateurs de qualité de l'IA sont suivis par segment d'utilisateurs, pas seulement en moyenne."],
+      ["Retours utilisateurs", "Les retours analysés par IA incluent ceux de l'accueil téléphonique et des courriers, pas seulement ceux de l'application."],
+      ["Delivery et recette", "Un utilisateur qui ne veut pas parler à l'assistant IA peut joindre directement un conseiller, sans parcours compliqué."],
+      ["Choix d'outils", "Le PO demande au fournisseur d'IA comment il a testé les biais de son modèle avant de le retenir."],
+      ["Discovery", "Les personas de l'équipe incluent des utilisateurs en situation de handicap et des aidants."],
+      ["Backlog et priorisation", "Quand une IA trie ou note des demandes, l'équipe relit les critères pour s'assurer qu'ils ne pénalisent pas un groupe d'utilisateurs."],
+    ],
+    undercovers: [
+      ["Delivery et recette", "L'assistant IA est entraîné et testé uniquement sur des messages bien rédigés. Les messages avec fautes ou en langage familier seront traités plus tard.", "Une partie des utilisateurs reçoit un service de moindre qualité : l'équité n'est pas vérifiée."],
+      ["Retours utilisateurs", "Le PO ne retient que les retours des utilisateurs qui laissent un commentaire écrit détaillé, qu'il juge plus utiles.", "Seule une partie des utilisateurs est entendue : les profils moins à l'aise à l'écrit sont écartés des décisions."],
+      ["Roadmap et pilotage", "L'équipe décide de ne pas prévoir d'alternative à l'assistant IA : les utilisateurs devront s'y habituer.", "Les utilisateurs qui ne peuvent pas ou ne veulent pas l'utiliser perdent l'accès au service : l'inclusion est ignorée."],
+    ],
+  },
+  7: {
+    civilians: [
+      ["Discovery", "L'IA retranscrit les entretiens utilisateurs en direct. Le PO, libéré de la prise de notes, peut se concentrer sur ce que dit la personne."],
+      ["Backlog et priorisation", "L'IA reformule les tickets confus en langage clair, pour que toute l'équipe, technique ou non, comprenne le besoin."],
+      ["Delivery et recette", "Un assistant IA répond aux questions des développeurs sur le contexte métier, qui peuvent ainsi se concentrer sur la conception."],
+      ["Parties prenantes", "L'IA prépare une première version des supports de revue de sprint. Le PO consacre le temps gagné à échanger avec les parties prenantes."],
+      ["Retours utilisateurs", "L'IA signale les retours qui expriment une vraie détresse ou une urgence, pour que le PO les fasse traiter par une personne rapidement."],
+      ["Roadmap et pilotage", "Un assistant IA prépare une synthèse des indicateurs avant la revue de produit, pour que la discussion porte sur les décisions à prendre."],
+      ["Delivery et recette", "L'IA propose aux utilisateurs une aide contextuelle dans les parcours complexes, avec un accès direct à un conseiller en cas de blocage."],
+      ["Discovery", "Après un atelier, l'IA rapproche les besoins exprimés de ceux déjà identifiés pour que le PO repère rapidement les sujets vraiment nouveaux."],
+      ["Choix d'outils", "Le PO teste un outil d'IA auprès des utilisateurs concernés avant de le déployer : il ne le garde que si leur travail s'en trouve amélioré."],
+      ["Roadmap et pilotage", "Chaque initiative IA de la roadmap est liée à un besoin utilisateur documenté et à un indicateur de bénéfice."],
+    ],
+    undercovers: [
+      ["Roadmap et pilotage", "Pour se démarquer lors d'un salon professionnel, le PO inscrit à la roadmap une fonctionnalité d'IA dont personne ne sait encore à quoi elle servira.", "La fonctionnalité est choisie pour l'effet vitrine, sans besoin utilisateur ni bénéfice attendu."],
+      ["Roadmap et pilotage", "L'équipe déploie un assistant IA pour la relation client. Elle ne suit que le nombre de conversations, pas ce que les clients en retirent.", "Le bénéfice réel n'est pas mesuré : on observe l'usage de l'IA, pas son utilité pour les utilisateurs."],
+      ["Delivery et recette", "L'IA remplace l'accueil téléphonique pour les demandes sensibles (décès, sinistre grave). L'équipe y voit un gain de temps pour les conseillers.", "L'IA prend la place du contact humain là où il est le plus nécessaire : elle devrait au contraire libérer du temps pour l'écoute."],
+    ],
+  },
+};
+
+// Cartes de l'édition PO au format du jeu : jeu de base (PO ci-dessus, cartes à valider elles aussi)
+// puis extension (PO_EXT). Même nombre de cartes que l'édition générique : 44 + 88.
+const poRule = (r) => ({
+  ...r,
+  civilians: [
+    ...PO[r.id].civilians.map((text) => ({ deck: "base", text })),
+    ...PO_EXT[r.id].civilians.map(([job, text]) => ({ deck: "ext", job, text })),
+  ],
+  undercovers: [
+    { deck: "base", text: PO[r.id].undercover, why: PO[r.id].why },
+    ...PO_EXT[r.id].undercovers.map(([job, text, why]) => ({ deck: "ext", job, text, why })),
+  ],
+});
+
+// Catalogue des éditions. L'ordre fixe le numéro stocké dans le code de partie (2 bits, 4 éditions
+// au plus) : n'insérez une nouvelle édition qu'à la fin.
+export const EDITIONS = {
+  generique: { label: "Générique", rules: RULES },
+  po: { label: "Product Owner", rules: RULES.map(poRule) },
+};
+export const EDITION_IDS = Object.keys(EDITIONS);
+export const rulesOf = (edition) => EDITIONS[edition].rules;

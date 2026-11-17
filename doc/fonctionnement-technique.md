@@ -37,12 +37,16 @@ Il n'y a pas de flèche entre les téléphones et le serveur dans l'autre sens :
 
 Le jeu repose sur une **distribution déterministe** (`js/game.js`) :
 
-1. L'animateur crée une partie. L'application tire une graine aléatoire et l'assemble avec les paramètres (mode, jeu de cartes, nombre de joueurs, undercovers et leurs cartes, règles d'or, ordre, nombre de manches) dans un **code de 8 caractères** (40 bits, dont 6 de somme de contrôle contre les fautes de frappe).
+1. L'animateur crée une partie. L'application tire une graine aléatoire et l'assemble avec les paramètres (édition, mode, jeu de cartes, nombre de joueurs, undercovers et leurs cartes, règles d'or, ordre, nombre de manches) dans un **code de 8 caractères** (40 bits, dont 6 de somme de contrôle contre les fautes de frappe).
 2. Les joueurs reçoivent ce code via le QR code. Chaque téléphone exécute le **même calcul** à partir de *(code, numéro de manche, numéro de joueur)* et obtient exactement la même distribution des cartes que celui de l'animateur.
 3. Le passage à la manche suivante se fait de la même façon, sans nouvel échange : chacun appuie sur « Manche suivante ».
 4. Pour répartir le rôle d'undercover et la prise de parole, chaque téléphone recalcule aussi les manches précédentes : un joueur qui a déjà eu le rôle a 4 fois moins de chances de l'avoir de nouveau. Le calcul reste identique sur tous les appareils.
 
 Les tests automatiques (`npm test`) vérifient que deux appareils obtiennent toujours la même distribution à partir du même code.
+
+## Éditions spéciales
+
+Le jeu existe en plusieurs éditions (`EDITIONS` dans `js/cards.js`) : « Générique » et « Product Owner ». Elles partagent les 7 règles d'or, leurs dos de cartes et la même répartition en jeu de base et extension (44 + 88 cartes) : seules les situations changent. L'édition est stockée sur 2 bits dans le code de partie (la graine passe à 12 bits) : les joueurs qui rejoignent une partie en héritent sans rien choisir. `data-edition` posé sur `<html>` change le thème (couleur verte, bandeau hachuré, badge dans la barre du haut). Pour ajouter une édition, ajouter une entrée à la fin de `EDITIONS` (4 au maximum) et, si besoin, un bloc `:root[data-edition="…"]` dans `css/style.css`.
 
 ## Ce qui transite dans les liens et QR codes
 

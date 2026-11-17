@@ -6,6 +6,15 @@
 
 export const CHANGELOG = [
   {
+    date: "2026-11-17",
+    title: "Édition Product Owner",
+    items: [
+      "Nouvelle édition spéciale pour les Product Owners : mêmes 7 règles d'or, mais des cartes tirées de situations de PO (discovery, backlog, recette, roadmap, parties prenantes).",
+      "Une partie en édition spéciale a un thème vert et un badge dans la barre du haut, pour la distinguer d'une session générique.",
+      "Le catalogue des cartes propose les deux éditions.",
+    ],
+  },
+  {
     date: "2026-11-06",
     title: "Retours d'utilisateurs",
     items: [

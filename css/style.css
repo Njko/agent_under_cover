@@ -704,6 +704,39 @@ body { overflow-wrap: anywhere; hyphens: auto; }
 .form label.radio > span, .form label.check > span { flex: 1; min-width: 0; }
 
 /* =============================================================================================
+   Éditions spéciales — `data-edition` est posé sur <html> par applyEdition() (js/app.js).
+   Pour distinguer d'un coup d'œil une session spéciale d'une session générique : autre couleur
+   dominante (vert profond au lieu du bleu), bandeau hachuré et badge du nom de l'édition.
+   Le mode low-tech reste monochrome : seuls le badge et un double filet distinguent l'édition.
+   ============================================================================================= */
+.edition-badge { background: #ffffff; color: #0b5f55; border-radius: 999px; padding: 2px 10px; font-size: 0.8rem; font-weight: 700; white-space: nowrap; }
+a.chip { display: inline-flex; align-items: center; text-decoration: none; }
+.chip[aria-current="true"] { background: var(--primary); border-color: var(--primary); color: var(--primary-text); font-weight: 700; }
+.edition-badge[hidden] { display: none; }
+.brand:has(.edition-badge:not([hidden])) { flex-wrap: wrap; }
+[data-lowtech] .edition-badge { background: transparent; color: var(--text); border: 2px solid var(--text); border-radius: 0; text-transform: uppercase; }
+[data-lowtech][data-edition] .topbar { border-bottom-style: double; border-bottom-width: 6px; }
+
+:root[data-edition="po"]:not([data-lowtech]) {
+  --primary: #0b6b5f;
+  --bar: #0b5f55;
+  --focus: #0b6b5f;
+  --press-bg: #d3eee8;
+  --primary-pressed: #07443d;
+}
+:root[data-edition="po"]:not([data-lowtech]) .topbar {
+  background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.09) 0 10px, transparent 10px 20px);
+}
+@media (prefers-color-scheme: dark) {
+  :root[data-edition="po"]:not([data-lowtech]):not([data-theme="light"]) {
+    --primary: #6fe0cc; --focus: #6fe0cc; --press-bg: #1c4a44; --primary-pressed: #b8f3e8;
+  }
+}
+:root[data-edition="po"][data-theme="dark"]:not([data-lowtech]) {
+  --primary: #6fe0cc; --focus: #6fe0cc; --press-bg: #1c4a44; --primary-pressed: #b8f3e8;
+}
+
+/* =============================================================================================
    Grands écrans (ordinateur, vidéoprojecteur) — à partir de 1024 px uniquement.
    Le mobile n'est pas concerné : les conteneurs de mise en page ci-dessous sont « transparents »
    (display: contents) en dessous de 1024 px et l'ordre du contenu reste le même partout.

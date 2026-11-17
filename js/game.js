@@ -5,7 +5,7 @@
 // à partir de (code, numéro de manche, numéro de joueur). Tous les appareils obtiennent donc
 // exactement le même résultat sans jamais communiquer entre eux.
 
-import { RULES } from "./cards.js";
+import { EDITION_IDS, RULES, rulesOf } from "./cards.js";
 
 const ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // 32 symboles, sans 0/O/1/I
 export const CODE_LENGTH = 8; // 8 × 5 bits = 40 bits
@@ -54,7 +54,7 @@ function shuffle(array, rand) {
 }
 
 // --- Code de partie -----------------------------------------------------------------------
-// Bits : graine (14) | jeu de cartes (1) | cartes undercover (1) | mode (1) | joueurs-3 (4)
+// Bits : graine (12) | édition (2) | jeu de cartes (1) | cartes undercover (1) | mode (1) | joueurs-3 (4)
 //        | undercovers-1 (1) | règles jouées (7) | ordre des règles (1) | manches-1 (4) | contrôle (6)
 // Les valeurs dépassent 32 bits : on calcule avec des multiplications plutôt qu'avec << et |.
 
@@ -66,7 +66,8 @@ export const DECK_CHOICES = ["base", "ext"];
 export const UC_CARDS = ["same", "distinct"];
 
 const FIELDS = [
-  ["seed", 14],
+  ["seed", 12],
+  ["edition", 2],
   ["deck", 1],
   ["ucCards", 1],
   ["mode", 1],
@@ -80,10 +81,10 @@ const CHECK_BITS = 6;
 
 function checksum(payload) {
   // Le sel change avec le format du code : les codes de l'ancien format sont refusés.
-  return hash32(payload % 2 ** 32, Math.floor(payload / 2 ** 32), 0xc0de8) % 2 ** CHECK_BITS;
+  return hash32(payload % 2 ** 32, Math.floor(payload / 2 ** 32), 0xc0de9) % 2 ** CHECK_BITS;
 }
 
-export function validateSettings({ players, undercovers, rules = [1], rounds = 1, mode = "coop", deck = "base" }) {
+export function validateSettings({ players, undercovers, rules = [1], rounds = 1, mode = "coop", deck = "base", edition = "generique" }) {
   if (!Number.isInteger(players) || players < MIN_PLAYERS || players > MAX_PLAYERS) {
     return `Le nombre de joueurs doit être compris entre ${MIN_PLAYERS} et ${MAX_PLAYERS}.`;
   }
@@ -108,7 +109,7 @@ export function validateSettings({ players, undercovers, rules = [1], rounds = 1
   // Deux joueurs ne doivent jamais recevoir la même carte : chaque règle jouée doit avoir au moins une
   // bonne pratique par civil.
   const civilians = players - undercovers;
-  for (const rule of RULES.filter((r) => rules.includes(r.id))) {
+  for (const rule of rulesOf(edition).filter((r) => rules.includes(r.id))) {
     const available = rulePool(rule, deck).civilians.length;
     if (available < civilians) {
       return `La règle d'or ${rule.id} n'a que ${available} bonnes pratiques dans ce jeu de cartes, pour ${civilians} civils : choisissez « Jeu de base et extension », ajoutez un undercover ou retirez cette règle.`;
@@ -120,12 +121,14 @@ export function validateSettings({ players, undercovers, rules = [1], rounds = 1
   return null;
 }
 
-export function encodeCode({ seed, players, undercovers, rules, ordered = false, rounds = 7, mode = "coop", deck = "base", ucCards = "same" }) {
+export function encodeCode({ seed, players, undercovers, rules, ordered = false, rounds = 7, mode = "coop", deck = "base", ucCards = "same", edition = "generique" }) {
+  if (!EDITION_IDS.includes(edition)) throw new Error("Édition inconnue.");
   rules = rules ?? RULES.map((r) => r.id);
-  const error = validateSettings({ players, undercovers, rules, rounds, mode, deck });
+  const error = validateSettings({ players, undercovers, rules, rounds, mode, deck, edition });
   if (error) throw new Error(error);
   const values = {
-    seed: seed % 2 ** 14,
+    seed: seed % 2 ** 12,
+    edition: EDITION_IDS.indexOf(edition),
     deck: Math.max(0, DECK_CHOICES.indexOf(deck)),
     ucCards: Math.max(0, UC_CARDS.indexOf(ucCards)),
     mode: Math.max(0, MODES.indexOf(mode)),
@@ -177,13 +180,14 @@ export function decodeCode(raw) {
     mode: MODES[v.mode],
     deck: DECK_CHOICES[v.deck],
     ucCards: UC_CARDS[v.ucCards],
+    edition: EDITION_IDS[v.edition],
   };
-  if (validateSettings(settings)) return null;
+  if (!settings.edition || validateSettings(settings)) return null;
   return { code, ...settings };
 }
 
 export function newCode(settings, random = Math.random) {
-  const seed = Math.floor(random() * 2 ** 14);
+  const seed = Math.floor(random() * 2 ** 12);
   return encodeCode({ ...settings, seed });
 }
 
@@ -191,7 +195,7 @@ export function newCode(settings, random = Math.random) {
 
 export function ruleForRound(game, round) {
   // Les règles choisies sont toutes jouées une fois (dans l'ordre ou au hasard) avant de recommencer.
-  const rules = RULES.filter((r) => game.rules.includes(r.id));
+  const rules = rulesOf(game.edition).filter((r) => game.rules.includes(r.id));
   if (game.ordered) return rules[(round - 1) % rules.length];
   const cycle = Math.floor((round - 1) / rules.length);
   const order = shuffle(rules, mulberry32(hash32(game.seed, cycle, 0x52554c45)));

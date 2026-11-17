@@ -1,4 +1,4 @@
-import { DECKS, RULES } from "./cards.js";
+import { DECKS, EDITIONS, EDITION_IDS, RULES, rulesOf } from "./cards.js";
 import { CHANGELOG, LATEST_CHANGE } from "./changelog.js";
 import { ICONS } from "./icons.js";
 import {
@@ -1039,14 +1039,17 @@ function viewLowTech() {
 }
 
 // Nombre de cartes d'un jeu (« base » ou « ext » : jeu de base et extension).
-function countCards(deck) {
-  return RULES.reduce((n, r) => {
+function countCards(deck, edition = "generique") {
+  return rulesOf(edition).reduce((n, r) => {
     const pool = rulePool(r, deck);
     return n + pool.civilians.length + pool.undercovers.length;
   }, 0);
 }
 
-function viewCards() {
+function viewCards(edition) {
+  if (!EDITION_IDS.includes(edition)) edition = "generique";
+  applyEdition(edition);
+  const rules = rulesOf(edition);
   const filter = store.get("cardsFilter", "all");
   const opened = new Set(store.get("cardsOpen", []));
   const shown = (card) => filter === "all" || card.deck === filter;
@@ -1054,7 +1057,10 @@ function viewCards() {
   app.innerHTML = `
     <section class="catalog">
       <h1>Toutes les cartes</h1>
-      <p>${countCards("ext")} cartes : ${countCards("base")} dans le ${DECKS.base.toLowerCase()}, validées, et ${countCards("ext") - countCards("base")} dans l'${DECKS.ext.toLowerCase()}, à valider en atelier.</p>
+      <div class="chips" role="group" aria-label="Édition">
+        ${EDITION_IDS.map((id) => `<a class="chip" href="#/cards/${id}" aria-current="${id === edition}">${esc(EDITIONS[id].label)}</a>`).join("")}
+      </div>
+      <p>${countCards("ext", edition)} cartes : ${countCards("base", edition)} dans le ${DECKS.base.toLowerCase()} et ${countCards("ext", edition) - countCards("base", edition)} dans l'${DECKS.ext.toLowerCase()}, à valider en atelier.</p>
       <div class="chips" role="group" aria-label="Cartes affichées">
         ${[["all", "Toutes"], ["base", DECKS.base], ["ext", DECKS.ext]]
           .map(([value, text]) => `<button type="button" class="chip" data-filter="${value}" aria-pressed="${filter === value}">${text}</button>`)
@@ -1065,7 +1071,7 @@ function viewCards() {
         <button type="button" class="btn btn--small" id="export-xlsx" aria-describedby="export-xlsx-hint">Exporter en Excel</button>
       </div>
       <p class="hint" id="export-xlsx-hint">L'export contient toutes les cartes et les énoncés des règles, pour revoir ou modifier les textes.</p>
-      ${RULES.map((r) => {
+      ${rules.map((r) => {
         const civilians = r.civilians.filter(shown);
         const undercovers = r.undercovers.filter(shown);
         return `
@@ -1140,7 +1146,7 @@ function viewCards() {
     button.disabled = true;
     try {
       const { buildXlsx, cardsWorkbook } = await import("./xlsx.js");
-      const blob = new Blob([buildXlsx(cardsWorkbook(RULES))], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const blob = new Blob([buildXlsx(cardsWorkbook(rules))], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -1196,9 +1202,11 @@ function viewHostSetup() {
     mode: "coop",
     deck: "base",
     ucCards: "same",
+    edition: "generique",
     names: {},
     ...store.get("hostPrefs", {}),
   };
+  if (!EDITION_IDS.includes(prefs.edition)) prefs.edition = "generique";
   // Réglages enregistrés avec une ancienne limite (jusqu'à 18 joueurs) : ramenés à la limite actuelle.
   prefs.players = Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, Number(prefs.players) || MIN_PLAYERS));
   // Les prénoms de la partie précédente ne sont pas repris d'office : une nouvelle équipe
@@ -1211,6 +1219,15 @@ function viewHostSetup() {
     <section>
       <h1>Nouvelle partie</h1>
       <form id="setup" class="form">
+        <fieldset class="fs-edition">
+          <legend>Édition</legend>
+          ${EDITION_IDS.map(
+            (id) => `
+          <label class="radio mode-pick"><input type="radio" name="edition" value="${id}" ${prefs.edition === id ? "checked" : ""}>
+            <span><strong>${esc(EDITIONS[id].label)}</strong><br><small>${id === "po" ? "Édition spéciale : toutes les cartes décrivent des situations vécues par un Product Owner." : "Pour un public large du secteur de l'assurance."}</small></span></label>`
+          ).join("")}
+        </fieldset>
+
         <fieldset class="fs-mode">
           <legend>Mode de jeu</legend>
           <label class="radio mode-pick"><input type="radio" name="mode" value="coop" ${prefs.mode !== "compet" ? "checked" : ""}>
@@ -1377,7 +1394,7 @@ function viewHostSetup() {
     const rules = [...form.querySelectorAll('input[name="rules"]:checked')].map((c) => Number(c.value));
     const shortage =
       !tooMany && baseInput.checked && rules.length
-        ? validateSettings({ players, undercovers: Number(form.elements.undercovers.value), rules, deck: "base" })
+        ? validateSettings({ players, undercovers: Number(form.elements.undercovers.value), rules, deck: "base", edition: form.elements.edition.value })
         : null;
     document.getElementById("deck-hint").textContent = tooMany
       ? `Au-delà de ${MAX_BASE_PLAYERS} joueurs, l'extension est obligatoire : le jeu de base n'a pas assez de cartes pour que chacun en ait une différente.`
@@ -1387,6 +1404,7 @@ function viewHostSetup() {
     syncUcCards();
   };
   form.addEventListener("change", syncDeck);
+  form.elements.edition.forEach((r) => r.addEventListener("change", () => applyEdition(form.elements.edition.value)));
   form.elements.players.addEventListener("input", syncDeck);
   syncDeck();
   form.addEventListener("input", syncRulesHint);
@@ -1404,6 +1422,7 @@ function viewHostSetup() {
       rounds: Number(form.elements.rounds.value),
       mode: form.elements.mode.value,
       deck: form.elements.deck.value,
+      edition: form.elements.edition.value,
       ucCards: form.elements.undercovers.value === "2" ? form.elements.ucCards.value : "same",
     };
     const error = validateSettings(settings);
@@ -1443,7 +1462,7 @@ function viewHost(code) {
         <div>
           <p class="label">Code de la partie</p>
           <p class="code">${esc(prettyCode(code))}</p>
-          <p class="small">Mode ${coop ? "coopératif" : "compétitif"} · ${game.players} joueurs · ${game.undercovers} undercover${game.undercovers > 1 ? "s" : ""}${
+          <p class="small">${game.edition === "generique" ? "" : `Édition ${esc(EDITIONS[game.edition].label)} · `}Mode ${coop ? "coopératif" : "compétitif"} · ${game.players} joueurs · ${game.undercovers} undercover${game.undercovers > 1 ? "s" : ""}${
             game.undercovers > 1 && game.ucCards === "distinct" && game.deck === "ext" ? " (une carte chacun)" : ""
           } · ${game.rounds} manche${game.rounds > 1 ? "s" : ""} · ${rulesSummary} · ${game.deck === "ext" ? `${DECKS.base.toLowerCase()} et ${DECKS.ext.toLowerCase()}` : DECKS.base.toLowerCase()}</p>
           <button class="btn btn--small" id="copy">Copier le lien</button>
@@ -2094,6 +2113,24 @@ function announceView() {
   firstRender = false;
 }
 
+// Édition spéciale : `data-edition` sur <html> change le thème (voir css/style.css) et le badge de
+// la barre du haut. L'édition d'une partie vient de son code ; hors partie, c'est l'édition générique.
+function applyEdition(id) {
+  const special = id && id !== "generique";
+  if (special) document.documentElement.dataset.edition = id;
+  else delete document.documentElement.dataset.edition;
+  const badge = document.getElementById("edition-badge");
+  badge.hidden = !special;
+  badge.textContent = special ? EDITIONS[id].label : "";
+  document.querySelector('meta[name="theme-color"]').content = special ? "#0b5f55" : "#00008f";
+}
+
+function editionOf(route, code) {
+  if (route === "host" && !code) return store.get("hostPrefs", {}).edition;
+  const inGame = ["host", "debrief", "end", "results", "join", "play", "over", "pass"].includes(route);
+  return inGame ? decodeCode(code)?.edition : null;
+}
+
 function render() {
   closeModal(false);
   const viewName = location.hash.replace(/^#\/?/, "").split(/[/~-]/)[0] || "home";
@@ -2107,6 +2144,7 @@ function render() {
     : results
       ? ["", "results", results[1], results[2], results[3]]
       : hash.split("/");
+  applyEdition(editionOf(route, a));
   switch (route) {
     case "host":
       a ? viewHost(a) : viewHostSetup();
@@ -2138,7 +2176,7 @@ function render() {
       viewRules();
       break;
     case "cards":
-      viewCards();
+      viewCards(a);
       break;
     case "lowtech":
       viewLowTech();

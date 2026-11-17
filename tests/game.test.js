@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { RULES } from "../js/cards.js";
+import { EDITIONS, RULES } from "../js/cards.js";
 import { MAX_BASE_PLAYERS, MAX_PLAYERS, MIN_PLAYERS_TWO_UNDERCOVERS, MIN_COMPET_PLAYERS, validateSettings, coopFound, rulePool, coopPoints, decodeCode, dealRound, encodeCode, newCode, outcome, roundPoints, ruleForRound, wrongGuesses } from "../js/game.js";
 
 const base = { seed: 4242, players: 5, undercovers: 1 };
@@ -35,14 +35,14 @@ test("le code encode et décode les paramètres", () => {
       if (players - undercovers < 2 || (undercovers === 2 && players < MIN_PLAYERS_TWO_UNDERCOVERS)) continue;
       for (const rounds of [1, 5, 16]) {
         for (const mode of players < 4 ? ["coop"] : ["coop", "compet"]) {
-          const seed = (players * 7919 + undercovers * 31 + rounds) % 2 ** 14;
+          const seed = (players * 7919 + undercovers * 31 + rounds) % 2 ** 12;
           const rules = [1, 3, 7];
           // Jeu de base quand il suffit (au plus 5 joueurs, assez de cartes), sinon l'extension.
           const deck = rounds === 5 || validateSettings({ players, undercovers, rules, deck: "base" }) ? "ext" : "base";
           const ucCards = rounds === 16 ? "distinct" : "same";
           const code = encodeCode({ seed, players, undercovers, rules, ordered: true, rounds, mode, deck, ucCards });
           assert.match(code, /^[2-9A-HJ-NP-Z]{8}$/);
-          assert.deepEqual(decodeCode(code), { code, seed, players, undercovers, rules, ordered: true, rounds, mode, deck, ucCards });
+          assert.deepEqual(decodeCode(code), { code, seed, players, undercovers, rules, ordered: true, rounds, mode, deck, ucCards, edition: "generique" });
         }
         if (validateSettings({ players, undercovers, rules: RULES.map((r) => r.id) })) continue;
         const code = encodeCode({ seed: 1, players, undercovers, rounds });
@@ -270,4 +270,23 @@ test("deux undercovers à partir de 7 joueurs seulement", () => {
   assert.equal(MIN_PLAYERS_TWO_UNDERCOVERS, 7);
   assert.throws(() => encodeCode({ ...base, players: 6, undercovers: 2, deck: "ext" }), /à partir de 7 joueurs/);
   assert.ok(encodeCode({ ...base, players: 7, undercovers: 2, deck: "ext" }));
+});
+
+test("édition PO : stockée dans le code, mêmes règles, mêmes effectifs que l'édition générique, cartes différentes", () => {
+  const po = decodeCode(encodeCode({ ...base, edition: "po", rules: [1, 2, 3, 4, 5, 6, 7] }));
+  assert.equal(po.edition, "po");
+  assert.equal(decodeCode(encodeCode(base)).edition, "generique");
+  assert.throws(() => encodeCode({ ...base, edition: "inconnue" }));
+  for (const [i, rule] of EDITIONS.po.rules.entries()) {
+    const gen = EDITIONS.generique.rules[i];
+    for (const deck of ["base", "ext"]) {
+      const a = rulePool(rule, deck);
+      const b = rulePool(gen, deck);
+      assert.equal(a.civilians.length, b.civilians.length, `règle ${rule.id}, ${deck} : civils`);
+      assert.equal(a.undercovers.length, b.undercovers.length, `règle ${rule.id}, ${deck} : undercovers`);
+    }
+    assert.ok(rule.undercovers.every((u) => u.why), `règle ${rule.id} : chaque undercover a son explication`);
+  }
+  const deal = dealRound(po, 1);
+  assert.ok(EDITIONS.po.rules.some((r) => r.undercovers.some((u) => u.text === deal.roles.find((x) => x.role === "undercover").card)));
 });
