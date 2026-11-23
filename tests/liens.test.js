@@ -16,8 +16,8 @@ test("chaque page d'entrée a son titre, son image d'aperçu et sa redirection",
     assert.ok(html.includes(`content="${titre}"`), `${page} : og:title identique au titre`);
     titres.add(titre);
     assert.ok(html.includes('<script src="../../js/entree.js">'), `${page} : redirection`);
-    const image = html.match(/og:image" content="\.\.\/\.\.\/(.+?)"/)?.[1];
-    assert.ok(image && existsSync(new URL(image, racine)), `${page} : image d'aperçu`);
+    const image = html.match(/og:image" content="https:\/\/njko\.github\.io\/agent_under_cover\/(.+?)"/)?.[1];
+    assert.ok(image && existsSync(new URL(image, racine)), `${page} : image d'aperçu (adresse absolue)`);
   }
   assert.equal(titres.size, pages.length, "deux pages ne partagent pas le même titre");
 });
