@@ -48,7 +48,11 @@ Le moteur désigne chaque carte par un identifiant (`classique:R1-C03`, `po:R2-U
 
 ## Textes de l'interface
 
-Les textes affichés ne sont pas écrits dans le code : ils sont rangés par clé dans `js/i18n/fr.js` (le français, langue de référence) et affichés par la fonction `t("clé", { paramètres })` de `js/i18n.js`. Les pluriels s'appuient sur `Intl.PluralRules` et les dates sur `toLocaleDateString`, intégrés au navigateur : aucune bibliothèque, aucune requête. Les textes des cartes et des règles d'or restent dans `js/cards.js`.
+Les textes affichés ne sont pas écrits dans le code : ils sont rangés par clé dans `js/i18n/fr.js` (le français, langue de référence) et affichés par la fonction `t("clé", { paramètres })` de `js/i18n.js`. Les pluriels s'appuient sur `Intl.PluralRules` et les dates sur `toLocaleDateString`, intégrés au navigateur : aucune bibliothèque, aucune requête.
+
+Langues proposées : `LANGUAGES` dans `js/i18n.js`. Chaque langue a deux fichiers : `js/i18n/<langue>.js` pour l'interface (mêmes clés que `fr.js`) et `js/i18n/cards-<langue>.js` pour les règles d'or et les cartes, rangées par identifiant de carte. Les textes français des cartes restent dans `js/cards.js`, qui reste la source de l'export Excel ; `cardText()` et `ruleText()` renvoient le texte dans la langue active. Seuls les fichiers de la langue active sont chargés à l'ouverture ; le service worker les garde tous en cache pour le hors-ligne.
+
+La langue est un réglage du téléphone, pas de la partie : elle n'entre pas dans le code de partie, et des joueurs d'une même partie peuvent jouer dans des langues différentes. Ordre de choix : langue choisie sur le téléphone (`lang`), sinon celle du lien ouvert, sinon la première langue du navigateur que le jeu connaît, sinon le français. Les tests (`tests/i18n.test.js`) vérifient que chaque traduction est complète : mêmes clés et mêmes paramètres que le français, une traduction pour chaque carte et chaque explication.
 
 ## Éditions spéciales
 
@@ -96,6 +100,7 @@ Tout est stocké dans le `localStorage` du navigateur, sur l'appareil, et n'en s
 | `names:CODE` | Prénoms reçus via le QR code | Joueur |
 | `player:CODE:N` | Manche affichée par le joueur N | Joueur |
 | `lastPlayer` | Dernière partie rejointe | Joueur |
+| `lang` | Langue choisie avec le sélecteur de l'accueil ou de l'écran « Rejoindre une partie » (sinon, celle du navigateur) | Tous |
 | `lowtech`, `timerDuration`, `debriefDuration` | Préférences d'affichage et durées des minuteurs (débat, discussion du débrief) | Tous |
 | `cardsFilter`, `cardsOpen`, `seenChangelog` | Catalogue (filtre, règles dépliées) et dernière page « Nouveautés » vue | Tous |
 

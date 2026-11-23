@@ -277,6 +277,7 @@ export default {
 
   "app.name": "Undercover IA responsable",
   "app.tagline": "IA responsable",
+  "lang.label": "Langue",
 
   "debrief.backResults": "Retour aux résultats",
   "debrief.backGame": "Retour à la partie",

@@ -1,7 +1,7 @@
 import { EDITION_IDS, RULES, rulesOf } from "./cards.js";
 import { CHANGELOG, LATEST_CHANGE } from "./changelog.js";
 import { ICONS } from "./icons.js";
-import { formatDate, formatDecimal, t } from "./i18n.js";
+import { LANGUAGES, cardText, formatDate, formatDecimal, lang, loadLanguage, pickLanguage, ruleText, t } from "./i18n.js";
 import {
   CODE_LENGTH,
   MAX_ROUNDS,
@@ -405,7 +405,8 @@ function cardHtml({ ruleId, text, kind = "civilian", label, theme, summary, note
   // débrief, jamais pendant le jeu : elle pourrait aider à deviner un rôle.
   const ext = card?.deck === "ext";
   // L'en-tête nomme la règle d'or (numéro et titre), sur toutes les cartes.
-  const ruleTheme = theme ?? RULES.find((r) => r.id === ruleId)?.theme ?? "";
+  const rule = RULES.find((r) => r.id === ruleId);
+  const ruleTheme = theme ?? (rule ? ruleText(rule, "theme") : "");
   return `
     <article class="card card--rule${ruleId} ${kind === "undercover" ? "card--undercover" : ""}" data-deck="${card?.deck || ""}">
       <header class="card-head">
@@ -413,12 +414,28 @@ function cardHtml({ ruleId, text, kind = "civilian", label, theme, summary, note
         <i></i>
       </header>
       ${summary ? `<p class="card-summary">${esc(summary)}</p>` : ""}
-      <p class="card-text">${esc(text ?? card.text)}</p>
+      <p class="card-text">${esc(text ?? cardText(card))}</p>
       ${ext ? `<p class="card-deck">${t("deck.ext")}</p>` : ""}
       ${note ? `<p class="card-note">${note}</p>` : ""}
       ${kind === "undercover" ? `<footer class="card-foot">${t("card.undercover")}</footer>` : ""}
       ${label ? `<footer class="card-label">${esc(label)}</footer>` : ""}
     </article>`;
+}
+
+// --- Langue ----------------------------------------------------------------------------------
+// Le choix est mémorisé sur ce téléphone ; la page est rechargée pour tout afficher dans la langue choisie.
+function languagePicker() {
+  const options = Object.entries(LANGUAGES)
+    .map(([code, name]) => `<option value="${code}" lang="${code}" ${code === lang ? "selected" : ""}>${name}</option>`)
+    .join("");
+  return `<p class="lang-pick"><label for="lang-select"><span aria-hidden="true">🌐 </span>${t("lang.label")}</label><select id="lang-select">${options}</select></p>`;
+}
+
+function bindLanguagePicker() {
+  document.getElementById("lang-select")?.addEventListener("change", (e) => {
+    store.set("lang", e.target.value);
+    location.reload();
+  });
 }
 
 // --- Mode low-tech ---------------------------------------------------------------------------
@@ -472,14 +489,14 @@ function formatKo(bytes) {
  * Sinon : grande image couleur, ou en low-tech une carte en texte avec un dessin vectoriel simplifié (< 1 Ko).
  */
 function backImg(rule, className = "back", { lazy = true, small = false } = {}) {
-  const alt = t("back.alt", { id: rule.id, theme: esc(rule.theme) });
+  const alt = t("back.alt", { id: rule.id, theme: esc(ruleText(rule, "theme")) });
   if (isLowTech()) {
     if (small) return "";
     return `
       <div class="lt-back ${className}" role="img" aria-label="${alt}">
         <svg class="lt-icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">${ICONS[rule.id]}</svg>
         <span class="lt-back-label">${t("rule.n", { id: rule.id })}</span>
-        <strong>${esc(rule.theme)}</strong>
+        <strong>${esc(ruleText(rule, "theme"))}</strong>
         <span class="lt-back-foot">${t("back.foot")}</span>
       </div>`;
   }
@@ -492,7 +509,7 @@ function backImg(rule, className = "back", { lazy = true, small = false } = {}) 
       <img src="${rule.back}" width="640" height="893" draggable="false" ${loading} alt="">
       <span class="back-text" aria-hidden="true">
         <span class="back-label">${t("back.label")}</span>
-        <strong>${esc(rule.theme)}</strong>
+        <strong>${esc(ruleText(rule, "theme"))}</strong>
         <span class="back-foot">${t("back.foot")}</span>
       </span>
     </div>`;
@@ -559,11 +576,12 @@ function bindSecret() {
 
 // Carte vue par un joueur. Coopératif : personne ne connaît son rôle. Compétitif : chacun le connaît.
 function playerCardHtml(game, deal, me) {
-  const { id: ruleId, theme, summary } = deal.rule;
-  if (game.mode === "coop") return cardHtml({ ruleId, text: me.card.text, theme, summary });
+  const { id: ruleId } = deal.rule;
+  const [theme, summary] = [ruleText(deal.rule, "theme"), ruleText(deal.rule, "summary")];
+  if (game.mode === "coop") return cardHtml({ ruleId, text: cardText(me.card), theme, summary });
   return me.role === "undercover"
-    ? cardHtml({ ruleId, text: me.card.text, theme, summary, kind: "undercover", note: t("play.noteUndercover") })
-    : cardHtml({ ruleId, text: me.card.text, theme, summary, note: t("play.noteCivilian") });
+    ? cardHtml({ ruleId, text: cardText(me.card), theme, summary, kind: "undercover", note: t("play.noteUndercover") })
+    : cardHtml({ ruleId, text: cardText(me.card), theme, summary, note: t("play.noteCivilian") });
 }
 
 // Indication visible sous la carte, même face cachée : elle ne doit pas dépendre du rôle.
@@ -572,8 +590,8 @@ function playerHint(game) {
 }
 
 function ruleTag(rule) {
-  return `<p class="round-theme round-theme--${rule.id}"><span>${t("rule.n", { id: rule.id })}</span> ${esc(rule.theme)}</p>
-    <p class="rule-summary">${esc(rule.summary)}</p>`;
+  return `<p class="round-theme round-theme--${rule.id}"><span>${t("rule.n", { id: rule.id })}</span> ${esc(ruleText(rule, "theme"))}</p>
+    <p class="rule-summary">${esc(ruleText(rule, "summary"))}</p>`;
 }
 
 // --- État de l'hôte (persisté par code de partie) -------------------------------------------
@@ -851,6 +869,7 @@ function viewHome() {
       }
     </nav>
 
+    ${languagePicker()}
     ${hasData ? `<p class="center-small"><button class="link-btn" id="forget-all">${t("home.forgetAll")}</button></p>` : ""}`;
 
   app.querySelectorAll("[data-forget]").forEach((btn) =>
@@ -868,6 +887,7 @@ function viewHome() {
     )
   );
   bindFan();
+  bindLanguagePicker();
 }
 
 const TRASH_ICON = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M10 11v6M14 11v6M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg>`;
@@ -890,10 +910,13 @@ function viewChangelog() {
     <section class="prose">
       <h1>${t("news.title")}</h1>
       <p>${t("news.intro")}</p>
-      ${CHANGELOG.map(
-        (release) => `
-        <h2>${formatDate(release.date)} · ${esc(release.title)}</h2>
-        <ul>${release.items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`
+      ${CHANGELOG.map((release) => {
+        // Texte dans la langue active s'il existe (release.en…), sinon en français.
+        const { title, items } = release[lang] || release;
+        return `
+        <h2>${formatDate(release.date)} · ${esc(title)}</h2>
+        <ul>${items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`;
+      }
       ).join("")}
       <p><a class="btn" href="#/">${t("common.backHome")}</a></p>
     </section>`;
@@ -984,13 +1007,13 @@ function viewCards(edition) {
             <button type="button" class="rule-toggle" aria-expanded="${opened.has(r.id)}" aria-controls="rule-panel-${r.id}">
               ${backImg(r, "back back--thumb", { small: true })}
               <span class="rule-section-title">
-                <span class="rule-title">${t("rule.n", { id: r.id })} · ${esc(r.theme)}</span>
+                <span class="rule-title">${t("rule.n", { id: r.id })} · ${esc(ruleText(r, "theme"))}</span>
                 <small>${t("cards.civilianCount", { n: civilians.length })} · ${t("cards.undercoverCount", { n: undercovers.length })}</small>
               </span>
             </button>
           </h2>
           <div class="rule-panel" id="rule-panel-${r.id}" ${opened.has(r.id) ? "" : "hidden"}>
-          <p class="rule-summary">${esc(r.summary)}</p>
+          <p class="rule-summary">${esc(ruleText(r, "summary"))}</p>
           <h3 class="cards-sub">${t("cards.civilians")}</h3>
           <div class="grid">
             ${backImg(r, "back back--grid")}
@@ -1002,7 +1025,7 @@ function viewCards(edition) {
               .map(
                 (u) => `<div class="uc-pair">
                   ${cardHtml({ ruleId: r.id, card: u, kind: "undercover" })}
-                  <p class="why"><strong>${t("card.why")}</strong> ${esc(u.why)}</p>
+                  <p class="why"><strong>${t("card.why")}</strong> ${esc(cardText(u, "why"))}</p>
                 </div>`
               )
               .join("")}
@@ -1177,7 +1200,7 @@ function viewHostSetup() {
               <label class="check rule-pick">
                 <input type="checkbox" name="rules" value="${r.id}" ${prefs.rules.includes(r.id) ? "checked" : ""}>
                 ${backImg(r, "back back--thumb", { small: true })}
-                <span><strong>${t("rule.n", { id: r.id })}</strong><br>${esc(r.theme)}</span>
+                <span><strong>${t("rule.n", { id: r.id })}</strong><br>${esc(ruleText(r, "theme"))}</span>
               </label>`
             ).join("")}
           </div>
@@ -1482,10 +1505,11 @@ function viewHost(code) {
   app.querySelectorAll("[data-show-card]").forEach((btn) =>
     btn.addEventListener("click", () => {
       const seat = Number(btn.dataset.showCard);
-      const { id: ruleId, theme, summary } = deal.rule;
+      const { id: ruleId } = deal.rule;
+      const [theme, summary] = [ruleText(deal.rule, "theme"), ruleText(deal.rule, "summary")];
       openModal(`
         <h2>${t("host.cardOf", { name: esc(playerName(hostState(code), seat)) })}</h2>
-        ${cardHtml({ ruleId, text: deal.roles[seat - 1].card.text, theme, summary })}
+        ${cardHtml({ ruleId, text: cardText(deal.roles[seat - 1].card), theme, summary })}
         <button class="btn btn--primary" data-close>${t("common.close")}</button>`);
     })
   );
@@ -1681,8 +1705,8 @@ function viewDebrief(code, { round, names, back, mySeat = null, unplayed = false
         ${backImg(rule, "back back--round", { lazy: false, small: true })}
         <div>
           <p class="label">${t("round.plain", { round: shown, rounds: game.rounds })} · ${t(unplayed ? "debrief.unplayed" : "debrief.label")}</p>
-          <h1>${t("rule.n", { id: rule.id })} · ${esc(rule.theme)}</h1>
-          <p class="rule-summary">${esc(rule.summary)}</p>
+          <h1>${t("rule.n", { id: rule.id })} · ${esc(ruleText(rule, "theme"))}</h1>
+          <p class="rule-summary">${esc(ruleText(rule, "summary"))}</p>
         </div>
       </div>
 
@@ -1692,7 +1716,7 @@ function viewDebrief(code, { round, names, back, mySeat = null, unplayed = false
       ${deal.undercovers
         .map(
           (u) => `${cardHtml({ ruleId: rule.id, card: u, kind: "undercover", label: holders(u) })}
-      <p class="why"><strong>${t("card.why")}</strong> ${esc(u.why)}</p>`
+      <p class="why"><strong>${t("card.why")}</strong> ${esc(cardText(u, "why"))}</p>`
         )
         .join("")}
       </div>
@@ -1706,7 +1730,7 @@ function viewDebrief(code, { round, names, back, mySeat = null, unplayed = false
       <h2>${t("debrief.questions")}</h2>
       ${names ? "" : timerHtml(game.mode === "coop", "debrief")}
       <ul class="questions">
-        <li><strong>${esc(rule.question)}</strong></li>
+        <li><strong>${esc(ruleText(rule, "question"))}</strong></li>
         <li>${t("debrief.q1")}</li>
         <li>${t("debrief.q2")}</li>
         <li>${t("debrief.q3", { id: rule.id })}</li>
@@ -1749,8 +1773,8 @@ function resultsHtml(game, names, results, mySeat, roundHref) {
                   <div>
                     <p class="recap-title">${
                       roundHref
-                        ? `<a class="recap-link" href="${roundHref(round)}">${t("round.n", { round })} · ${esc(deal.rule.theme)}</a>`
-                        : `${t("round.n", { round })} · ${esc(deal.rule.theme)}`
+                        ? `<a class="recap-link" href="${roundHref(round)}">${t("round.n", { round })} · ${esc(ruleText(deal.rule, "theme"))}</a>`
+                        : `${t("round.n", { round })} · ${esc(ruleText(deal.rule, "theme"))}`
                     }</p>
                     <p class="small">${
                       res === "n" ? t("results.unplayed") : t("results.undercover", { names: esc(undercovers.join(", ")) })
@@ -1861,7 +1885,9 @@ function viewJoin(prefill, seatPrefill, namesToken) {
         <div id="seats"></div>
         <p class="error" id="join-error" role="alert"></p>
       </form>
+      ${languagePicker()}
     </section>`;
+  bindLanguagePicker();
 
   const form = document.getElementById("join");
   const seatsEl = document.getElementById("seats");
@@ -2129,6 +2155,8 @@ function localizeShell() {
   document.querySelector(".brand small").textContent = t("app.tagline");
 }
 
+await loadLanguage(pickLanguage(store.get("lang", null), store.get("linkLang", null), navigator.languages || [navigator.language]));
+document.documentElement.lang = lang;
 localizeShell();
 document.getElementById("mode-toggle")?.addEventListener("click", () => setLowTech(!isLowTech()));
 window.addEventListener("load", paintWeight);

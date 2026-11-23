@@ -1,11 +1,42 @@
 // Textes de l'interface dans la langue active : t("clé", { paramètres }).
-// Les textes sont rangés par langue dans js/i18n/<langue>.js. Le français (fr.js) est la référence :
-// un texte absent d'une autre langue s'affiche en français.
+// Les textes sont rangés par langue dans js/i18n/<langue>.js, et ceux des cartes et des règles d'or
+// dans js/i18n/cards-<langue>.js. Le français est la référence : un texte absent d'une autre langue
+// s'affiche en français (fr.js pour l'interface, js/cards.js pour les cartes).
 
 import fr from "./i18n/fr.js";
 
+// Langues proposées, sous leur propre nom.
+export const LANGUAGES = { fr: "Français", en: "English" };
+
 export let lang = "fr";
-const dict = fr;
+let dict = fr;
+// Textes traduits des cartes (clé : identifiant de la carte) et des règles d'or (clé : numéro).
+let content = { rules: {}, cards: {} };
+
+const known = (code) => typeof code === "string" && Object.hasOwn(LANGUAGES, code);
+
+/**
+ * Langue de l'interface : celle choisie sur ce téléphone, sinon celle du lien ouvert, sinon la
+ * première langue du navigateur que le jeu connaît, sinon le français.
+ */
+export function pickLanguage(chosen, fromLink, browser = []) {
+  const candidates = [chosen, fromLink, ...browser.map((tag) => String(tag).slice(0, 2).toLowerCase())];
+  return candidates.find(known) || "fr";
+}
+
+/** Charge les textes d'une langue (fichiers téléchargés seulement si elle n'est pas le français). */
+export async function loadLanguage(code) {
+  lang = known(code) ? code : "fr";
+  pluralRules.clear();
+  if (lang === "fr") {
+    dict = fr;
+    content = { rules: {}, cards: {} };
+    return;
+  }
+  const [ui, cards] = await Promise.all([import(`./i18n/${lang}.js`), import(`./i18n/cards-${lang}.js`)]);
+  dict = ui.default;
+  content = cards.default;
+}
 
 const pluralRules = new Map();
 function pluralCategory(type, n) {
@@ -27,6 +58,16 @@ export function t(key, params = {}) {
     text = text[category] ?? text.other;
   }
   return text.replace(/\{(\w+)\}/g, (match, name) => (name in params ? String(params[name]) : match));
+}
+
+/** Texte d'une carte dans la langue active : field « text » (la carte) ou « why » (l'explication). */
+export function cardText(card, field = "text") {
+  return content.cards[card.id]?.[field] ?? card[field];
+}
+
+/** Texte d'une règle d'or dans la langue active : field « theme », « summary » ou « question ». */
+export function ruleText(rule, field) {
+  return content.rules[rule.id]?.[field] ?? rule[field];
 }
 
 /** Date AAAA-MM-JJ en toutes lettres (« 23 novembre 2026 »). */

@@ -431,6 +431,11 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
 [data-lowtech] .badge-new { border-radius: 0; }
 .tile small { display: block; color: var(--muted); font-size: 0.85rem; }
 .center-small { text-align: center; margin: 24px 0 0; }
+/* Choix de la langue (accueil, écran « Rejoindre ») */
+.lang-pick { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: 24px 0 0; }
+.lang-pick select {
+  font: inherit; min-height: 44px; padding: 8px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text);
+}
 .link-btn { font: inherit; font-size: 0.85rem; color: var(--muted); background: none; border: none; text-decoration: underline; cursor: pointer; padding: 8px; }
 
 /* Actions secondaires (terminer, supprimer) */

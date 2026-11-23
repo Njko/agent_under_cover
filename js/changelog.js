@@ -3,8 +3,27 @@
 // l'accueil signale « Nouveau » tant que la personne n'a pas ouvert la page.
 //
 // date : date de mise en ligne (AAAA-MM-JJ) ; items : changements, du point de vue des joueurs.
+// Traductions : une propriété par langue de js/i18n.js ({ title, items }), par exemple en. Toute nouvelle
+// entrée est écrite dans toutes les langues ; les entrées plus anciennes s'affichent en français.
 
 export const CHANGELOG = [
+  {
+    date: "2026-11-23",
+    title: "Le jeu en anglais",
+    items: [
+      "Le jeu est désormais disponible en anglais : interface, aide et toutes les cartes des deux éditions. La traduction est encore à relire.",
+      "La langue est celle du téléphone. Pour en changer, utilisez le choix « Langue » en bas de l'accueil ou de l'écran « Rejoindre une partie » : il est mémorisé sur ce téléphone.",
+      "Dans une même partie, chacun peut jouer dans sa langue : le code de partie et la distribution des cartes ne changent pas.",
+    ],
+    en: {
+      title: "The game in English",
+      items: [
+        "The game is now available in English: interface, help and all the cards of both editions. The translation still needs to be reviewed.",
+        "The language follows your phone's settings. To change it, use the “Language” option at the bottom of the home screen or of the “Join a game” screen: it is remembered on this phone.",
+        "Within the same game, everyone can play in their own language: the game code and the cards dealt do not change.",
+      ],
+    },
+  },
   {
     date: "2026-11-23",
     title: "Dos de cartes plus lisibles",
@@ -12,6 +31,13 @@ export const CHANGELOG = [
       "Le titre de la règle d'or est désormais écrit en texte sur le dos des cartes, et non plus dans l'image : il reste net à toutes les tailles d'écran et il est lu par les lecteurs d'écran. Le libellé « Règle d'or » est un peu plus clair, pour mieux ressortir sur le fond.",
       "Les illustrations et les couleurs ne changent pas. C'est une première étape vers un jeu disponible en anglais, allemand, italien et espagnol.",
     ],
+    en: {
+      title: "Easier-to-read card backs",
+      items: [
+        "The golden rule's title is now written as text on the card backs, rather than in the image: it stays sharp at every screen size and is read out by screen readers. The “Golden rule” label is slightly lighter, to stand out better against the background.",
+        "The illustrations and colours are unchanged. This is a first step towards a game available in English, German, Italian and Spanish.",
+      ],
+    },
   },
   {
     date: "2026-11-23",
