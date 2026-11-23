@@ -60,6 +60,13 @@ export function t(key, params = {}) {
   return text.replace(/\{(\w+)\}/g, (match, name) => (name in params ? String(params[name]) : match));
 }
 
+/** Textes traduits des cartes et des règles dans toutes les langues autres que le français (export Excel). */
+export async function cardTranslations() {
+  const codes = Object.keys(LANGUAGES).filter((code) => code !== "fr");
+  const modules = await Promise.all(codes.map((code) => import(`./i18n/cards-${code}.js`)));
+  return Object.fromEntries(codes.map((code, i) => [code, modules[i].default]));
+}
+
 /** Texte d'une carte dans la langue active : field « text » (la carte) ou « why » (l'explication). */
 export function cardText(card, field = "text") {
   return content.cards[card.id]?.[field] ?? card[field];

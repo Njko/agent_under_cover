@@ -1,7 +1,8 @@
 import { EDITION_IDS, RULES, rulesOf } from "./cards.js";
 import { CHANGELOG, LATEST_CHANGE } from "./changelog.js";
 import { ICONS } from "./icons.js";
-import { LANGUAGES, cardText, formatDate, formatDecimal, lang, loadLanguage, pickLanguage, ruleText, t } from "./i18n.js";
+import { LANGUAGES, cardText, cardTranslations, formatDate, formatDecimal, lang, loadLanguage, pickLanguage, ruleText, t } from "./i18n.js";
+import fr from "./i18n/fr.js";
 import {
   CODE_LENGTH,
   MAX_ROUNDS,
@@ -1075,11 +1076,13 @@ function viewCards(edition) {
     button.disabled = true;
     try {
       const { buildXlsx, cardsWorkbook } = await import("./xlsx.js");
-      const blob = new Blob([buildXlsx(cardsWorkbook(rules))], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      // Le classeur reste en français (langue de référence), avec les traductions en colonnes.
+      const workbook = cardsWorkbook(rules, await cardTranslations(), fr[`edition.${edition}`]);
+      const blob = new Blob([buildXlsx(workbook)], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = "cartes-undercover-ia-responsable.xlsx";
+      link.download = `cartes-undercover-ia-responsable${edition === "classique" ? "" : `-${edition}`}.xlsx`;
       document.body.append(link);
       link.click();
       link.remove();

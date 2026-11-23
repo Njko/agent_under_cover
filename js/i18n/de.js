@@ -140,7 +140,7 @@ export default {
   "cards.filter": "Angezeigte Karten",
   "cards.all": "Alle",
   "cards.export": "Nach Excel exportieren",
-  "cards.exportHint": "Der Export enthält alle Karten und die Regeltexte auf Französisch, um die Texte zu prüfen oder zu ändern.",
+  "cards.exportHint": "Der Export enthält alle Karten und die Regeltexte auf Französisch, mit ihren Übersetzungen, um die Texte zu prüfen oder zu ändern.",
   "cards.civilianCount": { one: "{n} gute Praxis", other: "{n} gute Praktiken" },
   "cards.undercoverCount": { one: "{n} Undercover-Karte", other: "{n} Undercover-Karten" },
   "cards.civilians": "Gute Praktiken (Karten der Teammitglieder)",

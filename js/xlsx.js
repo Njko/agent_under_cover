@@ -3,7 +3,9 @@
 // Un fichier .xlsx est une archive ZIP de fichiers XML (format Office Open XML). Les fichiers sont
 // stockés sans compression : l'archive reste petite (quelques dizaines de Ko) et le code simple.
 // Ce module sert au navigateur (bouton « Exporter en Excel » du catalogue) et à npm run cartes:export.
-// Le classeur modifié est reporté dans js/cards.js par un agent de code (voir AGENTS.md).
+// Le classeur modifié est reporté dans js/cards.js et js/i18n/cards-<langue>.js par un agent de code
+// (voir AGENTS.md). Les traductions sont dans des colonnes à droite (« Texte EN », « Pourquoi EN »…) :
+// elles suivent leur ligne quand une carte est ajoutée, supprimée ou déplacée.
 
 import { cardId } from "./cards.js";
 
@@ -35,9 +37,11 @@ export const LEVELS = { easy: "Facile", medium: "Moyenne", hard: "Difficile" };
 // Identifiant d'une carte dans l'export : R<règle>-C<n> (équipier) ou R<règle>-U<n> (undercover).
 export { cardId };
 
-const HOW_TO = [
-  "Ce classeur contient le texte de toutes les cartes du jeu « Undercover IA responsable ».",
+const howTo = (edition) => [
+  `Ce classeur contient le texte de toutes les cartes du jeu « Undercover IA responsable », édition ${edition}.`,
   "",
+  "Le français est la langue de référence. Les traductions sont dans les colonnes de droite : « Texte EN », « Pourquoi EN » (anglais), puis DE (allemand), IT (italien) et ES (espagnol). L'onglet « Règles » a les mêmes colonnes par langue.",
+  "Quand vous modifiez un texte français, vérifiez ses traductions sur la même ligne. Une nouvelle carte peut laisser ses traductions vides : elles seront proposées puis relues.",
   "Modifier un texte : changez-le dans l'onglet « Cartes » (colonnes « Texte de la carte » et « Pourquoi elle enfreint la règle ») ou « Règles » (énoncé et question de débrief).",
   "Jeu : « base » pour une carte validée, « ext » pour une carte de l'extension, encore à valider.",
   "Ajouter une carte : ajoutez une ligne avec la règle, le type (Équipier ou Undercover), le jeu et le texte, en laissant l'identifiant vide. Une carte undercover a besoin d'une explication.",
@@ -49,8 +53,29 @@ const HOW_TO = [
   "Pour mettre le jeu à jour, enregistrez le fichier au format Excel (.xlsx) et transmettez-le à la personne qui maintient le jeu : elle demande à un agent de code de reporter les modifications.",
 ];
 
-/** Classeur des cartes : onglets « Cartes », « Règles » et « Mode d'emploi ». */
-export function cardsWorkbook(rules) {
+/**
+ * Classeur des cartes d'une édition : onglets « Cartes », « Règles » et « Mode d'emploi ».
+ * translations : textes traduits par langue, { en: { rules, cards }, … } (voir cardTranslations dans
+ * js/i18n.js) ; les cartes y sont rangées par identifiant (card.id). edition : nom affiché de l'édition.
+ */
+export function cardsWorkbook(rules, translations = {}, edition = "Classique") {
+  const langs = Object.keys(translations);
+  const code = (lang) => lang.toUpperCase();
+  const cardColumns = [
+    ...CARD_COLUMNS,
+    ...langs.flatMap((lang) => [
+      { key: `text:${lang}`, title: `Texte ${code(lang)}`, width: 60 },
+      { key: `why:${lang}`, title: `Pourquoi ${code(lang)} (undercover)`, width: 50 },
+    ]),
+  ];
+  const ruleColumns = [
+    ...RULE_COLUMNS,
+    ...langs.flatMap((lang) => [
+      { key: `theme:${lang}`, title: `Thème ${code(lang)}`, width: 30 },
+      { key: `summary:${lang}`, title: `Énoncé ${code(lang)}`, width: 60 },
+      { key: `question:${lang}`, title: `Question ${code(lang)}`, width: 60 },
+    ]),
+  ];
   const cards = [];
   for (const rule of rules) {
     const add = (card, kind, index) =>
@@ -64,6 +89,12 @@ export function cardsWorkbook(rules) {
         text: card.text,
         why: card.why || "",
         level: LEVELS[card.level] || "",
+        ...Object.fromEntries(
+          langs.flatMap((lang) => [
+            [`text:${lang}`, translations[lang].cards[card.id]?.text || ""],
+            [`why:${lang}`, translations[lang].cards[card.id]?.why || ""],
+          ])
+        ),
       });
     rule.civilians.forEach((card, i) => add(card, "civilian", i));
     rule.undercovers.forEach((card, i) => add(card, "undercover", i));
@@ -72,19 +103,25 @@ export function cardsWorkbook(rules) {
   return [
     {
       name: "Cartes",
-      columns: CARD_COLUMNS,
+      columns: cardColumns,
       // La longueur est une formule : elle se met à jour pendant la modification du texte.
-      rows: cards.map((card, i) => CARD_COLUMNS.map((c) => (c.key === "length" ? { formula: `LEN(${textColumn}${i + 2})` } : card[c.key]))),
+      rows: cards.map((card, i) => cardColumns.map((c) => (c.key === "length" ? { formula: `LEN(${textColumn}${i + 2})` } : card[c.key]))),
     },
     {
       name: "Règles",
-      columns: RULE_COLUMNS,
-      rows: rules.map((rule) => [rule.id, rule.theme, rule.summary, rule.question]),
+      columns: ruleColumns,
+      rows: rules.map((rule) => [
+        rule.id,
+        rule.theme,
+        rule.summary,
+        rule.question,
+        ...langs.flatMap((lang) => ["theme", "summary", "question"].map((field) => translations[lang].rules[rule.id]?.[field] || "")),
+      ]),
     },
     {
       name: "Mode d'emploi",
       columns: [{ title: "Mode d'emploi", width: 120 }],
-      rows: HOW_TO.map((line) => [line]),
+      rows: howTo(edition).map((line) => [line]),
     },
   ];
 }

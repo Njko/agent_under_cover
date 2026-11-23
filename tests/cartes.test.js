@@ -49,3 +49,28 @@ test("l'export contient chaque carte avec son identifiant, et chaque règle", ()
     assert.ok(rules.includes(xml(rule.summary)) && rules.includes(xml(rule.question)), `règle ${rule.id}`);
   }
 });
+
+test("l'export ajoute les traductions en colonnes, sur la ligne de chaque carte", async () => {
+  const { EDITIONS } = await import("../js/cards.js");
+  const { cardTranslations } = await import("../js/i18n.js");
+  const translations = await cardTranslations();
+  const rules = EDITIONS.po.rules;
+  const files = unzipStored(buildXlsx(cardsWorkbook(rules, translations, "Product Owner")));
+  const cards = files.get("xl/worksheets/sheet1.xml");
+  const ruleSheet = files.get("xl/worksheets/sheet2.xml");
+  for (const lang of Object.keys(translations)) {
+    const code = lang.toUpperCase();
+    assert.ok(cards.includes(`>Texte ${code}<`) && cards.includes(`>Pourquoi ${code} (undercover)<`), `colonnes ${code}`);
+    assert.ok(ruleSheet.includes(`>Thème ${code}<`), `règles ${code}`);
+    for (const rule of rules) {
+      assert.ok(ruleSheet.includes(xml(translations[lang].rules[rule.id].summary)), `${code} : règle ${rule.id}`);
+      // Chaque traduction est sur la ligne de sa carte (même ligne que le texte français).
+      for (const card of [rule.civilians[0], rule.undercovers[0]]) {
+        const row = cards.split("<row ").find((r) => r.includes(`>${xml(card.text)}<`));
+        assert.ok(row?.includes(xml(translations[lang].cards[card.id].text)), `${code} : ${card.id}`);
+        if (card.why) assert.ok(row.includes(xml(translations[lang].cards[card.id].why)), `${code} : explication de ${card.id}`);
+      }
+    }
+  }
+  assert.ok(files.get("xl/worksheets/sheet3.xml").includes("édition Product Owner"));
+});

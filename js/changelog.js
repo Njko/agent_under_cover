@@ -15,6 +15,7 @@ export const CHANGELOG = [
       "La langue est celle du téléphone, ou celle du lien ouvert. Pour en changer, utilisez le choix « Langue » en bas de l'accueil, de l'écran « Rejoindre une partie » ou de l'écran de sa carte : il est mémorisé sur ce téléphone.",
       "Dans une même partie, chacun peut jouer dans sa langue : le code de partie et la distribution des cartes ne changent pas.",
       "Les liens et QR codes de l'animateur sont dans sa langue : dans Teams ou une messagerie, leur aperçu (titre, description, image) est traduit.",
+      "L'export Excel du catalogue contient aussi les traductions, en colonnes à côté du français, pour les faire relire.",
     ],
     en: {
       title: "The game in five languages",
@@ -23,6 +24,7 @@ export const CHANGELOG = [
         "The language follows your phone's settings, or the link you opened. To change it, use the “Language” option at the bottom of the home screen, the “Join a game” screen or your card screen: it is remembered on this phone.",
         "Within the same game, everyone can play in their own language: the game code and the cards dealt do not change.",
         "The facilitator's links and QR codes are in their language: in Teams or a messaging app, their preview (title, description, image) is translated.",
+        "The catalogue's Excel export also contains the translations, in columns next to the French, so they can be reviewed.",
       ],
     },
     de: {
@@ -32,6 +34,7 @@ export const CHANGELOG = [
         "Die Sprache richtet sich nach dem Telefon oder nach dem geöffneten Link. Zum Wechseln nutzen Sie die Auswahl „Sprache“ unten auf der Startseite, auf dem Bildschirm „Spiel beitreten“ oder auf dem Bildschirm Ihrer Karte: Sie wird auf diesem Telefon gespeichert.",
         "Im selben Spiel kann jeder in seiner Sprache spielen: Der Spielcode und die verteilten Karten ändern sich nicht.",
         "Die Links und QR-Codes der Spielleitung sind in ihrer Sprache: In Teams oder einem Messenger ist ihre Vorschau (Titel, Beschreibung, Bild) übersetzt.",
+        "Der Excel-Export des Katalogs enthält auch die Übersetzungen, in Spalten neben dem Französischen, damit sie geprüft werden können.",
       ],
     },
     it: {
@@ -41,6 +44,7 @@ export const CHANGELOG = [
         "La lingua è quella del telefono, o quella del link aperto. Per cambiarla, usate la scelta «Lingua» in fondo alla home, alla schermata «Entra in una partita» o alla schermata della propria carta: viene memorizzata su questo telefono.",
         "Nella stessa partita, ognuno può giocare nella propria lingua: il codice della partita e la distribuzione delle carte non cambiano.",
         "I link e i QR code di chi conduce sono nella sua lingua: in Teams o in una chat, la loro anteprima (titolo, descrizione, immagine) è tradotta.",
+        "L'esportazione Excel del catalogo contiene anche le traduzioni, in colonne accanto al francese, per farle rivedere.",
       ],
     },
     es: {
@@ -50,6 +54,7 @@ export const CHANGELOG = [
         "El idioma es el del teléfono, o el del enlace abierto. Para cambiarlo, usad la opción «Idioma» al pie de la página de inicio, de la pantalla «Unirse a una partida» o de la pantalla de vuestra carta: se guarda en este teléfono.",
         "En una misma partida, cada uno puede jugar en su idioma: el código de la partida y el reparto de las cartas no cambian.",
         "Los enlaces y códigos QR de quien dirige están en su idioma: en Teams o en una mensajería, su vista previa (título, descripción, imagen) está traducida.",
+        "La exportación a Excel del catálogo también contiene las traducciones, en columnas junto al francés, para que se revisen.",
       ],
     },
   },

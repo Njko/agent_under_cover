@@ -140,7 +140,7 @@ export default {
   "cards.filter": "Carte mostrate",
   "cards.all": "Tutte",
   "cards.export": "Esporta in Excel",
-  "cards.exportHint": "L'esportazione contiene tutte le carte e gli enunciati delle regole in francese, per rivedere o modificare i testi.",
+  "cards.exportHint": "L'esportazione contiene tutte le carte e gli enunciati delle regole in francese, con le loro traduzioni, per rivedere o modificare i testi.",
   "cards.civilianCount": { one: "{n} buona pratica", other: "{n} buone pratiche" },
   "cards.undercoverCount": { one: "{n} carta undercover", other: "{n} carte undercover" },
   "cards.civilians": "Buone pratiche (carte dei compagni di squadra)",

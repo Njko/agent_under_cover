@@ -23,7 +23,7 @@ npm run k8s:render     # rendu Kustomize des manifestes Kubernetes
 | `js/boot.js` | Script classique chargé dans `<head>` : mode low-tech avant le premier affichage |
 | `js/app.js` | Écrans, routeur (fragment d'URL `#/…`), minuteur, accessibilité |
 | `js/game.js` | Moteur déterministe : code de partie, distribution, conditions de victoire, scores |
-| `js/cards.js` | Contenu des 7 règles d'or et des 132 cartes : 44 du jeu de base (`deck: "base"`, validées) et 88 de l'extension (`deck: "ext"`, à valider) |
+| `js/cards.js` | Textes français (référence) des 7 règles d'or et des cartes de chaque édition (`EDITIONS`) : 146 cartes par édition, 44 du jeu de base (`deck: "base"`, validées) et 102 de l'extension (`deck: "ext"`, à valider) |
 | `js/i18n.js`, `js/i18n/` | Langues proposées (`LANGUAGES`) et textes traduits : interface (`<langue>.js`, `fr.js` : référence, fonction `t()`), cartes et règles (`cards-<langue>.js`, par identifiant de carte) |
 | `js/changelog.js` | Notes de version (page « Nouveautés ») |
 | `js/xlsx.js` | Export Excel des cartes (navigateur et scripts), sans dépendance |
@@ -34,7 +34,7 @@ npm run k8s:render     # rendu Kustomize des manifestes Kubernetes
 | `css/style.css` | Styles des deux thèmes (normal et low-tech, clair et sombre) |
 | `sw.js` | Service worker (hors ligne) |
 | `vendor/qrcode.min.js` | Bibliothèque QR, hébergée localement |
-| `tests/` | Tests du moteur |
+| `tests/` | Tests : moteur, traductions complètes, export Excel, pages d'entrée des liens |
 | `doc/` | Documentation technique et d'exploitation |
 | `Dockerfile`, `deploy/` | Image nginx et manifestes Kubernetes |
 
@@ -74,29 +74,32 @@ C'est un engagement documenté dans `doc/fonctionnement-technique.md`. Ne le cas
 
 ## Importer un classeur Excel de cartes
 
-Les textes des cartes se modifient dans Excel : le bouton « Exporter en Excel » du catalogue (ou `npm run cartes:export`) produit le classeur, l'équipe le modifie, puis demande à un agent de reporter les modifications. **Il n'y a pas de script d'import : c'est vous qui mettez à jour `js/cards.js`.** La source de données reste ce fichier, publié par un commit sur `main`.
+Les textes des cartes se modifient dans Excel : le bouton « Exporter en Excel » du catalogue (ou `npm run cartes:export -- fichier.xlsx [classique|po]`) produit le classeur d'une édition, avec ses traductions en colonnes. L'équipe le modifie, puis demande à un agent de reporter les modifications. **Il n'y a pas de script d'import : c'est vous qui mettez à jour `js/cards.js` (français, référence) et `js/i18n/cards-<langue>.js` (traductions).** Ces fichiers restent la source de données, publiée par un commit sur `main`.
 
 ### Le classeur
 
-- **Onglet « Cartes »** : une ligne par carte. Colonnes : `Identifiant`, `Règle` (1 à 7), `Type` (`Civil` ou `Undercover`), `Jeu` (`base` ou `ext`), `Métier`, `Texte de la carte`, `Pourquoi elle enfreint la règle (undercover)`. Les colonnes `Thème` et `Longueur du texte` sont indicatives (la longueur est une formule) : ne les reportez pas.
-- **Onglet « Règles »** : `Règle`, `Thème (dos de carte)`, `Énoncé de la charte`, `Question de débrief`, qui correspondent à `theme`, `summary` et `question` dans `js/cards.js`.
-- **Identifiants** : `R<règle>-C<nn>` pour la *n*-ième carte de `civilians`, `R<règle>-U<nn>` pour la *n*-ième de `undercovers` (`cardId` dans `js/xlsx.js`), **selon l'ordre de `js/cards.js` au moment de l'export**. Une ligne sans identifiant est une nouvelle carte ; une carte absente du classeur a été supprimée.
+- **Édition** : nommée dans la première ligne de l'onglet « Mode d'emploi » (et dans le nom du fichier exporté, `-po` pour l'édition Product Owner). Demandez-la si elle manque : les identifiants sont les mêmes d'une édition à l'autre.
+- **Onglet « Cartes »** : une ligne par carte. Colonnes : `Identifiant`, `Règle` (1 à 7), `Type` (`Équipier` ou `Undercover`), `Jeu` (`base` ou `ext`), `Métier` (`job`), `Texte de la carte`, `Pourquoi elle enfreint la règle (undercover)`, `Difficulté (undercover)` (`Facile`, `Moyenne`, `Difficile` = `level` `easy`, `medium`, `hard`). Les colonnes `Thème` et `Longueur du texte` sont indicatives (la longueur est une formule) : ne les reportez pas. À droite, les traductions : `Texte EN`, `Pourquoi EN (undercover)`, puis DE, IT et ES.
+- **Onglet « Règles »** : `Règle`, `Thème (dos de carte)`, `Énoncé de la charte`, `Question de débrief`, qui correspondent à `theme`, `summary` et `question` dans `js/cards.js`, puis `Thème EN`, `Énoncé EN`, `Question EN`… pour chaque langue (`rules` dans `js/i18n/cards-<langue>.js`).
+- **Identifiants** : `R<règle>-C<nn>` pour la *n*-ième carte de `civilians`, `R<règle>-U<nn>` pour la *n*-ième de `undercovers` (`cardId` dans `js/cards.js`), **selon l'ordre de `js/cards.js` au moment de l'export**. Dans `js/i18n/cards-<langue>.js`, la clé est précédée de l'édition : `classique:R1-C03`, `po:R2-U01`. Une ligne sans identifiant est une nouvelle carte ; une carte absente du classeur a été supprimée. Les traductions d'une ligne suivent toujours la carte de cette ligne.
 - Le classeur réenregistré par Excel est une archive compressée avec textes partagés : lisez-le avec l'outil dont vous disposez (par exemple `openpyxl` en Python), sans ajouter de dépendance au projet.
 
 ### Procédure
 
 1. **Vérifier la base de l'export** : si `js/cards.js` a changé depuis l'export (`git log -- js/cards.js`), les identifiants peuvent ne plus correspondre. Retrouvez alors les cartes par leur texte d'origine (exportez la version de l'époque avec `git show`) ou demandez à l'utilisateur.
-2. **Lister les changements avant d'écrire** : textes et explications modifiés, cartes ajoutées, supprimées ou déplacées, changements de jeu (`ext` → `base` = carte validée), énoncés et questions des règles. Montrez cette liste à l'utilisateur ; demandez confirmation pour toute suppression et pour tout changement de `theme`, qui doit rester celui imprimé au dos des cartes (`img/dos/`).
+2. **Lister les changements avant d'écrire** : textes et explications modifiés, cartes ajoutées, supprimées ou déplacées, changements de jeu (`ext` → `base` = carte validée), énoncés et questions des règles, traductions modifiées. Montrez cette liste à l'utilisateur ; demandez confirmation pour toute suppression et pour tout changement de `theme` (le nom de la règle d'or, affiché au dos des cartes).
 3. **Contrôler le classeur**, et signaler chaque anomalie avec son numéro de ligne plutôt que de la corriger en silence :
    - règle, type et jeu connus, texte non vide ;
    - une explication (`why`) pour chaque carte undercover, un métier (`job`) pour chaque carte de l'extension ;
    - aucun texte en double (deux joueurs ne doivent jamais recevoir la même carte) ;
    - de quoi jouer : pour chaque règle, au moins 4 bonnes pratiques et une carte undercover dans le jeu de base (parties jusqu'à `MAX_BASE_PLAYERS` = 5 joueurs), et au moins 9 bonnes pratiques avec l'extension (parties à 10 joueurs) ;
-   - longueur conseillée de 100 à 170 caractères, la même pour les cartes civiles et undercover : signalez les écarts sans les bloquer.
-4. **Mettre à jour `js/cards.js`** en gardant sa structure : objets `{ deck, job?, text }` pour les cartes civiles, `{ deck, job?, text, why }` pour les cartes undercover, `job` seulement pour l'extension, ordre des lignes du classeur. Ne touchez ni à `back` ni à l'en-tête du fichier.
-5. **Vérifier et publier** : `npm test` (il contrôle notamment l'unicité des textes et le nombre de cartes par règle), réexportez le classeur pour comparer avec le fichier reçu, incrémentez `VERSION` dans `sw.js`, ajoutez une entrée à `js/changelog.js` si le changement est visible des joueurs, puis faites un commit en français qui résume les modifications.
+   - longueur conseillée de 100 à 170 caractères, la même pour les cartes civiles et undercover : signalez les écarts sans les bloquer ;
+   - traductions : une cellule vide (nouvelle carte, nouvelle explication) ou un texte français modifié dont la traduction n'a pas bougé sur la même ligne, à signaler comme traduction à proposer ou à revoir ; aucun texte en double dans une même langue ; une traduction nettement plus longue que les autres langues se remarque aussi en partie.
+4. **Mettre à jour `js/cards.js`** en gardant sa structure : objets `{ deck, job?, text }` pour les cartes civiles, `{ deck, job?, level, text, why }` pour les cartes undercover, `job` seulement pour l'extension, ordre des lignes du classeur. Ne touchez ni à `back` ni à l'en-tête du fichier.
+5. **Mettre à jour les traductions** `js/i18n/cards-<langue>.js` (en, de, it, es) à partir des colonnes de chaque langue : cartes dans l'ordre des lignes du classeur, avec leur **nouvel** identifiant (une carte ajoutée, supprimée ou déplacée décale les suivantes), règles depuis l'onglet « Règles ». Toute carte doit être traduite (`npm test` le vérifie) : pour une cellule vide, proposez une traduction et listez-la à l'utilisateur comme à faire relire.
+6. **Vérifier et publier** : `npm test` (il contrôle notamment l'unicité des textes, le nombre de cartes par règle et que chaque carte est traduite dans chaque langue), réexportez le classeur pour comparer avec le fichier reçu, incrémentez `VERSION` dans `sw.js`, ajoutez une entrée à `js/changelog.js` (dans toutes les langues) si le changement est visible des joueurs, puis faites un commit en français qui résume les modifications.
 
-Changer le texte d'une carte change la distribution des parties en cours qui l'utilisent : signalez-le à l'utilisateur.
+Ajouter, supprimer ou déplacer une carte change la distribution des parties en cours (les identifiants se décalent) : signalez-le à l'utilisateur. Modifier seulement un texte ou une traduction ne la change pas.
 
 ## Déploiement
 

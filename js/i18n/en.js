@@ -145,7 +145,7 @@ export default {
   "cards.filter": "Cards shown",
   "cards.all": "All",
   "cards.export": "Export to Excel",
-  "cards.exportHint": "The export contains all the cards and the rule statements in French, to review or edit the texts.",
+  "cards.exportHint": "The export contains all the cards and the rule statements in French, with their translations, to review or edit the texts.",
   "cards.civilianCount": { one: "{n} good practice", other: "{n} good practices" },
   "cards.undercoverCount": { one: "{n} undercover card", other: "{n} undercover cards" },
   "cards.civilians": "Good practices (teammates' cards)",

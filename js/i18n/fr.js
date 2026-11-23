@@ -141,7 +141,7 @@ export default {
   "cards.filter": "Cartes affichées",
   "cards.all": "Toutes",
   "cards.export": "Exporter en Excel",
-  "cards.exportHint": "L'export contient toutes les cartes et les énoncés des règles, pour revoir ou modifier les textes.",
+  "cards.exportHint": "L'export contient toutes les cartes et les énoncés des règles, avec leurs traductions, pour revoir ou modifier les textes.",
   "cards.civilianCount": { one: "{n} bonne pratique", other: "{n} bonnes pratiques" },
   "cards.undercoverCount": { one: "{n} carte undercover", other: "{n} cartes undercover" },
   "cards.civilians": "Bonnes pratiques (cartes des équipiers)",

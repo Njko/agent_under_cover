@@ -18,7 +18,9 @@
 //              tirée.
 // L'animateur choisit à la création de la partie de jouer avec le jeu de base seul ou avec l'extension.
 //
-// Pour modifier le jeu, il suffit d'éditer ce fichier : aucune autre modification n'est nécessaire.
+// Ce fichier contient les textes français, qui font référence. Pour modifier le jeu, éditez-le et reportez
+// les changements dans les traductions (js/i18n/cards-<langue>.js) : voir « Importer un classeur Excel »
+// dans AGENTS.md.
 // Chaque carte reçoit un identifiant (id) d'après sa place dans sa règle : le moteur distribue les cartes
 // par identifiant. Modifier un texte ne change donc pas la distribution des parties en cours ; ajouter,
 // supprimer ou déplacer une carte la change.
@@ -606,7 +608,7 @@ const PO = {
   },
 };
 
-// Extension de l'édition Product Owner : 88 cartes (67 équipiers, 21 undercovers) réparties comme
+// Extension de l'édition Product Owner : 102 cartes (67 équipiers, 35 undercovers) réparties comme
 // celles de l'extension générique. Format : [domaine, texte] pour un équipier, [domaine, texte, why]
 // pour un undercover. Comme l'extension générique, ces cartes sont à valider en atelier.
 const PO_EXT = {
@@ -757,7 +759,7 @@ const PO_EXT = {
 };
 
 // Cartes de l'édition PO au format du jeu : jeu de base (PO ci-dessus, cartes à valider elles aussi)
-// puis extension (PO_EXT). Même nombre de cartes que l'édition générique : 44 + 88.
+// puis extension (PO_EXT). Même nombre de cartes que l'édition générique : 44 + 102.
 const poRule = (r) => ({
   ...r,
   civilians: [
