@@ -481,10 +481,19 @@ function backImg(rule, className = "back", { lazy = true, small = false } = {}) 
         <span class="lt-back-foot">L'IA sous couverture</span>
       </div>`;
   }
-  const src = small ? rule.back.replace(".webp", "-mini.webp") : rule.back;
-  const [w, h] = small ? [200, 279] : [640, 893];
+  const loading = lazy ? 'loading="lazy"' : "";
   // Les vignettes sont toujours accompagnées du nom de la règle en texte : elles sont décoratives.
-  return `<img class="${className}" src="${src}" width="${w}" height="${h}" draggable="false" ${lazy ? 'loading="lazy"' : ""} alt="${small ? "" : alt}">`;
+  if (small) return `<img class="${className}" src="${rule.back.replace(".webp", "-mini.webp")}" width="200" height="279" draggable="false" ${loading} alt="">`;
+  // Grand dos : illustration sans texte, et le texte de la carte en HTML (traduisible).
+  return `
+    <div class="${className} back-art back--r${rule.id}" role="img" aria-label="${alt}">
+      <img src="${rule.back}" width="640" height="893" draggable="false" ${loading} alt="">
+      <span class="back-text" aria-hidden="true">
+        <span class="back-label">Règle d'or</span>
+        <strong>${esc(rule.theme)}</strong>
+        <span class="back-foot">L'IA sous couverture</span>
+      </span>
+    </div>`;
 }
 
 // Carte secrète : le dos de la carte de la règle d'or la masque. On la retourne en la touchant, en
@@ -549,10 +558,10 @@ function bindSecret() {
 // Carte vue par un joueur. Coopératif : personne ne connaît son rôle. Compétitif : chacun le connaît.
 function playerCardHtml(game, deal, me) {
   const { id: ruleId, theme, summary } = deal.rule;
-  if (game.mode === "coop") return cardHtml({ ruleId, text: me.card, theme, summary });
+  if (game.mode === "coop") return cardHtml({ ruleId, text: me.card.text, theme, summary });
   return me.role === "undercover"
-    ? cardHtml({ ruleId, text: me.card, theme, summary, kind: "undercover", note: "<strong>Tu es l'undercover :</strong> ta carte enfreint la règle d'or. Fais-toi passer pour un équipier ! <strong>Pour bluffer :</strong> décris le contexte de ta carte (qui, quel outil, pour quoi faire) et tais le détail qui enfreint la règle." })
-    : cardHtml({ ruleId, text: me.card, theme, summary, note: "<strong>Tu es équipier :</strong> ta carte respecte la règle d'or. Démasque l'undercover ! <strong>Ta mission :</strong> repère la description trop vague ou qui évite un détail, et pose une question à ce joueur pendant le débat." });
+    ? cardHtml({ ruleId, text: me.card.text, theme, summary, kind: "undercover", note: "<strong>Tu es l'undercover :</strong> ta carte enfreint la règle d'or. Fais-toi passer pour un équipier ! <strong>Pour bluffer :</strong> décris le contexte de ta carte (qui, quel outil, pour quoi faire) et tais le détail qui enfreint la règle." })
+    : cardHtml({ ruleId, text: me.card.text, theme, summary, note: "<strong>Tu es équipier :</strong> ta carte respecte la règle d'or. Démasque l'undercover ! <strong>Ta mission :</strong> repère la description trop vague ou qui évite un détail, et pose une question à ce joueur pendant le débat." });
 }
 
 // Indication visible sous la carte, même face cachée : elle ne doit pas dépendre du rôle.
@@ -1586,7 +1595,7 @@ function viewHost(code) {
       const { id: ruleId, theme, summary } = deal.rule;
       openModal(`
         <h2>Carte de ${esc(playerName(hostState(code), seat))}</h2>
-        ${cardHtml({ ruleId, text: deal.roles[seat - 1].card, theme, summary })}
+        ${cardHtml({ ruleId, text: deal.roles[seat - 1].card.text, theme, summary })}
         <button class="btn btn--primary" data-close>Fermer</button>`);
     })
   );
@@ -1765,13 +1774,13 @@ function viewDebrief(code, { round, names, back, mySeat = null, unplayed = false
   const deal = dealRound(game, shown);
   const rule = deal.rule;
   const label = (seat) => (names ? names[seat] || `Joueur ${seat}` : playerName(state, seat)) + (seat === mySeat ? " (toi)" : "");
-  const holders = (text) =>
+  const holders = (card) =>
     deal.roles
-      .filter((r) => r.card === text)
+      .filter((r) => r.card === card)
       .map((r) => label(r.seat))
       .join(", ");
   const [backHref, backText] = back || (round ? [`#/end/${code}`, "Retour aux résultats"] : [`#/host/${code}`, "Retour à la partie"]);
-  const distributed = rule.civilians.filter((c) => holders(c.text));
+  const distributed = rule.civilians.filter((c) => holders(c));
 
   app.innerHTML = `
     <section>
@@ -1789,7 +1798,7 @@ function viewDebrief(code, { round, names, back, mySeat = null, unplayed = false
       <h2>${deal.undercovers.length > 1 ? "Les cartes undercover" : "La carte undercover"}</h2>
       ${deal.undercovers
         .map(
-          (u) => `${cardHtml({ ruleId: rule.id, card: u, kind: "undercover", label: holders(u.text) })}
+          (u) => `${cardHtml({ ruleId: rule.id, card: u, kind: "undercover", label: holders(u) })}
       <p class="why"><strong>Pourquoi elle enfreint la règle :</strong> ${esc(u.why)}</p>`
         )
         .join("")}
@@ -1798,7 +1807,7 @@ function viewDebrief(code, { round, names, back, mySeat = null, unplayed = false
       <div class="debrief-civ">
       <h2>Les cartes des équipiers</h2>
       <div class="grid">
-        ${distributed.map((c) => cardHtml({ ruleId: rule.id, card: c, label: holders(c.text) })).join("")}
+        ${distributed.map((c) => cardHtml({ ruleId: rule.id, card: c, label: holders(c) })).join("")}
       </div>
 
       <h2>Questions pour la discussion</h2>

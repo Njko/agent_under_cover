@@ -225,7 +225,7 @@ export function rulePool(rule, deck = "base") {
 
 // Mélange, puis place en tête les cartes les moins distribuées dans les manches précédentes.
 function freshFirst(cards, usage, rand) {
-  return shuffle(cards, rand).sort((a, b) => (usage.get(a.text) || 0) - (usage.get(b.text) || 0));
+  return shuffle(cards, rand).sort((a, b) => (usage.get(a.id) || 0) - (usage.get(b.id) || 0));
 }
 
 function dealOne(game, round, ucCounts, starterCounts, usage) {
@@ -259,10 +259,10 @@ function dealOne(game, round, ucCounts, starterCounts, usage) {
   let civilianIndex = 0;
   seats.forEach((seat, i) => {
     if (i < undercovers) {
-      roles[seat] = { seat, role: "undercover", card: undercoverCards[i % ucCount].text };
+      roles[seat] = { seat, role: "undercover", card: undercoverCards[i % ucCount] };
     } else {
       // validateSettings garantit au moins une carte par équipier : aucune carte n'est donnée deux fois.
-      const card = civilianCards[civilianIndex].text;
+      const card = civilianCards[civilianIndex];
       civilianIndex++;
       roles[seat] = { seat, role: "civilian", card };
     }
@@ -279,20 +279,21 @@ function dealOne(game, round, ucCounts, starterCounts, usage) {
 }
 
 /**
- * Calcule la manche complète : règle jouée, rôle et carte de chaque joueur, cartes undercover
- * distribuées (undercovers, avec leur explication ; undercover est la première), premier joueur.
+ * Calcule la manche complète : règle jouée, rôle et carte de chaque joueur (objet de js/cards.js),
+ * cartes undercover distribuées (undercovers, avec leur explication ; undercover est la première),
+ * premier joueur.
  * Les joueurs sont numérotés à partir de 1. Les manches précédentes sont recalculées pour
  * répartir le rôle d'undercover et la prise de parole.
  */
 export function dealRound(game, round) {
   const ucCounts = new Array(game.players + 1).fill(0);
   const starterCounts = new Array(game.players + 1).fill(0);
-  const usage = new Map(); // nombre de distributions de chaque carte (par texte)
+  const usage = new Map(); // nombre de distributions de chaque carte (par identifiant)
   let deal;
   for (let r = 1; r <= round; r++) {
     deal = dealOne(game, r, ucCounts, starterCounts, usage);
     for (const role of deal.roles) if (role.role === "undercover") ucCounts[role.seat]++;
-    for (const text of new Set(deal.roles.map((role) => role.card))) usage.set(text, (usage.get(text) || 0) + 1);
+    for (const id of new Set(deal.roles.map((role) => role.card.id))) usage.set(id, (usage.get(id) || 0) + 1);
     starterCounts[deal.starter]++;
   }
   return deal;

@@ -5,6 +5,8 @@
 // Ce module sert au navigateur (bouton « Exporter en Excel » du catalogue) et à npm run cartes:export.
 // Le classeur modifié est reporté dans js/cards.js par un agent de code (voir AGENTS.md).
 
+import { cardId } from "./cards.js";
+
 // --- Contenu : les cartes et les règles d'or ----------------------------------------------------
 
 export const CARD_COLUMNS = [
@@ -30,10 +32,8 @@ export const RULE_COLUMNS = [
 export const KINDS = { civilian: "Équipier", undercover: "Undercover" };
 export const LEVELS = { easy: "Facile", medium: "Moyenne", hard: "Difficile" };
 
-/** Identifiant stable d'une carte dans l'export : R<règle>-C<n> (équipier) ou R<règle>-U<n> (undercover). */
-export function cardId(ruleId, kind, index) {
-  return `R${ruleId}-${kind === "undercover" ? "U" : "C"}${String(index + 1).padStart(2, "0")}`;
-}
+// Identifiant d'une carte dans l'export : R<règle>-C<n> (équipier) ou R<règle>-U<n> (undercover).
+export { cardId };
 
 const HOW_TO = [
   "Ce classeur contient le texte de toutes les cartes du jeu « Undercover IA responsable ».",

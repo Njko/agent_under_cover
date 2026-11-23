@@ -7,6 +7,14 @@
 export const CHANGELOG = [
   {
     date: "2026-11-23",
+    title: "Dos de cartes plus lisibles",
+    items: [
+      "Le titre de la règle d'or est désormais écrit en texte sur le dos des cartes, et non plus dans l'image : il reste net à toutes les tailles d'écran et il est lu par les lecteurs d'écran. Le libellé « Règle d'or » est un peu plus clair, pour mieux ressortir sur le fond.",
+      "Les illustrations et les couleurs ne changent pas. C'est une première étape vers un jeu disponible en anglais, allemand, italien et espagnol.",
+    ],
+  },
+  {
+    date: "2026-11-23",
     title: "Afficher la carte d'un joueur",
     items: [
       "Mode coopératif : sur l'écran de l'animateur, le bouton en forme d'œil, à gauche de « Désigner », affiche la carte d'un joueur à tout le groupe, par exemple au vidéoprojecteur pendant qu'il la lit. Son rôle n'est pas révélé.",

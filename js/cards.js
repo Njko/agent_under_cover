@@ -19,7 +19,9 @@
 // L'animateur choisit à la création de la partie de jouer avec le jeu de base seul ou avec l'extension.
 //
 // Pour modifier le jeu, il suffit d'éditer ce fichier : aucune autre modification n'est nécessaire.
-// Changer le texte d'une carte change la distribution des parties en cours qui l'utilisent.
+// Chaque carte reçoit un identifiant (id) d'après sa place dans sa règle : le moteur distribue les cartes
+// par identifiant. Modifier un texte ne change donc pas la distribution des parties en cours ; ajouter,
+// supprimer ou déplacer une carte la change.
 
 export const DECKS = {
   base: "Jeu de base",
@@ -775,4 +777,17 @@ export const EDITIONS = {
   po: { label: "Product Owner", rules: RULES.map(poRule) },
 };
 export const EDITION_IDS = Object.keys(EDITIONS);
+
+/** Identifiant d'une carte dans sa règle : R<règle>-C<n> (équipier) ou R<règle>-U<n> (undercover). */
+export function cardId(ruleId, kind, index) {
+  return `R${ruleId}-${kind === "undercover" ? "U" : "C"}${String(index + 1).padStart(2, "0")}`;
+}
+
+// Identifiant unique de chaque carte, préfixé par l'édition : « classique:R1-C03 », « po:R2-U01 ».
+for (const [edition, { rules }] of Object.entries(EDITIONS)) {
+  for (const rule of rules) {
+    rule.civilians.forEach((card, i) => (card.id = `${edition}:${cardId(rule.id, "civilian", i)}`));
+    rule.undercovers.forEach((card, i) => (card.id = `${edition}:${cardId(rule.id, "undercover", i)}`));
+  }
+}
 export const rulesOf = (edition) => EDITIONS[edition].rules;

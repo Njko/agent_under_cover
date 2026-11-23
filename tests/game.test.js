@@ -29,6 +29,18 @@ test("chaque règle a ses cartes civiles et undercover, un dos et ses textes", (
   assert.equal(new Set(texts).size, texts.length, "chaque carte est unique");
 });
 
+test("chaque carte a un identifiant unique, préfixé par son édition", () => {
+  const ids = [];
+  for (const [edition, { rules }] of Object.entries(EDITIONS)) {
+    for (const r of rules) {
+      r.civilians.forEach((c, i) => assert.equal(c.id, `${edition}:R${r.id}-C${String(i + 1).padStart(2, "0")}`));
+      r.undercovers.forEach((c, i) => assert.equal(c.id, `${edition}:R${r.id}-U${String(i + 1).padStart(2, "0")}`));
+      ids.push(...r.civilians.concat(r.undercovers).map((c) => c.id));
+    }
+  }
+  assert.equal(new Set(ids).size, ids.length);
+});
+
 test("le code encode et décode les paramètres", () => {
   for (let players = 3; players <= MAX_PLAYERS; players++) {
     for (const undercovers of [1, 2]) {
@@ -89,8 +101,8 @@ test("la distribution est identique sur tous les appareils et respecte les rôle
       const pool = rulePool(a.rule, deck);
       assert.ok(pool.undercovers.includes(a.undercover));
       for (const r of a.roles) {
-        if (r.role === "undercover") assert.equal(r.card, a.undercover.text);
-        else assert.ok(pool.civilians.some((c) => c.text === r.card));
+        if (r.role === "undercover") assert.equal(r.card, a.undercover);
+        else assert.ok(pool.civilians.includes(r.card));
       }
       assert.ok(a.starter >= 1 && a.starter <= players);
     }
@@ -116,7 +128,7 @@ test("les codes de l'ancien format sont refusés", () => {
 test("les civils reçoivent des cartes différentes tant que possible", () => {
   const game = decodeCode(encodeCode({ ...base, seed: 42 }));
   for (let round = 1; round <= 7; round++) {
-    const cards = dealRound(game, round).roles.filter((r) => r.role === "civilian").map((r) => r.card);
+    const cards = dealRound(game, round).roles.filter((r) => r.role === "civilian").map((r) => r.card.text);
     assert.equal(new Set(cards).size, cards.length);
   }
 });
@@ -214,7 +226,7 @@ test("la distribution tient compte des manches précédentes de façon détermin
 test("deux undercovers : même carte, ou une carte chacun si la règle en a assez", () => {
   for (let seed = 0; seed < 40; seed++) {
     const settings = { seed, players: 7, undercovers: 2, rounds: 7 };
-    const cardsOf = (deal) => deal.roles.filter((r) => r.role === "undercover").map((r) => r.card);
+    const cardsOf = (deal) => deal.roles.filter((r) => r.role === "undercover").map((r) => r.card.text);
     // Par défaut : la même carte pour les deux (7 joueurs et plus : toujours avec l'extension).
     const same = dealRound(decodeCode(encodeCode({ ...settings, deck: "ext" })), 1);
     assert.equal(new Set(cardsOf(same)).size, 1);
@@ -242,7 +254,7 @@ test("deux joueurs ne reçoivent jamais la même carte", () => {
           for (let seed = 0; seed < 12; seed++) {
             const game = decodeCode(encodeCode({ seed: seed * 101 + players, players, undercovers, rounds: 14, deck, ucCards }));
             for (let round = 1; round <= 14; round++) {
-              const civilians = dealRound(game, round).roles.filter((r) => r.role === "civilian").map((r) => r.card);
+              const civilians = dealRound(game, round).roles.filter((r) => r.role === "civilian").map((r) => r.card.text);
               assert.equal(new Set(civilians).size, civilians.length, `${players} joueurs, ${deck}, manche ${round}`);
             }
             games++;
@@ -288,7 +300,7 @@ test("édition PO : stockée dans le code, mêmes règles, mêmes effectifs que 
     assert.ok(rule.undercovers.every((u) => u.why), `règle ${rule.id} : chaque undercover a son explication`);
   }
   const deal = dealRound(po, 1);
-  assert.ok(EDITIONS.po.rules.some((r) => r.undercovers.some((u) => u.text === deal.roles.find((x) => x.role === "undercover").card)));
+  assert.ok(EDITIONS.po.rules.some((r) => r.undercovers.includes(deal.roles.find((x) => x.role === "undercover").card)));
 });
 
 test("6 cartes undercover par règle : 2 faciles, 2 moyennes, 2 difficiles, et le jeu de base ne garde qu'une facile", () => {
