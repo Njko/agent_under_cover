@@ -1,7 +1,7 @@
 // Service worker : met l'application en cache pour qu'elle fonctionne même sans réseau
 // (utile dans une salle de formation avec un Wi-Fi capricieux).
 // Incrémenter VERSION à chaque modification des fichiers pour forcer la mise à jour.
-const VERSION = "v64";
+const VERSION = "v65";
 // Seul le cœur de l'application est préchargé ; les images sont mises en cache à la première
 // utilisation (le mode low-tech n'en télécharge presque aucune).
 const ASSETS = [
@@ -19,6 +19,12 @@ const ASSETS = [
   "js/i18n/en.js",
   "js/i18n/cards-en.js",
   "js/entree.js",
+  // Pages d'entrée des liens et QR codes de l'application, dans chaque langue (scripts/liens-generer.mjs).
+  "links/fr/join/",
+  "links/fr/results/",
+  "links/en/join/",
+  "links/en/results/",
+  // Anciennes pages d'entrée, pour les liens partagés avant les langues.
   "liens/rejoindre/",
   "liens/resultats/",
   "manifest.webmanifest",

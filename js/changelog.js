@@ -12,15 +12,17 @@ export const CHANGELOG = [
     title: "Le jeu en anglais",
     items: [
       "Le jeu est désormais disponible en anglais : interface, aide et toutes les cartes des deux éditions. La traduction est encore à relire.",
-      "La langue est celle du téléphone. Pour en changer, utilisez le choix « Langue » en bas de l'accueil ou de l'écran « Rejoindre une partie » : il est mémorisé sur ce téléphone.",
+      "La langue est celle du téléphone, ou celle du lien ouvert. Pour en changer, utilisez le choix « Langue » en bas de l'accueil, de l'écran « Rejoindre une partie » ou de l'écran de sa carte : il est mémorisé sur ce téléphone.",
       "Dans une même partie, chacun peut jouer dans sa langue : le code de partie et la distribution des cartes ne changent pas.",
+      "Les liens et QR codes de l'animateur sont dans sa langue : dans Teams ou une messagerie, leur aperçu (titre, description, image) est traduit.",
     ],
     en: {
       title: "The game in English",
       items: [
         "The game is now available in English: interface, help and all the cards of both editions. The translation still needs to be reviewed.",
-        "The language follows your phone's settings. To change it, use the “Language” option at the bottom of the home screen or of the “Join a game” screen: it is remembered on this phone.",
+        "The language follows your phone's settings, or the link you opened. To change it, use the “Language” option at the bottom of the home screen, the “Join a game” screen or your card screen: it is remembered on this phone.",
         "Within the same game, everyone can play in their own language: the game code and the cards dealt do not change.",
+        "The facilitator's links and QR codes are in their language: in Teams or a messaging app, their preview (title, description, image) is translated.",
       ],
     },
   },

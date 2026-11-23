@@ -140,10 +140,11 @@ function baseUrl() {
   return window.UNDERCOVER_SHARE_URL || location.href.split("#")[0];
 }
 
-// Les liens à partager passent par une page d'entrée (liens/<page>/) qui porte l'aperçu du lien
-// (titre, description, image) ; le fragment, lui, n'est jamais envoyé au serveur.
+// Les liens à partager passent par une page d'entrée (links/<langue>/<page>/, générée par
+// scripts/liens-generer.mjs) qui porte l'aperçu du lien (titre, description, image) dans la langue de
+// l'animateur ; le fragment, lui, n'est jamais envoyé au serveur.
 function entryUrl(page) {
-  return `${baseUrl().replace(/[^/]*$/, "")}liens/${page}/`;
+  return `${baseUrl().replace(/[^/]*$/, "")}links/${lang}/${page}/`;
 }
 
 // Les prénoms et les résultats voyagent dans les liens (il n'y a pas de serveur pour les partager),
@@ -189,14 +190,14 @@ function decodeNames(token) {
 
 function joinUrl(code, seat, names = {}, players = 0) {
   const token = encodeNames(names, players);
-  return `${entryUrl("rejoindre")}#join-${code}${seat ? `-${seat}` : ""}${token ? `~${token}` : ""}`;
+  return `${entryUrl("join")}#join-${code}${seat ? `-${seat}` : ""}${token ? `~${token}` : ""}`;
 }
 
 // Lien des résultats : prénoms, scores et issue de chaque manche.
 function resultsUrl(code, game, state) {
   const results = Array.from({ length: game.rounds }, (_, i) => (i < playedRounds(state) ? state.results[i + 1] || "s" : "n")).join("");
   const scores = "";
-  return `${entryUrl("resultats")}#results-${code}~${toBase64Url([nameList(state.names, game.players).join("|"), scores, results].join("\n"))}`;
+  return `${entryUrl("results")}#results-${code}~${toBase64Url([nameList(state.names, game.players).join("|"), scores, results].join("\n"))}`;
 }
 
 function decodeResults(token, players) {
@@ -423,7 +424,8 @@ function cardHtml({ ruleId, text, kind = "civilian", label, theme, summary, note
 }
 
 // --- Langue ----------------------------------------------------------------------------------
-// Le choix est mémorisé sur ce téléphone ; la page est rechargée pour tout afficher dans la langue choisie.
+// Proposé sur l'accueil, l'écran « Rejoindre » et l'écran du joueur (où mène le QR code). Le choix est
+// mémorisé sur ce téléphone ; la page est rechargée pour tout afficher dans la langue choisie.
 function languagePicker() {
   const options = Object.entries(LANGUAGES)
     .map(([code, name]) => `<option value="${code}" lang="${code}" ${code === lang ? "selected" : ""}>${name}</option>`)
@@ -1957,9 +1959,11 @@ function viewPlay(code, seat) {
       ${secretHtml(deal.rule, playerCardHtml(game, deal, me))}
 
       <p class="hint">${playerHint(game)}</p>
+      ${languagePicker()}
     </section>`;
 
   bindSecret();
+  bindLanguagePicker();
   document.getElementById("prev").onclick = () => {
     store.set(key, Math.max(1, round - 1));
     render();

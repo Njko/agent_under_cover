@@ -347,4 +347,20 @@ export default {
   "error.baseDeck": "Above {n} players, choose “Base deck and expansion”: the base deck does not have enough different cards.",
   "error.shortage": "Golden rule {id} only has {available} good practices in this deck, for {civilians} teammates: choose “Base deck and expansion”, add an undercover or remove this rule.",
   "error.rounds": "The number of rounds must be between 1 and {max}.",
+
+  // Pages d'entrée des liens (scripts/liens-generer.mjs) et image d'aperçu (scripts/apercu.py).
+  "link.locale": "en_GB",
+  "link.join.title": "Join a game",
+  "link.join.description": "Open this link on your phone to discover your card and play.",
+  "link.results.title": "Game results",
+  "link.results.description": "The scores and how the game went, round by round.",
+  "link.cards.title": "Card catalogue",
+  "link.cards.description": "The 7 golden rules and all the cards in the game, Classic and Product Owner editions.",
+  "link.rules.title": "How to play",
+  "link.rules.description": "The rules of the game: roles, rounds, cooperative and competitive modes.",
+  "link.news.title": "What's new",
+  "link.news.description": "The latest changes to the game.",
+  "link.imageAlt": "Undercover Responsible AI logo and golden rule card backs",
+  "link.imageText": "Spot the practices that break the 7 golden rules",
+  "link.opening": "Opening {app}…",
 };

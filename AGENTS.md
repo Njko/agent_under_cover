@@ -7,6 +7,8 @@ Undercover IA responsable est un serious game web, en français, joué sur les t
 ```bash
 npm test               # tests du moteur de jeu et de l'export Excel (node --test), à lancer après toute modification de js/
 npm run cartes:export  # classeur Excel des cartes (même fichier que le bouton du catalogue)
+npm run liens:generer  # pages d'entrée des liens, par langue (links/), après un changement de textes link.* ou de langue
+npm run apercu         # images d'aperçu des liens par langue (img/apercu-<langue>.png ; Python + Pillow)
 npm start              # serveur local : http://localhost:8000
 npm run docker:build   # image Docker
 npm run docker:run     # conteneur durci : http://localhost:8080
@@ -26,8 +28,9 @@ npm run k8s:render     # rendu Kustomize des manifestes Kubernetes
 | `js/changelog.js` | Notes de version (page « Nouveautés ») |
 | `js/xlsx.js` | Export Excel des cartes (navigateur et scripts), sans dépendance |
 | `js/icons.js` | Dessins SVG du mode low-tech |
-| `js/entree.js`, `liens/` | Pages d'entrée des liens à partager (aperçu Teams : titre, description, image `img/apercu.png`), qui redirigent vers l'application en gardant le fragment |
-| `scripts/` | Export Excel des cartes en ligne de commande (Node, non servi) |
+| `js/entree.js`, `links/` | Pages d'entrée des liens à partager, par langue (aperçu Teams : titre, description, image `img/apercu-<langue>.png`), **générées** par `npm run liens:generer` : ne les modifiez pas à la main. Elles retiennent la langue du lien et redirigent vers l'application en gardant le fragment |
+| `liens/` | Anciennes pages d'entrée (en français), gardées pour les liens déjà partagés |
+| `scripts/` | Export Excel des cartes, génération des pages d'entrée et des images d'aperçu (non servi) |
 | `css/style.css` | Styles des deux thèmes (normal et low-tech, clair et sombre) |
 | `sw.js` | Service worker (hors ligne) |
 | `vendor/qrcode.min.js` | Bibliothèque QR, hébergée localement |
@@ -44,7 +47,7 @@ C'est un engagement documenté dans `doc/fonctionnement-technique.md`. Ne le cas
 - **Pas de requête vers un autre domaine :** ni CDN, ni police web, ni API, ni analytics, ni traceur. Une dépendance tierce doit être copiée dans `vendor/`.
 - **Pas d'envoi de données :** pas de `POST`, pas de backend. L'état de jeu reste dans `localStorage` et dans le fragment d'URL des liens et QR codes.
 - **CSP stricte :** pas de `<script>` ni d'attribut `style="…"` écrits dans le HTML, pas de gestionnaire `on…=""`. Ajoutez le code dans un fichier `.js` et les styles dans `css/style.css`. Modifier `el.style.x` en JavaScript reste autorisé.
-- **Deux copies de la CSP :** si vous la changez, mettez à jour `index.html` (balise meta) **et** `deploy/nginx/default.conf` (en-tête HTTP), puis la documentation.
+- **Deux copies de la CSP :** si vous la changez, mettez à jour `index.html` (balise meta) **et** `deploy/nginx/default.conf` (en-tête HTTP), puis la documentation. Relancez ensuite `npm run liens:generer` (les pages de `links/` reprennent la CSP d'`index.html`) et reportez-la dans les anciennes pages de `liens/`.
 
 ### Versions et compatibilité
 

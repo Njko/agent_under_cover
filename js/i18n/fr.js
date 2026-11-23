@@ -343,4 +343,20 @@ export default {
   "error.baseDeck": "Au-delà de {n} joueurs, choisissez « Jeu de base et extension » : le jeu de base n'a pas assez de cartes différentes.",
   "error.shortage": "La règle d'or {id} n'a que {available} bonnes pratiques dans ce jeu de cartes, pour {civilians} équipiers : choisissez « Jeu de base et extension », ajoutez un undercover ou retirez cette règle.",
   "error.rounds": "Le nombre de manches doit être compris entre 1 et {max}.",
+
+  // Pages d'entrée des liens (scripts/liens-generer.mjs) et image d'aperçu (scripts/apercu.py).
+  "link.locale": "fr_FR",
+  "link.join.title": "Rejoindre une partie",
+  "link.join.description": "Ouvrez ce lien sur votre téléphone pour découvrir votre carte et jouer.",
+  "link.results.title": "Résultats de la partie",
+  "link.results.description": "Les scores et le déroulé de la partie, manche par manche.",
+  "link.cards.title": "Catalogue des cartes",
+  "link.cards.description": "Les 7 règles d'or et toutes les cartes du jeu, éditions Classique et Product Owner.",
+  "link.rules.title": "Comment jouer",
+  "link.rules.description": "Les règles du jeu : rôles, manches, modes coopératif et compétitif.",
+  "link.news.title": "Nouveautés",
+  "link.news.description": "Les dernières évolutions du jeu.",
+  "link.imageAlt": "Logo Undercover IA responsable et dos de cartes des règles d'or",
+  "link.imageText": "Repérez les pratiques qui enfreignent les 7 règles d'or",
+  "link.opening": "Ouverture de {app}…",
 };

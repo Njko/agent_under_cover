@@ -60,15 +60,17 @@ Le jeu existe en plusieurs éditions (`EDITIONS` dans `js/cards.js`) : « Classi
 
 ### Aperçu des liens (Teams, messageries)
 
-Teams et les messageries lisent le HTML d'un lien sans exécuter le JavaScript et ignorent le fragment (`#…`) : tous les liens `/#/…` avaient donc le même titre, celui d'`index.html`. Chaque type de lien passe maintenant par une **page d'entrée** statique, `liens/<page>/index.html`, qui porte son propre `<title>`, sa description et son image (`og:title`, `og:description`, `og:image` = `img/apercu.png`, 1200 × 630). `js/entree.js` redirige ensuite vers l'application en gardant le fragment, ou vers la route de la page (`data-route`) quand il n'y en a pas.
+Teams et les messageries lisent le HTML d'un lien sans exécuter le JavaScript et ignorent le fragment (`#…`) : tous les liens `/#/…` avaient donc le même titre, celui d'`index.html`. Chaque type de lien passe par une **page d'entrée** statique, dans chaque langue : `links/<langue>/<page>/index.html`, qui porte son propre `<title>`, sa description et son image dans la langue du lien (`og:title`, `og:description`, `og:locale`, `og:image` = `img/apercu-<langue>.png`, 1200 × 630). `js/entree.js` retient la langue du lien sur le téléphone (`linkLang`, utilisée si le joueur n'a pas choisi sa langue), puis redirige vers l'application en gardant le fragment, ou vers la route de la page (`data-route`) quand il n'y en a pas.
 
-| Page | Utilisée par | Aperçu |
+| Page (`links/<langue>/…`) | Utilisée par | Aperçu (en français) |
 | --- | --- | --- |
-| `liens/rejoindre/` | liens et QR codes de la partie (`joinUrl`) | « Rejoindre une partie » |
-| `liens/resultats/` | lien des résultats (`resultsUrl`) | « Résultats de la partie » |
-| `liens/cartes/`, `liens/regles/`, `liens/nouveautes/` | à coller à la main (l'application ne les génère pas) | catalogue, règles, nouveautés |
+| `join/` | liens et QR codes de la partie (`joinUrl`), dans la langue de l'animateur | « Rejoindre une partie » |
+| `results/` | lien des résultats (`resultsUrl`), dans la langue de l'animateur | « Résultats de la partie » |
+| `cards/`, `rules/`, `news/` | à coller à la main (l'application ne les génère pas) | catalogue, règles, nouveautés |
 
-L'accueil (`index.html`) porte les mêmes balises. Le code de partie, les prénoms et les scores restent dans le fragment : ils ne partent ni vers le serveur ni vers Teams, et **l'aperçu ne peut donc pas décrire la partie** (édition, joueurs). Pour ajouter une page : copiez un dossier de `liens/` et changez le titre, la description et `data-route` (le test `tests/liens.test.js` contrôle titres et image). Teams garde l'aperçu en cache : les liens déjà envoyés ne changent pas. `og:image` doit être une adresse absolue (les messageries ne résolvent pas les chemins relatifs) : elle pointe sur GitHub Pages, `https://njko.github.io/agent_under_cover/img/apercu.png`. Sur un autre hébergement (image Docker, autre domaine), le titre et la description restent corrects mais la vignette vient de GitHub Pages : changez cette adresse dans `index.html` et les pages de `liens/` si le site est publié ailleurs.
+Ces pages sont **générées** par `npm run liens:generer` (`scripts/liens-generer.mjs`) à partir des textes `link.*` de `js/i18n/<langue>.js` et de la CSP d'`index.html`, puis versionnées : le site reste statique. Les images d'aperçu sont générées par `npm run apercu` (`scripts/apercu.py`, Python avec Pillow et Node.js) à partir des dos de cartes et des mêmes textes. Le test `tests/liens.test.js` vérifie que les pages sont à jour et que leurs images existent. Les anciennes pages `liens/<page>/` (en français, sans langue de lien) restent en place pour les liens déjà partagés.
+
+L'accueil (`index.html`) porte les mêmes balises, en français. Le code de partie, les prénoms et les scores restent dans le fragment : ils ne partent ni vers le serveur ni vers Teams, et **l'aperçu ne peut donc pas décrire la partie** (édition, joueurs). Pour ajouter une page : ajoutez-la à `PAGES` dans `scripts/liens-generer.mjs`, avec ses textes `link.<page>.title` et `link.<page>.description` dans chaque langue. Teams garde l'aperçu en cache : les liens déjà envoyés ne changent pas. `og:image` doit être une adresse absolue (les messageries ne résolvent pas les chemins relatifs) : elle pointe sur GitHub Pages (`SITE` dans `scripts/liens-generer.mjs`). Sur un autre hébergement (image Docker, autre domaine), le titre et la description restent corrects mais la vignette vient de GitHub Pages : changez cette adresse dans le script, `index.html` et les pages de `liens/` si le site est publié ailleurs.
 
 ### Mode « Distribuer sur ce téléphone » (masqué)
 
@@ -100,7 +102,8 @@ Tout est stocké dans le `localStorage` du navigateur, sur l'appareil, et n'en s
 | `names:CODE` | Prénoms reçus via le QR code | Joueur |
 | `player:CODE:N` | Manche affichée par le joueur N | Joueur |
 | `lastPlayer` | Dernière partie rejointe | Joueur |
-| `lang` | Langue choisie avec le sélecteur de l'accueil ou de l'écran « Rejoindre une partie » (sinon, celle du navigateur) | Tous |
+| `lang` | Langue choisie avec le sélecteur de l'accueil, de l'écran « Rejoindre une partie » ou de l'écran du joueur | Tous |
+| `linkLang` | Langue du dernier lien ouvert (page d'entrée `links/<langue>/…`), utilisée si aucune langue n'a été choisie | Tous |
 | `lowtech`, `timerDuration`, `debriefDuration` | Préférences d'affichage et durées des minuteurs (débat, discussion du débrief) | Tous |
 | `cardsFilter`, `cardsOpen`, `seenChangelog` | Catalogue (filtre, règles dépliées) et dernière page « Nouveautés » vue | Tous |
 
