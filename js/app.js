@@ -1234,9 +1234,9 @@ function viewHostSetup() {
         <fieldset class="fs-mode">
           <legend>Mode de jeu</legend>
           <label class="radio mode-pick"><input type="radio" name="mode" value="coop" ${prefs.mode !== "compet" ? "checked" : ""}>
-            <span><strong>Coopératif</strong> (recommandé)<br><small>L'application ne révèle aucun rôle. Chacun lit sa carte à voix haute et l'équipe enquête ensemble. 3, 2 ou 1 point selon le nombre de votes.</small></span></label>
+            <span><strong>Coopératif</strong> (recommandé)<br><small>L'application ne révèle aucun rôle. Chacun lit sa carte à voix haute et l'équipe enquête ensemble. L'animateur peut afficher la carte d'un joueur à tout le groupe. 3, 2 ou 1 point selon le nombre de votes.</small></span></label>
           <label class="radio mode-pick"><input type="radio" name="mode" value="compet" ${prefs.mode === "compet" ? "checked" : ""}>
-            <span><strong>Compétitif</strong><br><small>L'undercover sait qu'il l'est et bluffe. On décrit sa carte avec ses mots. Équipiers contre undercover. À partir de 4 joueurs.</small></span></label>
+            <span><strong>Compétitif</strong><br><small>L'undercover sait qu'il l'est et bluffe. On décrit sa carte avec ses mots : l'animateur ne peut pas l'afficher, cela trahirait le bluff. Équipiers contre undercover. À partir de 4 joueurs.</small></span></label>
         </fieldset>
 
         <fieldset class="fs-players">
@@ -1522,7 +1522,8 @@ function viewHost(code) {
                 revealed
                   ? `<span class="role role--${r.role}">${ROLE_LABELS[r.role]}${status}</span>`
                   : coop
-                    ? `<button class="btn btn--small" data-eliminate="${r.seat}">Désigner</button>`
+                    ? `<button class="btn btn--small btn--icon" data-show-card="${r.seat}" aria-label="Afficher la carte du joueur ${r.seat}" title="Afficher la carte à tout le groupe"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg></button>
+                      <button class="btn btn--small" data-eliminate="${r.seat}">Désigner</button>`
                     : `<button class="btn btn--small btn--danger" data-eliminate="${r.seat}">Éliminer</button>`
               }
             </li>`;
@@ -1574,6 +1575,19 @@ function viewHost(code) {
       saveHostState(code, s);
       app.querySelector(".share .qr").dataset.qr = joinUrl(code, 0, s.names, game.players);
       hydrateQr(app);
+    })
+  );
+
+  // Coopératif seulement : la carte lue à voix haute est affichée à tout le groupe (vidéoprojecteur),
+  // sans mention du rôle. En compétitif, on décrit sa carte sans la lire : l'afficher trahirait le bluff.
+  app.querySelectorAll("[data-show-card]").forEach((btn) =>
+    btn.addEventListener("click", () => {
+      const seat = Number(btn.dataset.showCard);
+      const { id: ruleId, theme, summary } = deal.rule;
+      openModal(`
+        <h2>Carte de ${esc(playerName(hostState(code), seat))}</h2>
+        ${cardHtml({ ruleId, text: deal.roles[seat - 1].card, theme, summary })}
+        <button class="btn btn--primary" data-close>Fermer</button>`);
     })
   );
 

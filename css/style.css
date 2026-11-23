@@ -112,6 +112,7 @@ main { max-width: 760px; margin: 0 auto; padding-block: 16px 48px; padding-left:
 .modal .btn--danger { background: var(--danger); color: var(--danger-text); }
 .btn--ghost { border-color: transparent; background: transparent; }
 .btn--small { min-height: 44px; padding: 4px 12px; font-size: 0.9rem; flex-direction: row; }
+.btn--icon { min-width: 44px; padding: 4px; }
 .btn:disabled { opacity: 0.35; cursor: default; }
 
 .resume, .links { display: flex; flex-direction: column; gap: 8px; align-items: center; margin: 16px 0; }
@@ -347,6 +348,7 @@ input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
 .modal[hidden] { display: none; }
 .modal-box { background: var(--surface); border-radius: var(--radius); padding: 20px; width: 100%; max-width: 420px; max-height: 90vh; overflow: auto; text-align: center; }
 .modal-box .actions { justify-content: center; }
+.modal-box .card { text-align: left; margin: 12px 0 16px; }
 .modal-box .actions .btn { flex: 1 1 120px; }
 
 @media (prefers-color-scheme: dark) {
