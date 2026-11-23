@@ -1,6 +1,7 @@
-import { DECKS, EDITIONS, EDITION_IDS, RULES, rulesOf } from "./cards.js";
+import { EDITION_IDS, RULES, rulesOf } from "./cards.js";
 import { CHANGELOG, LATEST_CHANGE } from "./changelog.js";
 import { ICONS } from "./icons.js";
+import { formatDate, formatDecimal, t } from "./i18n.js";
 import {
   CODE_LENGTH,
   MAX_ROUNDS,
@@ -13,6 +14,7 @@ import {
   COOP_MAX_POINTS,
   coopFound,
   coopPoints,
+  deckShortage,
   newCode,
   outcome,
   rulePool,
@@ -23,7 +25,6 @@ import {
 const app = document.getElementById("app");
 const modal = document.getElementById("modal");
 
-const ROLE_LABELS = { civilian: "Équipier", undercover: "Undercover" };
 // Issue de chaque manche, stockée en un caractère (elle voyage aussi dans le lien des résultats) :
 // coopératif : points obtenus « 0 » à « 3 » ; compétitif : « c » équipiers, « i » undercover ;
 // dans les deux modes : « r » rôles révélés sans vainqueur, « s » manche passée.
@@ -32,9 +33,9 @@ const RESULT_CODES = { civilians: "c", impostors: "i", revealed: "r" };
 function resultLabel(res) {
   if (/^\d$/.test(res)) {
     const pts = Number(res);
-    return pts ? `Trouvé au ${COOP_MAX_POINTS + 1 - pts}${pts === COOP_MAX_POINTS ? "er" : "e"} vote · +${pts}` : "Trouvé · +0";
+    return pts ? t("result.found", { ord: COOP_MAX_POINTS + 1 - pts, pts }) : t("result.foundZero");
   }
-  return { c: "Victoire des équipiers", i: "Victoire de l'undercover", r: "Rôles révélés", s: "Manche passée", n: "Non jouée" }[res] || "";
+  return res && "cirsn".includes(res) ? t(`result.${res}`) : "";
 }
 
 function resultClass(res) {
@@ -61,18 +62,18 @@ function teamScoreHtml(game, results, big = false) {
   const score = teamScore(game, results, big ? countedRounds(results) : game.rounds);
   if (game.mode === "coop") {
     const ratio = score.max ? score.points / score.max : 0;
-    const verdict = !score.max ? "" : ratio >= 0.8 ? "Excellent travail d'équipe !" : ratio >= 0.5 ? "Bonne enquête collective." : "L'undercover vous a donné du fil à retordre.";
+    const verdict = !score.max ? "" : t(ratio >= 0.8 ? "score.excellent" : ratio >= 0.5 ? "score.good" : "score.tough");
     return `
       <div class="team-score ${big ? "team-score--big" : ""}">
-        <p class="label">Score de l'équipe</p>
-        <p class="team-score-value"><strong>${score.points}</strong> / ${score.max} points</p>
+        <p class="label">${t("score.team")}</p>
+        <p class="team-score-value">${t("score.points", { points: score.points, max: score.max })}</p>
         ${big && verdict ? `<p>${verdict}</p>` : ""}
       </div>`;
   }
   return `
     <div class="team-score ${big ? "team-score--big" : ""}">
-      <p class="label">Manches gagnées</p>
-      <p class="team-score-value">Équipiers <strong>${score.civilians}</strong> – <strong>${score.undercover}</strong> Undercover</p>
+      <p class="label">${t("score.roundsWon")}</p>
+      <p class="team-score-value">${t("score.camps", { civilians: score.civilians, undercover: score.undercover })}</p>
     </div>`;
 }
 
@@ -255,7 +256,7 @@ function hydrateQr(root = document) {
         el.dataset.drawn = el.dataset.qr;
       }
     })
-    .catch(() => slots.forEach((el) => (el.textContent = "QR code indisponible : utilisez le code ou le lien.")));
+    .catch(() => slots.forEach((el) => (el.textContent = t("qr.unavailable"))));
 }
 
 function prettyCode(code) {
@@ -357,7 +358,7 @@ function confirmModal(message, okLabel, onConfirm, danger = false) {
     <p>${esc(message)}</p>
     <div class="actions">
       <button class="btn ${danger ? "btn--danger" : "btn--primary"}" id="confirm-ok">${esc(okLabel)}</button>
-      <button class="btn" data-close>Annuler</button>
+      <button class="btn" data-close>${t("common.cancel")}</button>
     </div>`);
   document.getElementById("confirm-ok").onclick = () => {
     closeModal();
@@ -386,10 +387,11 @@ modal.addEventListener("click", (e) => {
   if (e.target === modal || e.target.closest("[data-close]")) closeModal();
 });
 
+// label : « host » (l'animation) ou « game » (une partie rejointe).
 function confirmForget(code, label) {
   confirmModal(
-    `Supprimer ${label} de ce téléphone ? Les prénoms, scores et manches enregistrés seront effacés.`,
-    "Supprimer",
+    t("forget.confirm", { what: t(`forget.${label}`) }),
+    t("forget.ok"),
     () => {
       forgetGame(code);
       go("#/");
@@ -407,14 +409,14 @@ function cardHtml({ ruleId, text, kind = "civilian", label, theme, summary, note
   return `
     <article class="card card--rule${ruleId} ${kind === "undercover" ? "card--undercover" : ""}" data-deck="${card?.deck || ""}">
       <header class="card-head">
-        <p class="card-rule"><span class="card-rule-num">Règle ${ruleId}</span><span class="visually-hidden"> : </span><span class="card-rule-title">${esc(ruleTheme)}</span></p>
+        <p class="card-rule"><span class="card-rule-num">${t("card.rule", { id: ruleId })}</span><span class="visually-hidden"> : </span><span class="card-rule-title">${esc(ruleTheme)}</span></p>
         <i></i>
       </header>
       ${summary ? `<p class="card-summary">${esc(summary)}</p>` : ""}
       <p class="card-text">${esc(text ?? card.text)}</p>
-      ${ext ? `<p class="card-deck">${DECKS.ext}</p>` : ""}
+      ${ext ? `<p class="card-deck">${t("deck.ext")}</p>` : ""}
       ${note ? `<p class="card-note">${note}</p>` : ""}
-      ${kind === "undercover" ? `<footer class="card-foot">UNDERCOVER</footer>` : ""}
+      ${kind === "undercover" ? `<footer class="card-foot">${t("card.undercover")}</footer>` : ""}
       ${label ? `<footer class="card-label">${esc(label)}</footer>` : ""}
     </article>`;
 }
@@ -438,7 +440,7 @@ function syncModeToggle() {
   const btn = document.getElementById("mode-toggle");
   if (!btn) return;
   btn.setAttribute("aria-checked", String(isLowTech()));
-  btn.title = isLowTech() ? "Mode low-tech activé : toucher pour revenir à l'affichage normal" : "Activer le mode low-tech (moins de données, moins d'énergie)";
+  btn.title = t(isLowTech() ? "lowtech.toggleOn" : "lowtech.toggleOff");
 }
 
 // Poids réellement transféré depuis l'ouverture de la page (0 pour ce qui vient du cache).
@@ -451,7 +453,7 @@ function paintWeight() {
   }
   const bytes = transferredBytes();
   el.hidden = false;
-  el.innerHTML = `Mode low-tech · <strong>${formatKo(bytes)}</strong> transférés depuis l'ouverture · police du système, dessins vectoriels, aucun traceur. <a href="#/lowtech">Pourquoi ?</a>`;
+  el.innerHTML = t("lowtech.weight", { size: formatKo(bytes) });
 }
 
 function transferredBytes() {
@@ -462,7 +464,7 @@ function transferredBytes() {
 }
 
 function formatKo(bytes) {
-  return `${(bytes / 1024).toFixed(1).replace(".", ",")} Ko`;
+  return t("unit.ko", { n: formatDecimal(bytes / 1024) });
 }
 
 /**
@@ -470,15 +472,15 @@ function formatKo(bytes) {
  * Sinon : grande image couleur, ou en low-tech une carte en texte avec un dessin vectoriel simplifié (< 1 Ko).
  */
 function backImg(rule, className = "back", { lazy = true, small = false } = {}) {
-  const alt = `Dos de carte, règle d'or ${rule.id} : ${esc(rule.theme)}`;
+  const alt = t("back.alt", { id: rule.id, theme: esc(rule.theme) });
   if (isLowTech()) {
     if (small) return "";
     return `
       <div class="lt-back ${className}" role="img" aria-label="${alt}">
         <svg class="lt-icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">${ICONS[rule.id]}</svg>
-        <span class="lt-back-label">Règle d'or ${rule.id}</span>
+        <span class="lt-back-label">${t("rule.n", { id: rule.id })}</span>
         <strong>${esc(rule.theme)}</strong>
-        <span class="lt-back-foot">L'IA sous couverture</span>
+        <span class="lt-back-foot">${t("back.foot")}</span>
       </div>`;
   }
   const loading = lazy ? 'loading="lazy"' : "";
@@ -489,9 +491,9 @@ function backImg(rule, className = "back", { lazy = true, small = false } = {}) 
     <div class="${className} back-art back--r${rule.id}" role="img" aria-label="${alt}">
       <img src="${rule.back}" width="640" height="893" draggable="false" ${loading} alt="">
       <span class="back-text" aria-hidden="true">
-        <span class="back-label">Règle d'or</span>
+        <span class="back-label">${t("back.label")}</span>
         <strong>${esc(rule.theme)}</strong>
-        <span class="back-foot">L'IA sous couverture</span>
+        <span class="back-foot">${t("back.foot")}</span>
       </span>
     </div>`;
 }
@@ -503,10 +505,10 @@ function secretHtml(rule, front) {
   return `
     <div class="secret" id="secret">
       <div class="secret-cover secret-cover--back" aria-hidden="true">${backImg(rule, "back", { lazy: false })}</div>
-      <div class="secret-content" id="secret-content" tabindex="-1" aria-label="Ta carte">${front}</div>
+      <div class="secret-content" id="secret-content" tabindex="-1" aria-label="${t("secret.label")}">${front}</div>
     </div>
-    <button type="button" class="btn secret-toggle" id="secret-toggle" aria-pressed="false" aria-controls="secret-content">Afficher ma carte</button>
-    <p class="secret-hint"><span aria-hidden="true">👆 </span>Touche la carte ou fais-la glisser pour la retourner, puis de nouveau pour la cacher. Cache ton écran des autres joueurs.</p>`;
+    <button type="button" class="btn secret-toggle" id="secret-toggle" aria-pressed="false" aria-controls="secret-content">${t("secret.show")}</button>
+    <p class="secret-hint"><span aria-hidden="true">👆 </span>${t("secret.hint")}</p>`;
 }
 
 // Carte secrète : une touche, un clic ou un glissement horizontal la retourne, un second geste la cache.
@@ -526,7 +528,7 @@ function bindSecret() {
     revealed = on;
     secret.classList.toggle("revealed", on);
     toggle.setAttribute("aria-pressed", String(on));
-    toggle.textContent = on ? "Masquer ma carte" : "Afficher ma carte";
+    toggle.textContent = t(on ? "secret.hide" : "secret.show");
     // Le lecteur d'écran lit la carte dès qu'elle est affichée.
     if (on && focus) document.getElementById("secret-content").focus({ preventScroll: true });
   };
@@ -560,19 +562,17 @@ function playerCardHtml(game, deal, me) {
   const { id: ruleId, theme, summary } = deal.rule;
   if (game.mode === "coop") return cardHtml({ ruleId, text: me.card.text, theme, summary });
   return me.role === "undercover"
-    ? cardHtml({ ruleId, text: me.card.text, theme, summary, kind: "undercover", note: "<strong>Tu es l'undercover :</strong> ta carte enfreint la règle d'or. Fais-toi passer pour un équipier ! <strong>Pour bluffer :</strong> décris le contexte de ta carte (qui, quel outil, pour quoi faire) et tais le détail qui enfreint la règle." })
-    : cardHtml({ ruleId, text: me.card.text, theme, summary, note: "<strong>Tu es équipier :</strong> ta carte respecte la règle d'or. Démasque l'undercover ! <strong>Ta mission :</strong> repère la description trop vague ou qui évite un détail, et pose une question à ce joueur pendant le débat." });
+    ? cardHtml({ ruleId, text: me.card.text, theme, summary, kind: "undercover", note: t("play.noteUndercover") })
+    : cardHtml({ ruleId, text: me.card.text, theme, summary, note: t("play.noteCivilian") });
 }
 
 // Indication visible sous la carte, même face cachée : elle ne doit pas dépendre du rôle.
 function playerHint(game) {
-  return game.mode === "coop"
-    ? `À ton tour, <strong>lis ta carte à voix haute, mot pour mot</strong>. L'application ne révèle aucun rôle : même si tu crois reconnaître la carte undercover, lis-la comme les autres et enquêtez ensemble pour trouver la pratique qui enfreint la règle d'or.`
-    : `Garde ta carte sous les yeux si tu veux, mais à ton tour <strong>décris-la avec tes mots</strong>, sans la lire.`;
+  return t(game.mode === "coop" ? "play.hintCoop" : "play.hintCompet");
 }
 
 function ruleTag(rule) {
-  return `<p class="round-theme round-theme--${rule.id}"><span>Règle d'or ${rule.id}</span> ${esc(rule.theme)}</p>
+  return `<p class="round-theme round-theme--${rule.id}"><span>${t("rule.n", { id: rule.id })}</span> ${esc(rule.theme)}</p>
     <p class="rule-summary">${esc(rule.summary)}</p>`;
 }
 
@@ -588,7 +588,7 @@ function saveHostState(code, state) {
 }
 
 function playerName(state, seat) {
-  return state.names[seat] || `Joueur ${seat}`;
+  return state.names[seat] || t("player.n", { n: seat });
 }
 
 // Nombre de manches à afficher dans le récapitulatif : la manche en cours compte si elle est jouée.
@@ -600,27 +600,10 @@ function playedRounds(state) {
 // L'état repose sur une heure de fin : il survit aux rafraîchissements de l'écran animateur.
 
 // Deux minuteurs : le débat avant le vote (écran de la manche) et la discussion du débrief.
+// Textes : clés timer.<minuteur>.label, .aria, .start, .done (.doneCoop pour le débat coopératif), .announce.
 const TIMERS = {
-  debate: {
-    label: "Débat",
-    aria: "Minuteur du débat",
-    durations: [30, 60, 90, 120],
-    storeKey: "timerDuration",
-    fallback: 60,
-    start: "Lancer le débat",
-    done: (coop) => `Temps écoulé : ${coop ? "place au vote, désignez un suspect !" : "place au vote !"}`,
-    announce: "Temps écoulé : place au vote.",
-  },
-  debrief: {
-    label: "Discussion",
-    aria: "Minuteur de la discussion",
-    durations: [180, 300, 600],
-    storeKey: "debriefDuration",
-    fallback: 300,
-    start: "Lancer la discussion",
-    done: () => "Temps écoulé : concluez la discussion avant de passer à la suite.",
-    announce: "Temps écoulé : concluez la discussion.",
-  },
+  debate: { durations: [30, 60, 90, 120], storeKey: "timerDuration", fallback: 60 },
+  debrief: { durations: [180, 300, 600], storeKey: "debriefDuration", fallback: 300 },
 };
 const timer = { key: null, kind: "debate", duration: 60, end: null, remaining: 0, interval: null, audio: null };
 
@@ -640,27 +623,27 @@ function formatSeconds(ms) {
 }
 
 function durationLabel(seconds) {
-  return seconds < 120 ? `${seconds} s` : `${seconds / 60} min`;
+  return seconds < 120 ? t("unit.seconds", { n: seconds }) : t("unit.minutes", { n: seconds / 60 });
 }
 
 function timerHtml(coop, kind = "debate") {
   const cfg = TIMERS[kind];
   return `
-    <section class="timer" id="timer" aria-label="${cfg.aria}">
+    <section class="timer" id="timer" aria-label="${t(`timer.${kind}.aria`)}">
       <div class="timer-main">
-        <p class="label">${cfg.label}</p>
+        <p class="label">${t(`timer.${kind}.label`)}</p>
         <p class="timer-face" id="timer-face" role="timer" aria-live="off"></p>
       </div>
       <p class="timer-done-msg" id="timer-done-msg" hidden>
-        <span aria-hidden="true">⏰ </span>${cfg.done(coop)}
+        <span aria-hidden="true">⏰ </span>${t(`timer.${kind}.${kind === "debate" && coop ? "doneCoop" : "done"}`)}
       </p>
       <div class="timer-bar"><i id="timer-bar"></i></div>
       <div class="timer-controls">
-        <div class="chips" role="group" aria-label="Durée">
+        <div class="chips" role="group" aria-label="${t("timer.duration")}">
           ${cfg.durations.map((d) => `<button type="button" class="chip" data-duration="${d}">${durationLabel(d)}</button>`).join("")}
         </div>
         <button type="button" class="btn btn--small btn--primary" id="timer-toggle"></button>
-        <button type="button" class="btn btn--small" id="timer-reset">Réinitialiser</button>
+        <button type="button" class="btn btn--small" id="timer-reset">${t("timer.reset")}</button>
       </div>
     </section>`;
 }
@@ -693,7 +676,7 @@ function paintTimer() {
     timer.end = null;
     timer.remaining = 0;
     beep();
-    announce(TIMERS[timer.kind].announce);
+    announce(t(`timer.${timer.kind}.announce`));
   }
   const running = Boolean(timer.end);
   const done = left === 0;
@@ -703,7 +686,7 @@ function paintTimer() {
   document.getElementById("timer-face").textContent = formatSeconds(left);
   document.getElementById("timer-done-msg").hidden = !done;
   document.getElementById("timer-bar").style.width = `${(left / (timer.duration * 1000)) * 100}%`;
-  document.getElementById("timer-toggle").textContent = running ? "Pause" : done ? "Relancer" : left < timer.duration * 1000 ? "Reprendre" : TIMERS[timer.kind].start;
+  document.getElementById("timer-toggle").textContent = t(running ? "timer.pause" : done ? "timer.restart" : left < timer.duration * 1000 ? "timer.resume" : `timer.${timer.kind}.start`);
   el.querySelectorAll("[data-duration]").forEach((b) => b.setAttribute("aria-pressed", String(Number(b.dataset.duration) === timer.duration)));
 }
 
@@ -805,27 +788,26 @@ function viewHome() {
               ).join("")}
             </div>`
       }
-      <h1>Qui enfreint la règle ?</h1>
-      <p>Chaque joueur reçoit une pratique liée à une même règle d'or de l'IA responsable.
-      Un <strong>undercover</strong> a reçu une pratique qui l'enfreint. Démasquez-le !</p>
+      <h1>${t("home.title")}</h1>
+      <p>${t("home.intro")}</p>
     </section>
     <div class="actions">
-      <a class="btn btn--primary" href="#/host">Créer une partie <small>animateur</small></a>
-      <a class="btn" href="#/join">Rejoindre une partie <small>joueur</small></a>
+      <a class="btn btn--primary" href="#/host">${t("home.create")}</a>
+      <a class="btn" href="#/join">${t("home.join")}</a>
     </div>
 
     ${
       hostGame || playerGame
         ? `<section class="resume">
-            <h2 class="section-title">Parties en cours sur ce téléphone</h2>
+            <h2 class="section-title">${t("home.resume")}</h2>
             ${
               hostGame
                 ? `<div class="resume-item">
                     <a href="#/host/${lastHost}">
-                      <strong>Reprendre l'animation</strong>
-                      <small>Partie ${esc(prettyCode(lastHost))} · manche ${hostState(lastHost).round} / ${hostGame.rounds}</small>
+                      <strong>${t("home.resumeHost")}</strong>
+                      <small>${t("home.hostGame", { code: esc(prettyCode(lastHost)), round: hostState(lastHost).round, rounds: hostGame.rounds })}</small>
                     </a>
-                    <button class="icon-btn" data-forget="${lastHost}" data-label="l'animation" aria-label="Supprimer l'animation ${esc(prettyCode(lastHost))}">${TRASH_ICON}</button>
+                    <button class="icon-btn" data-forget="${lastHost}" data-label="host" aria-label="${t("home.forgetHost", { code: esc(prettyCode(lastHost)) })}">${TRASH_ICON}</button>
                   </div>`
                 : ""
             }
@@ -833,10 +815,10 @@ function viewHome() {
               playerGame
                 ? `<div class="resume-item">
                     <a href="#/play/${lastPlayer.code}/${lastPlayer.seat}">
-                      <strong>Revoir ma carte</strong>
-                      <small>Partie ${esc(prettyCode(lastPlayer.code))} · ${esc(knownNames(lastPlayer.code)[lastPlayer.seat] || `joueur ${lastPlayer.seat}`)}</small>
+                      <strong>${t("home.resumePlayer")}</strong>
+                      <small>${t("home.playerGame", { code: esc(prettyCode(lastPlayer.code)), name: esc(knownNames(lastPlayer.code)[lastPlayer.seat] || t("player.seat", { n: lastPlayer.seat })) })}</small>
                     </a>
-                    <button class="icon-btn" data-forget="${lastPlayer.code}" data-label="cette partie" aria-label="Supprimer la partie ${esc(prettyCode(lastPlayer.code))}">${TRASH_ICON}</button>
+                    <button class="icon-btn" data-forget="${lastPlayer.code}" data-label="game" aria-label="${t("home.forgetGame", { code: esc(prettyCode(lastPlayer.code)) })}">${TRASH_ICON}</button>
                   </div>`
                 : ""
             }
@@ -844,40 +826,40 @@ function viewHome() {
         : ""
     }
 
-    <nav class="tiles" aria-label="Découvrir le jeu">
+    <nav class="tiles" aria-label="${t("home.discover")}">
       <a class="tile" href="#/rules">
         <span class="tile-icon" aria-hidden="true">📖</span>
-        <span><strong>Comment jouer ?</strong><small>Déroulement, rôles et points</small></span>
+        <span><strong>${t("help.title")}</strong><small>${t("home.rulesTile")}</small></span>
       </a>
       <a class="tile" href="#/cards">
         <span class="tile-icon" aria-hidden="true">🃏</span>
-        <span><strong>Toutes les cartes</strong><small>Les 7 règles d'or et leurs ${countCards("ext")} cartes</small></span>
+        <span><strong>${t("cards.title")}</strong><small>${t("home.cardsTile", { n: countCards("ext") })}</small></span>
       </a>
       <a class="tile" href="#/nouveautes">
         <span class="tile-icon" aria-hidden="true">🆕</span>
-        <span><strong>Nouveautés${
-          store.get("seenChangelog", "") < LATEST_CHANGE ? ` <span class="badge-new">Nouveau</span>` : ""
-        }</strong><small>Mise à jour du ${formatDate(LATEST_CHANGE)} : ce qui a changé</small></span>
+        <span><strong>${t("news.title")}${
+          store.get("seenChangelog", "") < LATEST_CHANGE ? ` <span class="badge-new">${t("news.badge")}</span>` : ""
+        }</strong><small>${t("home.newsTile", { date: formatDate(LATEST_CHANGE) })}</small></span>
       </a>
       ${
         isLowTech()
           ? `<a class="tile" href="#/lowtech">
               <span class="tile-icon" aria-hidden="true">🌱</span>
-              <span><strong>Pourquoi un Web low-tech ?</strong><small>Ce que pèse une page, et comment l'alléger</small></span>
+              <span><strong>${t("lowtech.title")}</strong><small>${t("home.lowtechTile")}</small></span>
             </a>`
           : ""
       }
     </nav>
 
-    ${hasData ? `<p class="center-small"><button class="link-btn" id="forget-all">Effacer toutes les parties de ce téléphone</button></p>` : ""}`;
+    ${hasData ? `<p class="center-small"><button class="link-btn" id="forget-all">${t("home.forgetAll")}</button></p>` : ""}`;
 
   app.querySelectorAll("[data-forget]").forEach((btn) =>
     btn.addEventListener("click", () => confirmForget(btn.dataset.forget, btn.dataset.label))
   );
   document.getElementById("forget-all")?.addEventListener("click", () =>
     confirmModal(
-      "Effacer toutes les parties enregistrées sur ce téléphone ?",
-      "Tout effacer",
+      t("home.forgetAllConfirm"),
+      t("home.forgetAllOk"),
       () => {
         forgetAllGames();
         render();
@@ -893,70 +875,27 @@ const TRASH_ICON = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden=
 function viewRules() {
   app.innerHTML = `
     <section class="prose">
-      <h1>Comment jouer ?</h1>
-      <h2>Objectif</h2>
-      <p>Undercover IA responsable est un <strong>serious game</strong> : en démasquant la pratique qui enfreint la règle, on <strong>apprend ou on se rappelle les 7 règles d'or</strong> de l'IA responsable, et on <strong>challenge nos pratiques actuelles</strong> en les confrontant à ces règles.</p>
-      <h2>Mise en place</h2>
-      <ol>
-        <li>L'animateur crée une partie : prénoms des joueurs, règles d'or à jouer, nombre de manches et cartes (le jeu de base, validé, ou le jeu de base avec l'extension, dont les cartes tirées des métiers de l'assurance sont encore à valider). À partir de 7 joueurs, il peut prévoir 2 undercovers, avec la même carte ou une carte différente chacun.</li>
-        <li>Il affiche le <strong>QR code</strong> (ou le code de la partie).</li>
-        <li>Chacun scanne le QR code et sélectionne <strong>son prénom</strong>, ou choisit un <strong>numéro de place</strong> si aucun prénom n'a été établi avant de lancer la partie. Chaque prénom ou numéro ne doit être pris qu'une fois. Il n'y a pas de contrôle automatisé des participants pour garder le système de jeu le plus simple possible.</li>
-        <li>Sur l'appareil du participant (téléphone ou ordinateur), la carte distribuée pour la manche actuelle est affichée face cachée : on la retourne en la touchant, en cliquant dessus ou en la faisant glisser, ou avec le bouton « Afficher ma carte ». Le même geste la cache de nouveau.</li>
-      </ol>
-      <p class="hint">Aucune connexion entre téléphones n'est nécessaire : chaque téléphone calcule sa propre carte à partir du code.</p>
-      <h2>Deux modes de jeu</h2>
-      <p>Dans les deux modes, les <strong>équipiers</strong> ont une bonne pratique liée à la règle d'or de la manche ; l'<strong>undercover</strong> a une carte qui parle du même sujet mais <em>enfreint</em> la règle.</p>
-
-      <h3>Coopératif (recommandé)</h3>
-      <ol>
-        <li><strong>L'application ne révèle aucun rôle</strong>. Celui qui a la carte undercover peut la reconnaître en la lisant : il la lit quand même mot pour mot, comme les autres.</li>
-        <li><strong>Lecture</strong> : à partir du joueur désigné, chacun lit sa carte à voix haute, <strong>mot pour mot</strong>. Une carte résumée ou reformulée fausse l'enquête de toute l'équipe.</li>
-        <li><strong>Débat</strong> chronométré (1 minute par défaut) : quelle pratique enfreint la règle d'or, et pourquoi ? Citez la phrase précise de la carte avant de juger.</li>
-        <li><strong>Désignation</strong> : l'équipe désigne un suspect. S'il n'a pas la carte undercover, il est disculpé et on recommence.</li>
-        <li><strong>Pas de coupable</strong> : être désigné, ou avoir la carte undercover, n'est la faute de personne. Personne ne choisit sa carte : on discute des pratiques, pas des personnes.</li>
-        <li><strong>Points pour l'équipe</strong> : 3 points si l'undercover est trouvé au premier vote, 2 au deuxième, 1 au troisième, 0 ensuite.</li>
-      </ol>
-
-      <h3>Compétitif</h3>
-      <ol>
-        <li>En retournant sa carte, chacun découvre son rôle : <strong>l'undercover sait qu'il l'est</strong> et doit se faire passer pour un équipier. Il faut au moins 4 joueurs : à 3, un seul équipier éliminé à tort fait perdre la manche.</li>
-        <li><strong>Tour de parole</strong> : chacun peut garder sa carte sous les yeux, mais la <strong>décrit avec ses mots</strong>, sans la lire. Les équipiers la décrivent honnêtement : seul l'undercover a le droit de bluffer.</li>
-        <li><strong>Débat</strong> chronométré : chacun peut poser une question à un joueur dont la description lui semble floue. Les équipiers cherchent la description qui évite un détail ; l'undercover parle du contexte de sa carte et tait ce qui la trahit. Une description vague ou exagérée ne prouve rien : un équipier peut aussi mal décrire sa carte.</li>
-        <li><strong>Vote</strong> : le joueur éliminé révèle son rôle. Si c'est un équipier, la manche continue : nouveau débat, nouveau vote.</li>
-        <li>Les <strong>équipiers</strong> gagnent la manche s'ils éliminent l'undercover ; l'<strong>undercover</strong> la gagne s'il ne reste plus qu'un équipier.</li>
-        <li>Le score compte les <strong>manches gagnées par chaque camp</strong>.</li>
-      </ol>
-
-      <h2>Équité</h2>
-      <p>D'une manche à l'autre, l'application fait tourner le rôle d'undercover et le joueur qui commence : un même joueur peut les avoir deux fois de suite, mais c'est rare.</p>
-      <h2>Fin de partie</h2>
-      <p>Après la dernière manche, l'animateur affiche le score et un QR code : en le scannant, chaque joueur retrouve les résultats sur son téléphone. En touchant une manche, on revoit les cartes distribuées et qui les avait. Si la partie a été terminée plus tôt, les manches non jouées restent consultables, hors score.</p>
-      <h2>Débrief</h2>
-      <p>À la fin de chaque manche, l'animateur affiche la règle, la carte undercover et pourquoi elle l'enfreint. C'est le moment d'échanger sur les pratiques réelles des équipes.</p>
-      <p><button class="btn" id="back">Fermer l'aide</button></p>
+      ${t("rules.html")}
+      <p><button class="btn" id="back">${t("help.close")}</button></p>
     </section>`;
   document.getElementById("back").onclick = closeHelp;
 }
 
 // --- Notes de version ---------------------------------------------------------------------------
 
-function formatDate(iso) {
-  return new Date(`${iso}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
-}
-
 function viewChangelog() {
   // Une fois la page vue, l'accueil ne signale plus « Nouveau » jusqu'à la prochaine mise à jour.
   store.set("seenChangelog", LATEST_CHANGE);
   app.innerHTML = `
     <section class="prose">
-      <h1>Nouveautés</h1>
-      <p>Ce qui a changé à chaque mise à jour de l'application, de la plus récente à la plus ancienne.</p>
+      <h1>${t("news.title")}</h1>
+      <p>${t("news.intro")}</p>
       ${CHANGELOG.map(
         (release) => `
         <h2>${formatDate(release.date)} · ${esc(release.title)}</h2>
         <ul>${release.items.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>`
       ).join("")}
-      <p><a class="btn" href="#/">Retour à l'accueil</a></p>
+      <p><a class="btn" href="#/">${t("common.backHome")}</a></p>
     </section>`;
 }
 
@@ -972,8 +911,8 @@ function syncHelpButton() {
   const help = document.querySelector(".topbar-help");
   const open = app.dataset.view === "rules";
   help.classList.toggle("topbar-help--open", open);
-  help.setAttribute("aria-label", open ? "Fermer l'aide" : "Comment jouer ?");
-  help.title = open ? "Fermer l'aide" : "Comment jouer ?";
+  help.setAttribute("aria-label", t(open ? "help.close" : "help.title"));
+  help.title = t(open ? "help.close" : "help.title");
 }
 
 document.addEventListener("click", (e) => {
@@ -985,68 +924,22 @@ document.addEventListener("click", (e) => {
 
 // Mesures faites sur cette application (Chrome, profil iPhone 13, fichiers compressés comme sur GitHub Pages).
 const WEIGHT_TABLE = [
-  ["Rejoindre une partie et voir sa carte", 292, 137, 52],
-  ["Créer une partie et afficher le QR code", 292, 116, 60],
-  ["Parcourir les 132 cartes", 262, 277, 52],
+  ["lowtech.rowJoin", 292, 137, 52],
+  ["lowtech.rowHost", 292, 116, 60],
+  ["lowtech.rowCards", 262, 277, 52],
 ];
 
 function viewLowTech() {
   app.innerHTML = `
     <section class="prose">
-      <h1>Pourquoi un Web low-tech ?</h1>
-      <p>Chaque page consultée met en mouvement des serveurs, des réseaux et surtout l'appareil que vous tenez en main.
-      Un Web plus léger demande moins d'énergie à chacun de ces maillons, et permet de garder plus longtemps des téléphones moins puissants.</p>
-
-      <h2>Ce que pèse le numérique</h2>
-      <ul>
-        <li>En France, selon l'étude ADEME–Arcep de 2022, la <strong>fabrication et l'usage des terminaux</strong> (téléphones, ordinateurs, écrans) représentent la plus grande part de l'empreinte carbone du numérique, loin devant les réseaux et les centres de données.</li>
-        <li>Des pages plus lourdes poussent à renouveler les appareils : un site qui reste fluide sur un vieux téléphone prolonge sa durée de vie.</li>
-        <li>Une page web médiane pèse aujourd'hui de l'ordre de <strong>2 Mo</strong> sur mobile, essentiellement en images et en scripts : une grande partie n'est pas indispensable à ce que l'on vient y lire.</li>
-      </ul>
-
-      <h2>L'exemple de Low-tech Magazine</h2>
-      <p>Le site de <a href="https://solar.lowtechmagazine.com/" target="_blank" rel="noopener">Low-tech Magazine<span class="visually-hidden"> (nouvel onglet)</span></a> est hébergé sur un petit serveur alimenté par un panneau solaire. Pour tenir sur cette énergie, il a été repensé :</p>
-      <ul>
-        <li><strong>site statique</strong> : les pages sont prêtes à l'avance, aucun calcul à chaque visite ;</li>
-        <li><strong>images tramées</strong> en quelques niveaux de gris, bien plus légères que des photos en couleur ;</li>
-        <li><strong>police par défaut</strong> du système, sans police à télécharger, et pas de logo en image ;</li>
-        <li><strong>aucun traceur</strong>, aucune publicité, aucun service tiers ;</li>
-        <li>il accepte d'être <strong>hors ligne</strong> quand le ciel est couvert trop longtemps, et affiche le niveau de sa batterie.</li>
-      </ul>
-      <p>Pour aller plus loin : <a href="https://solar.lowtechmagazine.com/2018/09/how-to-build-a-low-tech-website/" target="_blank" rel="noopener">How to Build a Low-tech Website?<span class="visually-hidden"> (article en anglais, nouvel onglet)</span></a> (en anglais).</p>
-      <p class="hint">Le site étant alimenté par le soleil, il peut être hors ligne après plusieurs jours sans soleil : c'est voulu. Réessayez plus tard.</p>
-
-      <h2>Ce que fait ce mode</h2>
-      <ul>
-        <li>Police du système et deux encres : pas de couleurs, d'ombres, de dégradés ni d'animations.</li>
-        <li>Dos de cartes rendus en texte, avec un dessin simplifié au trait de moins de 1 Ko, intégré à la page, au lieu d'une image couleur de 30 Ko.</li>
-        <li>Les images décoratives (éventail de l'accueil, vignettes) ne sont pas téléchargées.</li>
-        <li>En thème sombre, fond noir pur : sur les écrans OLED, les pixels noirs sont éteints.</li>
-        <li>Le minuteur se redessine une fois par seconde au lieu de quatre.</li>
-        <li>Partout, l'application ne charge la bibliothèque des QR codes que sur les écrans qui en affichent, et garde ses fichiers en cache pour fonctionner hors ligne.</li>
-      </ul>
-
-      <h2>Les chiffres de cette application</h2>
-      <div class="table-wrap">
-        <table class="weights">
-          <thead><tr><th scope="col">Parcours</th><th scope="col">Avant</th><th scope="col">Normal</th><th scope="col">Low-tech</th></tr></thead>
-          <tbody>
-            ${WEIGHT_TABLE.map(([label, before, normal, low]) => `<tr><th scope="row">${label}</th><td>${before} Ko</td><td>${normal} Ko</td><td><strong>${low} Ko</strong></td></tr>`).join("")}
-          </tbody>
-        </table>
-      </div>
-      <p class="hint">« Avant » : la version de l'application précédant ce mode. Données transférées lors d'une première visite, fichiers compressés comme sur GitHub Pages.
-      Depuis l'ouverture de cette page, votre téléphone a transféré <strong>${formatKo(transferredBytes())}</strong> (0 Ko pour ce qui vient du cache).</p>
-
-      <h2>Et vous, quel Web efficace ?</h2>
-      <p>Quelques questions pour se projeter, en lien avec la règle d'or <em>Impact environnemental</em> :</p>
-      <ul class="questions">
-        <li>Quels outils utilisez-vous chaque jour qui pourraient fonctionner avec moins d'images, de vidéos ou de scripts ?</li>
-        <li>Pour vos usages d'IA, quand un modèle plus léger, ou pas d'IA du tout, suffirait-il ?</li>
-        <li>Seriez-vous prêts à accepter un service parfois indisponible, comme Low-tech Magazine, s'il consommait beaucoup moins ?</li>
-        <li>Quelle serait la version « low-tech » d'un projet sur lequel vous travaillez ?</li>
-      </ul>
-      <p><button class="btn" id="back">Retour</button></p>
+      ${t("lowtech.html", {
+        rows: WEIGHT_TABLE.map(
+          ([label, before, normal, low]) =>
+            `<tr><th scope="row">${t(label)}</th><td>${t("unit.ko", { n: before })}</td><td>${t("unit.ko", { n: normal })}</td><td><strong>${t("unit.ko", { n: low })}</strong></td></tr>`
+        ).join(""),
+        size: formatKo(transferredBytes()),
+      })}
+      <p><button class="btn" id="back">${t("common.back")}</button></p>
     </section>`;
   document.getElementById("back").onclick = () => (history.length > 1 ? history.back() : go("#/"));
 }
@@ -1066,23 +959,22 @@ function viewCards(edition) {
   const filter = store.get("cardsFilter", "all");
   const opened = new Set(store.get("cardsOpen", []));
   const shown = (card) => filter === "all" || card.deck === filter;
-  const count = (n, one, many) => `${n} ${n > 1 ? many : one}`;
   app.innerHTML = `
     <section class="catalog">
-      <h1>Toutes les cartes</h1>
-      <div class="chips" role="group" aria-label="Édition">
-        ${EDITION_IDS.map((id) => `<a class="chip" href="#/cards/${id}" aria-current="${id === edition}">${esc(EDITIONS[id].label)}</a>`).join("")}
+      <h1>${t("cards.title")}</h1>
+      <div class="chips" role="group" aria-label="${t("setup.edition")}">
+        ${EDITION_IDS.map((id) => `<a class="chip" href="#/cards/${id}" aria-current="${id === edition}">${esc(t(`edition.${id}`))}</a>`).join("")}
       </div>
-      <div class="chips" role="group" aria-label="Cartes affichées">
-        ${[["all", "Toutes"], ["base", DECKS.base], ["ext", DECKS.ext]]
-          .map(([value, text]) => `<button type="button" class="chip" data-filter="${value}" aria-pressed="${filter === value}">${text}</button>`)
+      <div class="chips" role="group" aria-label="${t("cards.filter")}">
+        ${["all", "base", "ext"]
+          .map((value) => `<button type="button" class="chip" data-filter="${value}" aria-pressed="${filter === value}">${t(value === "all" ? "cards.all" : `deck.${value}`)}</button>`)
           .join("")}
       </div>
       <div class="catalog-actions">
         <button type="button" class="btn btn--small" id="toggle-all"></button>
-        <button type="button" class="btn btn--small" id="export-xlsx" aria-describedby="export-xlsx-hint">Exporter en Excel</button>
+        <button type="button" class="btn btn--small" id="export-xlsx" aria-describedby="export-xlsx-hint">${t("cards.export")}</button>
       </div>
-      <p class="hint" id="export-xlsx-hint">L'export contient toutes les cartes et les énoncés des règles, pour revoir ou modifier les textes.</p>
+      <p class="hint" id="export-xlsx-hint">${t("cards.exportHint")}</p>
       ${rules.map((r) => {
         const civilians = r.civilians.filter(shown);
         const undercovers = r.undercovers.filter(shown);
@@ -1092,25 +984,25 @@ function viewCards(edition) {
             <button type="button" class="rule-toggle" aria-expanded="${opened.has(r.id)}" aria-controls="rule-panel-${r.id}">
               ${backImg(r, "back back--thumb", { small: true })}
               <span class="rule-section-title">
-                <span class="rule-title">Règle d'or ${r.id} · ${esc(r.theme)}</span>
-                <small>${count(civilians.length, "bonne pratique", "bonnes pratiques")} · ${count(undercovers.length, "carte undercover", "cartes undercover")}</small>
+                <span class="rule-title">${t("rule.n", { id: r.id })} · ${esc(r.theme)}</span>
+                <small>${t("cards.civilianCount", { n: civilians.length })} · ${t("cards.undercoverCount", { n: undercovers.length })}</small>
               </span>
             </button>
           </h2>
           <div class="rule-panel" id="rule-panel-${r.id}" ${opened.has(r.id) ? "" : "hidden"}>
           <p class="rule-summary">${esc(r.summary)}</p>
-          <h3 class="cards-sub">Bonnes pratiques (cartes des équipiers)</h3>
+          <h3 class="cards-sub">${t("cards.civilians")}</h3>
           <div class="grid">
             ${backImg(r, "back back--grid")}
             ${civilians.map((c) => cardHtml({ ruleId: r.id, card: c })).join("")}
           </div>
-          <h3 class="cards-sub">Cartes undercover</h3>
+          <h3 class="cards-sub">${t("cards.undercovers")}</h3>
           <div class="grid">
             ${undercovers
               .map(
                 (u) => `<div class="uc-pair">
                   ${cardHtml({ ruleId: r.id, card: u, kind: "undercover" })}
-                  <p class="why"><strong>Pourquoi elle enfreint la règle :</strong> ${esc(u.why)}</p>
+                  <p class="why"><strong>${t("card.why")}</strong> ${esc(u.why)}</p>
                 </div>`
               )
               .join("")}
@@ -1118,7 +1010,7 @@ function viewCards(edition) {
           </div>
         </section>`;
       }).join("")}
-      <p><a class="btn" href="#/">Retour</a></p>
+      <p><a class="btn" href="#/">${t("common.back")}</a></p>
     </section>`;
 
   const toggles = [...app.querySelectorAll(".rule-toggle")];
@@ -1136,7 +1028,7 @@ function viewCards(edition) {
   };
   const toggleAll = document.getElementById("toggle-all");
   const syncToggleAll = () => {
-    toggleAll.textContent = toggles.every(isOpen) ? "Tout replier" : "Tout déplier";
+    toggleAll.textContent = t(toggles.every(isOpen) ? "cards.collapseAll" : "cards.expandAll");
     store.set("cardsOpen", toggles.filter(isOpen).map((t) => Number(t.closest(".rule-section").dataset.rule)));
   };
   toggleAll.onclick = () => {
@@ -1167,7 +1059,7 @@ function viewCards(edition) {
       link.click();
       link.remove();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
-      announce("Classeur Excel des cartes téléchargé.");
+      announce(t("cards.exported"));
     } finally {
       button.disabled = false;
     }
@@ -1229,38 +1121,38 @@ function viewHostSetup() {
     .filter(Boolean);
   app.innerHTML = `
     <section>
-      <h1>Nouvelle partie</h1>
+      <h1>${t("setup.title")}</h1>
       <form id="setup" class="form">
         <fieldset class="fs-edition">
-          <legend>Édition</legend>
+          <legend>${t("setup.edition")}</legend>
           ${EDITION_IDS.map(
             (id) => `
           <label class="radio mode-pick"><input type="radio" name="edition" value="${id}" ${prefs.edition === id ? "checked" : ""}>
-            <span><strong>${esc(EDITIONS[id].label)}</strong><br><small>${id === "po" ? "Édition spéciale : toutes les cartes décrivent des situations vécues par un Product Owner." : "Pour un public large."}</small></span></label>`
+            <span><strong>${esc(t(`edition.${id}`))}</strong><br><small>${t(`setup.editionHint.${id}`)}</small></span></label>`
           ).join("")}
         </fieldset>
 
         <fieldset class="fs-mode">
-          <legend>Mode de jeu</legend>
+          <legend>${t("setup.mode")}</legend>
           <label class="radio mode-pick"><input type="radio" name="mode" value="coop" ${prefs.mode !== "compet" ? "checked" : ""}>
-            <span><strong>Coopératif</strong> (recommandé)<br><small>L'application ne révèle aucun rôle. Chacun lit sa carte à voix haute et l'équipe enquête ensemble. L'animateur peut afficher la carte d'un joueur à tout le groupe. 3, 2 ou 1 point selon le nombre de votes.</small></span></label>
+            <span>${t("setup.coop")}<br><small>${t("setup.coopHint")}</small></span></label>
           <label class="radio mode-pick"><input type="radio" name="mode" value="compet" ${prefs.mode === "compet" ? "checked" : ""}>
-            <span><strong>Compétitif</strong><br><small>L'undercover sait qu'il l'est et bluffe. On décrit sa carte avec ses mots : l'animateur ne peut pas l'afficher, cela trahirait le bluff. Équipiers contre undercover. À partir de 4 joueurs.</small></span></label>
+            <span>${t("setup.compet")}<br><small>${t("setup.competHint")}</small></span></label>
         </fieldset>
 
         <fieldset class="fs-players">
-          <legend>Joueurs</legend>
+          <legend>${t("setup.players")}</legend>
           <div class="stepper" data-target="players">
-            <button type="button" data-step="-1" aria-label="Un joueur de moins">−</button>
-            <input id="players" name="players" type="number" inputmode="numeric" min="${MIN_PLAYERS}" max="${MAX_PLAYERS}" value="${prefs.players}" aria-label="Nombre de joueurs" aria-describedby="players-hint">
-            <button type="button" data-step="1" aria-label="Un joueur de plus">+</button>
+            <button type="button" data-step="-1" aria-label="${t("setup.playersLess")}">−</button>
+            <input id="players" name="players" type="number" inputmode="numeric" min="${MIN_PLAYERS}" max="${MAX_PLAYERS}" value="${prefs.players}" aria-label="${t("setup.playersCount")}" aria-describedby="players-hint">
+            <button type="button" data-step="1" aria-label="${t("setup.playersMore")}">+</button>
           </div>
-          <p class="hint" id="players-hint">Comptez les personnes qui reçoivent une carte. Saisissez leurs prénoms : chacun retrouvera le sien en scannant le QR code, et l'écran de l'animateur affiche le numéro de chacun.</p>
+          <p class="hint" id="players-hint">${t("setup.playersHint")}</p>
           <ol class="name-list" id="name-list"></ol>
           ${
             lastNames.length
               ? `<div class="reuse-names" id="reuse-names">
-                  <button type="button" class="btn btn--small" id="reuse-names-btn" aria-describedby="reuse-names-list">Reprendre les prénoms de la partie précédente</button>
+                  <button type="button" class="btn btn--small" id="reuse-names-btn" aria-describedby="reuse-names-list">${t("setup.reuseNames")}</button>
                   <p class="small" id="reuse-names-list">${esc(lastNames.join(", "))}</p>
                 </div>`
               : ""
@@ -1268,56 +1160,56 @@ function viewHostSetup() {
         </fieldset>
 
         <fieldset class="fs-rounds">
-          <legend>Manches</legend>
+          <legend>${t("setup.rounds")}</legend>
           <div class="stepper" data-target="rounds">
-            <button type="button" data-step="-1" aria-label="Une manche de moins">−</button>
-            <input id="rounds" name="rounds" type="number" inputmode="numeric" min="1" max="${MAX_ROUNDS}" value="${prefs.rounds}" aria-label="Nombre de manches">
-            <button type="button" data-step="1" aria-label="Une manche de plus">+</button>
+            <button type="button" data-step="-1" aria-label="${t("setup.roundsLess")}">−</button>
+            <input id="rounds" name="rounds" type="number" inputmode="numeric" min="1" max="${MAX_ROUNDS}" value="${prefs.rounds}" aria-label="${t("setup.roundsCount")}">
+            <button type="button" data-step="1" aria-label="${t("setup.roundsMore")}">+</button>
           </div>
-          <p class="hint">À la fin de la dernière manche, l'application affiche le score de l'équipe et le récapitulatif des manches.</p>
+          <p class="hint">${t("setup.roundsHint")}</p>
         </fieldset>
 
         <fieldset class="fs-rules">
-          <legend>Règles d'or jouées</legend>
+          <legend>${t("setup.rules")}</legend>
           <div class="rule-picks">
             ${RULES.map(
               (r) => `
               <label class="check rule-pick">
                 <input type="checkbox" name="rules" value="${r.id}" ${prefs.rules.includes(r.id) ? "checked" : ""}>
                 ${backImg(r, "back back--thumb", { small: true })}
-                <span><strong>Règle d'or ${r.id}</strong><br>${esc(r.theme)}</span>
+                <span><strong>${t("rule.n", { id: r.id })}</strong><br>${esc(r.theme)}</span>
               </label>`
             ).join("")}
           </div>
           <div class="inline-actions">
-            <button type="button" class="btn btn--small" data-rules="all">Toutes</button>
-            <button type="button" class="btn btn--small" data-rules="none">Aucune</button>
+            <button type="button" class="btn btn--small" data-rules="all">${t("setup.rulesAll")}</button>
+            <button type="button" class="btn btn--small" data-rules="none">${t("setup.rulesNone")}</button>
           </div>
-          <label class="radio"><input type="radio" name="ordered" value="0" ${!prefs.ordered ? "checked" : ""}> <span>Ordre aléatoire</span></label>
-          <label class="radio"><input type="radio" name="ordered" value="1" ${prefs.ordered ? "checked" : ""}> <span>Dans l'ordre des règles (une règle par manche)</span></label>
+          <label class="radio"><input type="radio" name="ordered" value="0" ${!prefs.ordered ? "checked" : ""}> <span>${t("setup.random")}</span></label>
+          <label class="radio"><input type="radio" name="ordered" value="1" ${prefs.ordered ? "checked" : ""}> <span>${t("setup.ordered")}</span></label>
           <p class="rules-hint" id="rules-hint" aria-live="polite"></p>
         </fieldset>
 
         <fieldset class="fs-deck">
-          <legend>Cartes</legend>
-          <label class="radio"><input type="radio" name="deck" value="base" ${prefs.deck !== "ext" ? "checked" : ""}> <span>${DECKS.base} <small>(${countCards("base")} cartes validées)</small></span></label>
-          <label class="radio"><input type="radio" name="deck" value="ext" ${prefs.deck === "ext" ? "checked" : ""}> <span>${DECKS.base} et ${DECKS.ext.toLowerCase()} <small>(${countCards("ext")} cartes)</small></span></label>
+          <legend>${t("setup.deck")}</legend>
+          <label class="radio"><input type="radio" name="deck" value="base" ${prefs.deck !== "ext" ? "checked" : ""}> <span>${t("deck.base")} <small>${t("setup.deckBaseCount", { n: countCards("base") })}</small></span></label>
+          <label class="radio"><input type="radio" name="deck" value="ext" ${prefs.deck === "ext" ? "checked" : ""}> <span>${t("setup.deckExt")} <small>${t("setup.deckExtCount", { n: countCards("ext") })}</small></span></label>
           <p class="hint" id="deck-hint" aria-live="polite"></p>
         </fieldset>
 
         <fieldset class="fs-undercovers">
-          <legend>Undercovers</legend>
-          <label class="radio"><input type="radio" name="undercovers" value="1" ${prefs.undercovers === 1 ? "checked" : ""}> <span>1 undercover</span></label>
-          <label class="radio"><input type="radio" name="undercovers" value="2" ${prefs.undercovers === 2 ? "checked" : ""}> <span>2 undercovers <small>(à partir de ${MIN_PLAYERS_TWO_UNDERCOVERS} joueurs)</small></span></label>
+          <legend>${t("setup.undercovers")}</legend>
+          <label class="radio"><input type="radio" name="undercovers" value="1" ${prefs.undercovers === 1 ? "checked" : ""}> <span>${t("setup.oneUndercover")}</span></label>
+          <label class="radio"><input type="radio" name="undercovers" value="2" ${prefs.undercovers === 2 ? "checked" : ""}> <span>${t("setup.twoUndercovers", { n: MIN_PLAYERS_TWO_UNDERCOVERS })}</span></label>
           <fieldset class="uc-cards" id="uc-cards" ${prefs.undercovers === 2 ? "" : "hidden"}>
-            <legend>Cartes des 2 undercovers</legend>
-            <label class="radio"><input type="radio" name="ucCards" value="same" ${prefs.ucCards !== "distinct" ? "checked" : ""}> <span>La même carte pour les deux</span></label>
-            <label class="radio"><input type="radio" name="ucCards" value="distinct" ${prefs.ucCards === "distinct" ? "checked" : ""}> <span>Une carte différente chacun</span></label>
+            <legend>${t("setup.ucCards")}</legend>
+            <label class="radio"><input type="radio" name="ucCards" value="same" ${prefs.ucCards !== "distinct" ? "checked" : ""}> <span>${t("setup.ucSame")}</span></label>
+            <label class="radio"><input type="radio" name="ucCards" value="distinct" ${prefs.ucCards === "distinct" ? "checked" : ""}> <span>${t("setup.ucDistinct")}</span></label>
           </fieldset>
         </fieldset>
 
         <p class="error" id="setup-error" role="alert"></p>
-        <button class="btn btn--primary" type="submit">Générer la partie</button>
+        <button class="btn btn--primary" type="submit">${t("setup.submit")}</button>
       </form>
     </section>`;
 
@@ -1331,7 +1223,7 @@ function viewHostSetup() {
       { length: count },
       (_, i) => `
         <li><input id="name-${i + 1}" class="name-input" data-seat="${i + 1}" maxlength="${MAX_NAME_LENGTH}" autocomplete="off"
-          placeholder="Joueur ${i + 1}" value="${esc(typedNames[i + 1] || "")}" aria-label="Prénom du joueur ${i + 1}"></li>`
+          placeholder="${t("player.n", { n: i + 1 })}" value="${esc(typedNames[i + 1] || "")}" aria-label="${t("player.nameLabel", { n: i + 1 })}"></li>`
     ).join("");
   };
   nameListEl.addEventListener("input", (e) => {
@@ -1359,7 +1251,7 @@ function viewHostSetup() {
     players.value = Math.min(Number(players.max), Math.max(Number(players.value), ...seats));
     renderNames();
     document.getElementById("reuse-names").remove();
-    announce(`Prénoms repris : ${lastNames.join(", ")}.`);
+    announce(t("setup.namesReused", { names: lastNames.join(", ") }));
     document.getElementById("name-1").focus();
   });
 
@@ -1369,17 +1261,20 @@ function viewHostSetup() {
     const rules = form.querySelectorAll('input[name="rules"]:checked').length;
     const rounds = Number(form.elements.rounds.value) || 0;
     const ordered = form.elements.ordered.value === "1";
-    const plural = (n, word) => `${n} ${word}${n > 1 ? "s" : ""}`;
     hint.textContent =
       !rules || !rounds
         ? ""
         : rounds < rules
-          ? `${plural(rules, "règle")} d'or choisie${rules > 1 ? "s" : ""} pour ${plural(rounds, "manche")} : seule${rounds > 1 ? "s" : ""} ${rounds} ${rounds > 1 ? "seront jouées" : "sera jouée"}, ${
-              ordered ? "les premières dans l'ordre" : "tirée" + (rounds > 1 ? "s" : "") + " au hasard"
-            }. ${rules - rounds} ne ${rules - rounds > 1 ? "seront" : "sera"} pas abordée${rules - rounds > 1 ? "s" : ""}.`
+          ? t("setup.rulesFewer", {
+              rules: t("setup.chosenRules", { n: rules }),
+              rounds: t("setup.roundCount", { n: rounds }),
+              played: t("setup.played", { n: rounds }),
+              how: ordered ? t("setup.playedOrdered", { n: rounds }) : t("setup.playedRandom", { n: rounds }),
+              skipped: t("setup.skipped", { n: rules - rounds }),
+            })
           : rounds > rules
-            ? `${plural(rounds, "manche")} pour ${plural(rules, "règle")} d'or : toutes seront jouées, et certaines reviendront une seconde fois.`
-            : `Chaque règle d'or choisie sera jouée une fois.`;
+            ? t("setup.rulesMore", { rounds: t("setup.roundCount", { n: rounds }), rules: t("setup.ruleCount", { n: rules }) })
+            : t("setup.rulesEqual");
     hint.classList.toggle("rules-hint--warn", rules > 0 && rounds > 0 && rounds < rules);
   };
   // Undercovers : 2 seulement à partir de 7 joueurs (le choix reste visible, mais indisponible) ; le
@@ -1406,13 +1301,9 @@ function viewHostSetup() {
     const rules = [...form.querySelectorAll('input[name="rules"]:checked')].map((c) => Number(c.value));
     const shortage =
       !tooMany && baseInput.checked && rules.length
-        ? validateSettings({ players, undercovers: Number(form.elements.undercovers.value), rules, deck: "base", edition: form.elements.edition.value })
+        ? deckShortage({ players, undercovers: Number(form.elements.undercovers.value), rules, deck: "base", edition: form.elements.edition.value })
         : null;
-    document.getElementById("deck-hint").textContent = tooMany
-      ? `Au-delà de ${MAX_BASE_PLAYERS} joueurs, l'extension est obligatoire : le jeu de base n'a pas assez de cartes pour que chacun en ait une différente.`
-      : shortage && /bonnes pratiques/.test(shortage)
-        ? shortage
-        : "";
+    document.getElementById("deck-hint").textContent = tooMany ? t("setup.extRequired", { n: MAX_BASE_PLAYERS }) : shortage || "";
     syncUcCards();
   };
   form.addEventListener("change", syncDeck);
@@ -1463,22 +1354,27 @@ function viewHost(code) {
   const result = state.finished || roundOutcome(game, deal, state.eliminated);
   const lastRound = state.round >= game.rounds;
   const url = joinUrl(code, 0, state.names, game.players);
-  const rulesSummary =
-    game.rules.length === RULES.length ? "toutes les règles" : `règle${game.rules.length > 1 ? "s" : ""} ${game.rules.join(", ")}`;
+  const summary = [
+    ...(game.edition === "classique" ? [] : [t("host.edition", { name: esc(t(`edition.${game.edition}`)) })]),
+    t(coop ? "host.modeCoop" : "host.modeCompet"),
+    t("host.players", { n: game.players }),
+    t("host.undercovers", { n: game.undercovers }) + (game.undercovers > 1 && game.ucCards === "distinct" && game.deck === "ext" ? ` ${t("host.ucDistinct")}` : ""),
+    t("setup.roundCount", { n: game.rounds }),
+    game.rules.length === RULES.length ? t("host.allRules") : t("host.someRules", { n: game.rules.length, list: game.rules.join(", ") }),
+    t(game.deck === "ext" ? "host.deckExt" : "host.deckBase"),
+  ].join(" · ");
 
   app.innerHTML = `
     <section class="host">
-      <aside class="host-side" aria-label="Rejoindre la partie">
+      <aside class="host-side" aria-label="${t("host.joinAria")}">
       <div class="share">
-        ${qrSlot(url, "QR code pour rejoindre la partie")}
+        ${qrSlot(url, t("host.qr"))}
         <div>
-          <p class="label">Code de la partie</p>
+          <p class="label">${t("host.code")}</p>
           <p class="code">${esc(prettyCode(code))}</p>
-          <p class="small">${game.edition === "classique" ? "" : `Édition ${esc(EDITIONS[game.edition].label)} · `}Mode ${coop ? "coopératif" : "compétitif"} · ${game.players} joueurs · ${game.undercovers} undercover${game.undercovers > 1 ? "s" : ""}${
-            game.undercovers > 1 && game.ucCards === "distinct" && game.deck === "ext" ? " (une carte chacun)" : ""
-          } · ${game.rounds} manche${game.rounds > 1 ? "s" : ""} · ${rulesSummary} · ${game.deck === "ext" ? `${DECKS.base.toLowerCase()} et ${DECKS.ext.toLowerCase()}` : DECKS.base.toLowerCase()}</p>
-          <button class="btn btn--small" id="copy">Copier le lien</button>
-          <button class="btn btn--small" id="seat-qrs">QR par joueur</button>
+          <p class="small">${summary}</p>
+          <button class="btn btn--small" id="copy">${t("host.copy")}</button>
+          <button class="btn btn--small" id="seat-qrs">${t("host.seatQrs")}</button>
         </div>
       </div>
       </aside>
@@ -1487,12 +1383,12 @@ function viewHost(code) {
       <div class="round-bar">
         ${backImg(deal.rule, "back back--round", { lazy: false, small: true })}
         <div>
-          <h1>Manche ${state.round} <span class="of">/ ${game.rounds}</span></h1>
+          <h1>${t("round.title", { round: state.round, rounds: game.rounds })}</h1>
           ${ruleTag(deal.rule)}
           ${
             state.round > 1 && !result
-              ? `<p class="round-reminder"><span aria-hidden="true">📱 </span>Demandez à chacun de toucher <strong>«&nbsp;Manche suivante&nbsp;»</strong>&nbsp;: son téléphone doit afficher <strong>Manche&nbsp;${state.round}</strong>.</p>`
-              : `<p>Les joueurs doivent afficher la <strong>manche ${state.round}</strong> sur leur téléphone.</p>`
+              ? `<p class="round-reminder"><span aria-hidden="true">📱 </span>${t("host.reminder", { round: state.round })}</p>`
+              : `<p>${t("host.showRound", { round: state.round })}</p>`
           }
         </div>
       </div>
@@ -1505,14 +1401,8 @@ function viewHost(code) {
         result
           ? resultBanner(result, "div", state.results[state.round])
           : `<div class="starter">
-              <p><span aria-hidden="true">🎙️ </span><strong>${esc(playerName(state, deal.starter))}</strong> ${
-                coop ? "commence : chacun lit sa carte à voix haute, mot pour mot, puis l'équipe désigne un suspect." : "commence le tour de parole : chacun décrit sa carte avec ses mots, sans la lire."
-              }</p>
-              <p class="small">${
-                coop
-                  ? "Si le suspect est disculpé, l'équipe relance le débat et désigne quelqu'un d'autre."
-                  : "Pendant le débat, chacun peut poser une question à un joueur. Une description vague ou exagérée ne prouve rien : un équipier peut aussi mal décrire sa carte. Si un équipier est éliminé, la manche continue : nouveau débat, nouveau vote."
-              }</p>
+              <p><span aria-hidden="true">🎙️ </span>${t(coop ? "host.starterCoop" : "host.starterCompet", { name: esc(playerName(state, deal.starter)) })}</p>
+              <p class="small">${t(coop ? "host.afterCoop" : "host.afterCompet")}</p>
             </div>`
       }
 
@@ -1522,18 +1412,18 @@ function viewHost(code) {
             const out = state.eliminated.includes(r.seat);
             const revealed = out || result;
             // Coopératif : un équipier désigné à tort est disculpé et reste en jeu.
-            const status = !out ? "" : coop ? (r.role === "undercover" ? " · démasqué" : " · disculpé") : " · éliminé";
+            const status = !out ? "" : ` · ${t(coop ? (r.role === "undercover" ? "host.unmasked" : "host.cleared") : "host.eliminated")}`;
             return `
             <li class="${out && !coop ? "out" : ""} ${justRevealed?.code === code && justRevealed.seat === r.seat ? "row-just" : ""}">
               <span class="seat">${r.seat}</span>
-              <input class="name" id="host-name-${r.seat}" data-seat="${r.seat}" maxlength="${MAX_NAME_LENGTH}" value="${esc(state.names[r.seat] || "")}" placeholder="Joueur ${r.seat}" aria-label="Prénom du joueur ${r.seat}">
+              <input class="name" id="host-name-${r.seat}" data-seat="${r.seat}" maxlength="${MAX_NAME_LENGTH}" value="${esc(state.names[r.seat] || "")}" placeholder="${t("player.n", { n: r.seat })}" aria-label="${t("player.nameLabel", { n: r.seat })}">
               ${
                 revealed
-                  ? `<span class="role role--${r.role}">${ROLE_LABELS[r.role]}${status}</span>`
+                  ? `<span class="role role--${r.role}">${t(`role.${r.role}`)}${status}</span>`
                   : coop
-                    ? `<button class="btn btn--small btn--icon" data-show-card="${r.seat}" aria-label="Afficher la carte du joueur ${r.seat}" title="Afficher la carte à tout le groupe"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg></button>
-                      <button class="btn btn--small" data-eliminate="${r.seat}">Désigner</button>`
-                    : `<button class="btn btn--small btn--danger" data-eliminate="${r.seat}">Éliminer</button>`
+                    ? `<button class="btn btn--small btn--icon" data-show-card="${r.seat}" aria-label="${t("host.showCardAria", { n: r.seat })}" title="${t("host.showCardTitle")}"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false"><path d="M1.5 12S5.5 4.5 12 4.5 22.5 12 22.5 12 18.5 19.5 12 19.5 1.5 12 1.5 12Z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg></button>
+                      <button class="btn btn--small" data-eliminate="${r.seat}">${t("host.designate")}</button>`
+                    : `<button class="btn btn--small btn--danger" data-eliminate="${r.seat}">${t("host.eliminate")}</button>`
               }
             </li>`;
           })
@@ -1541,19 +1431,19 @@ function viewHost(code) {
       </ul>
 
       <div class="actions">
-        ${result ? `<button class="btn btn--primary" id="debrief">Débrief de la manche</button>` : ""}
+        ${result ? `<button class="btn btn--primary" id="debrief">${t("host.debrief")}</button>` : ""}
         ${
           lastRound
-            ? `<a class="btn" href="#/end/${code}" id="finish">Voir les résultats</a>`
-            : `<button class="btn" id="next">Manche suivante</button>`
+            ? `<a class="btn" href="#/end/${code}" id="finish">${t("host.results")}</a>`
+            : `<button class="btn" id="next">${t("round.next")}</button>`
         }
         ${/* Option « Distribuer sur ce téléphone » masquée : sans objet quand l'animateur projette son écran. La route #/pass reste en place. */ ""}
-        ${!result ? `<button class="btn btn--ghost" id="debrief">Révéler et débriefer</button>` : ""}
+        ${!result ? `<button class="btn btn--ghost" id="debrief">${t("host.reveal")}</button>` : ""}
       </div>
-      ${!lastRound ? `<div class="actions actions--secondary"><button class="btn btn--ghost" id="end-now">Terminer la partie maintenant</button></div>` : ""}
+      ${!lastRound ? `<div class="actions actions--secondary"><button class="btn btn--ghost" id="end-now">${t("host.endNow")}</button></div>` : ""}
       <div class="danger-zone">
-        <p class="small">Efface la partie de cet appareil (prénoms, scores, manches). Une confirmation est demandée.</p>
-        <button class="btn btn--small btn--danger" id="forget">Supprimer la partie</button>
+        <p class="small">${t("host.forgetHint")}</p>
+        <button class="btn btn--small btn--danger" id="forget">${t("host.forget")}</button>
       </div>
       </div>
     </section>`;
@@ -1561,13 +1451,13 @@ function viewHost(code) {
   document.getElementById("copy").onclick = async () => {
     try {
       await navigator.clipboard.writeText(url);
-      document.getElementById("copy").textContent = "Lien copié";
-      announce("Lien de la partie copié.");
+      document.getElementById("copy").textContent = t("common.copied");
+      announce(t("host.copiedAnnounce"));
     } catch {
       openModal(`
-        <h2>Lien à partager</h2>
-        <input class="share-url" id="share-url" readonly value="${esc(url)}" aria-label="Lien de la partie">
-        <button class="btn btn--primary" data-close>Fermer</button>`);
+        <h2>${t("host.shareTitle")}</h2>
+        <input class="share-url" id="share-url" readonly value="${esc(url)}" aria-label="${t("host.shareAria")}">
+        <button class="btn btn--primary" data-close>${t("common.close")}</button>`);
       document.getElementById("share-url").select();
     }
   };
@@ -1594,9 +1484,9 @@ function viewHost(code) {
       const seat = Number(btn.dataset.showCard);
       const { id: ruleId, theme, summary } = deal.rule;
       openModal(`
-        <h2>Carte de ${esc(playerName(hostState(code), seat))}</h2>
+        <h2>${t("host.cardOf", { name: esc(playerName(hostState(code), seat)) })}</h2>
         ${cardHtml({ ruleId, text: deal.roles[seat - 1].card.text, theme, summary })}
-        <button class="btn btn--primary" data-close>Fermer</button>`);
+        <button class="btn btn--primary" data-close>${t("common.close")}</button>`);
     })
   );
 
@@ -1613,7 +1503,7 @@ function viewHost(code) {
   document.getElementById("debrief").onclick = () => {
     const s = hostState(code);
     if (s.finished || roundOutcome(game, deal, s.eliminated)) return go(`#/debrief/${code}`);
-    confirmModal("La manche n'est pas terminée. Révéler tous les rôles ?", "Révéler", () => {
+    confirmModal(t("host.revealConfirm"), t("host.revealOk"), () => {
       closeRound(s, "r");
       saveHostState(code, s);
       go(`#/debrief/${code}`);
@@ -1629,13 +1519,13 @@ function viewHost(code) {
     saveHostState(code, s);
     render();
     openModal(`
-      <h2>Manche ${s.round} / ${game.rounds}</h2>
+      <h2>${t("round.plain", { round: s.round, rounds: game.rounds })}</h2>
       ${ruleTag(dealRound(game, s.round).rule)}
-      <p>Demandez à chaque joueur d'appuyer sur <strong>« Manche suivante »</strong> sur son téléphone pour découvrir sa nouvelle carte.</p>
-      <button class="btn btn--primary" data-close>OK</button>`);
+      <p>${t("host.nextRoundInfo")}</p>
+      <button class="btn btn--primary" data-close>${t("common.ok")}</button>`);
   };
   document.getElementById("next")?.addEventListener("click", () =>
-    result ? nextRound() : confirmModal("La manche en cours n'est pas terminée. Passer à la suivante ?", "Passer", nextRound)
+    result ? nextRound() : confirmModal(t("host.skipConfirm"), t("host.skipOk"), nextRound)
   );
 
   const endGame = () => {
@@ -1647,30 +1537,30 @@ function viewHost(code) {
   document.getElementById("finish")?.addEventListener("click", (e) => {
     if (result) return;
     e.preventDefault();
-    confirmModal("La dernière manche n'est pas terminée. Afficher quand même les résultats ?", "Voir les résultats", endGame);
+    confirmModal(t("host.finishConfirm"), t("host.results"), endGame);
   });
   document.getElementById("end-now")?.addEventListener("click", () =>
     confirmModal(
       state.round + 1 === game.rounds
-        ? `Terminer la partie maintenant ? La manche ${game.rounds} ne sera pas jouée : elle ne comptera pas dans le score, mais ses cartes resteront consultables en fin de partie.`
-        : `Terminer la partie maintenant ? Les manches ${state.round + 1} à ${game.rounds} ne seront pas jouées : elles ne compteront pas dans le score, mais leurs cartes resteront consultables en fin de partie.`,
-      "Terminer",
+        ? t("host.endNowOne", { round: game.rounds })
+        : t("host.endNowMany", { from: state.round + 1, to: game.rounds }),
+      t("host.endOk"),
       endGame
     )
   );
-  document.getElementById("forget").onclick = () => confirmForget(code, "cette partie");
+  document.getElementById("forget").onclick = () => confirmForget(code, "game");
 }
 
 function resultBanner(result, tag = "p", code = "") {
   const pts = Number(code);
   const [icon, text] =
     result === "found"
-      ? ["🎉", `Undercover démasqué ! +${pts} point${pts > 1 ? "s" : ""} pour l'équipe.`]
+      ? ["🎉", t("banner.found", { n: pts })]
       : result === "civilians"
-      ? ["🎉", "Les équipiers ont démasqué l'undercover !"]
+      ? ["🎉", t("banner.civilians")]
       : result === "impostors"
-        ? ["🕵️", "L'undercover l'emporte : il ne reste qu'un équipier."]
-        : ["", "Rôles révélés."];
+        ? ["🕵️", t("banner.impostors")]
+        : ["", t("banner.revealed")];
   return `<${tag} class="banner banner--${result === "civilians" || result === "found" ? "win" : "lose"}">${icon ? `<span aria-hidden="true">${icon} </span>` : ""}${text}</${tag}>`;
 }
 
@@ -1685,18 +1575,18 @@ function eliminate(code, game, deal, seat) {
   openModal(
     coop
       ? `
-    <h2>Désigner ${esc(name)} ?</h2>
-    <p>L'équipe pense que ${esc(name)} a la carte qui enfreint la règle d'or. Son rôle sera révélé.</p>
+    <h2>${t("elim.designateTitle", { name: esc(name) })}</h2>
+    <p>${t("elim.designateText", { name: esc(name) })}</p>
     <div class="actions">
-      <button class="btn btn--primary" id="do-eliminate">Désigner</button>
-      <button class="btn" data-close>Annuler</button>
+      <button class="btn btn--primary" id="do-eliminate">${t("host.designate")}</button>
+      <button class="btn" data-close>${t("common.cancel")}</button>
     </div>`
       : `
-    <h2>Éliminer ${esc(name)} ?</h2>
-    <p>Son rôle sera révélé à tout le groupe.</p>
+    <h2>${t("elim.eliminateTitle", { name: esc(name) })}</h2>
+    <p>${t("elim.eliminateText")}</p>
     <div class="actions">
-      <button class="btn btn--danger" id="do-eliminate">Éliminer</button>
-      <button class="btn" data-close>Annuler</button>
+      <button class="btn btn--danger" id="do-eliminate">${t("host.eliminate")}</button>
+      <button class="btn" data-close>${t("common.cancel")}</button>
     </div>`
   );
 
@@ -1713,23 +1603,23 @@ function eliminate(code, game, deal, seat) {
     const errors = wrongGuesses(deal, state.eliminated);
     const next = coop
       ? player.role === "undercover"
-        ? "Bien vu ! Il reste un undercover à trouver."
-        : `Ce n'est pas l'undercover : ${esc(name)} est disculpé. Relisez les cartes et désignez un autre suspect${
-            errors >= COOP_MAX_POINTS ? "." : ` (la manche vaut maintenant ${coopPoints(errors)} point${coopPoints(errors) > 1 ? "s" : ""}).`
-          }`
-      : "La manche continue : nouveau tour de parole !";
+        ? t("elim.oneLeft")
+        : errors >= COOP_MAX_POINTS
+          ? t("elim.cleared", { name: esc(name) })
+          : t("elim.clearedWorth", { name: esc(name), n: coopPoints(errors) })
+      : t("elim.continue");
     // On débat des pratiques, pas des personnes : personne ne choisit sa carte.
     const reassure = !coop
       ? ""
       : player.role === "undercover"
-        ? `${esc(name)} ne pouvait pas savoir que sa carte enfreignait la règle : c'est la pratique qu'on discute, pas la personne.`
-        : `Ce n'est pas une erreur de sa part : sa carte décrit une bonne pratique, et l'application ne révèle à personne qui a la carte undercover.`;
+        ? t("elim.reassureUndercover", { name: esc(name) })
+        : t("elim.reassureCivilian");
     openModal(`
-      <p class="label">${esc(name)} ${coop ? "avait…" : "était…"}</p>
-      <p class="role-reveal role--${player.role}">${coop ? (player.role === "undercover" ? "La carte undercover" : "Une bonne pratique") : ROLE_LABELS[player.role]}</p>
+      <p class="label">${t(coop ? "elim.had" : "elim.was", { name: esc(name) })}</p>
+      <p class="role-reveal role--${player.role}">${t(coop ? (player.role === "undercover" ? "elim.undercoverCard" : "elim.goodPractice") : `role.${player.role}`)}</p>
       ${result ? resultBanner(result, "p", state.results[state.round]) : `<p>${next}</p>`}
       ${reassure ? `<p class="reassure">${reassure}</p>` : ""}
-      <button class="btn btn--primary" data-close>Continuer</button>`);
+      <button class="btn btn--primary" data-close>${t("common.continue")}</button>`);
   };
 }
 
@@ -1739,13 +1629,13 @@ function showSeatQrs(code, game, state) {
   const show = () => {
     const seat = seats[index];
     openModal(`
-      <p class="label">Au tour de</p>
+      <p class="label">${t("qr.turnOf")}</p>
       <h2>${esc(playerName(state, seat))}</h2>
-      ${qrSlot(joinUrl(code, seat, state.names, game.players), `QR code de ${playerName(state, seat)} pour rejoindre la partie`, 8, "qr--big")}
-      <p class="small">Scanne ce QR code : ta carte s'affiche directement.</p>
+      ${qrSlot(joinUrl(code, seat, state.names, game.players), t("qr.seatLabel", { name: playerName(state, seat) }), 8, "qr--big")}
+      <p class="small">${t("qr.seatHint")}</p>
       <div class="actions">
         <button class="btn" id="qr-prev" ${index === 0 ? "disabled" : ""}>←</button>
-        <button class="btn btn--primary" id="qr-next">${index === seats.length - 1 ? "Terminer" : "Joueur suivant →"}</button>
+        <button class="btn btn--primary" id="qr-next">${t(index === seats.length - 1 ? "qr.done" : "qr.next")}</button>
       </div>`);
     document.getElementById("qr-prev").onclick = () => {
       index--;
@@ -1773,13 +1663,16 @@ function viewDebrief(code, { round, names, back, mySeat = null, unplayed = false
   const shown = round >= 1 && round <= game.rounds ? round : state.round;
   const deal = dealRound(game, shown);
   const rule = deal.rule;
-  const label = (seat) => (names ? names[seat] || `Joueur ${seat}` : playerName(state, seat)) + (seat === mySeat ? " (toi)" : "");
+  const label = (seat) => {
+    const name = names ? names[seat] || t("player.n", { n: seat }) : playerName(state, seat);
+    return seat === mySeat ? t("player.you", { name }) : name;
+  };
   const holders = (card) =>
     deal.roles
       .filter((r) => r.card === card)
       .map((r) => label(r.seat))
       .join(", ");
-  const [backHref, backText] = back || (round ? [`#/end/${code}`, "Retour aux résultats"] : [`#/host/${code}`, "Retour à la partie"]);
+  const [backHref, backText] = back || (round ? [`#/end/${code}`, t("debrief.backResults")] : [`#/host/${code}`, t("debrief.backGame")]);
   const distributed = rule.civilians.filter((c) => holders(c));
 
   app.innerHTML = `
@@ -1787,37 +1680,37 @@ function viewDebrief(code, { round, names, back, mySeat = null, unplayed = false
       <div class="debrief-head">
         ${backImg(rule, "back back--round", { lazy: false, small: true })}
         <div>
-          <p class="label">Manche ${shown} / ${game.rounds} · ${unplayed ? "non jouée" : "débrief"}</p>
-          <h1>Règle d'or ${rule.id} · ${esc(rule.theme)}</h1>
+          <p class="label">${t("round.plain", { round: shown, rounds: game.rounds })} · ${t(unplayed ? "debrief.unplayed" : "debrief.label")}</p>
+          <h1>${t("rule.n", { id: rule.id })} · ${esc(rule.theme)}</h1>
           <p class="rule-summary">${esc(rule.summary)}</p>
         </div>
       </div>
 
-      ${unplayed ? `<p class="hint unplayed-note">Cette manche n'a pas été jouée : voici les cartes qui auraient été distribuées, pour en discuter quand même.</p>` : ""}
+      ${unplayed ? `<p class="hint unplayed-note">${t("debrief.unplayedNote")}</p>` : ""}
       <div class="debrief-uc ${deal.undercovers.length > 1 ? "debrief-uc--multi" : ""}">
-      <h2>${deal.undercovers.length > 1 ? "Les cartes undercover" : "La carte undercover"}</h2>
+      <h2>${t("debrief.undercovers", { n: deal.undercovers.length })}</h2>
       ${deal.undercovers
         .map(
           (u) => `${cardHtml({ ruleId: rule.id, card: u, kind: "undercover", label: holders(u) })}
-      <p class="why"><strong>Pourquoi elle enfreint la règle :</strong> ${esc(u.why)}</p>`
+      <p class="why"><strong>${t("card.why")}</strong> ${esc(u.why)}</p>`
         )
         .join("")}
       </div>
 
       <div class="debrief-civ">
-      <h2>Les cartes des équipiers</h2>
+      <h2>${t("debrief.civilians")}</h2>
       <div class="grid">
         ${distributed.map((c) => cardHtml({ ruleId: rule.id, card: c, label: holders(c) })).join("")}
       </div>
 
-      <h2>Questions pour la discussion</h2>
+      <h2>${t("debrief.questions")}</h2>
       ${names ? "" : timerHtml(game.mode === "coop", "debrief")}
       <ul class="questions">
         <li><strong>${esc(rule.question)}</strong></li>
-        <li>Quelle phrase précise de la carte undercover enfreint la règle ? Citez-la.</li>
-        <li>Avez-vous déjà rencontré cette situation dans votre activité ?</li>
-        <li>Comment la transformer pour qu'elle respecte la règle ${rule.id} ?</li>
-        <li>Laquelle des bonnes pratiques est la plus facile / difficile à appliquer chez vous ?</li>
+        <li>${t("debrief.q1")}</li>
+        <li>${t("debrief.q2")}</li>
+        <li>${t("debrief.q3", { id: rule.id })}</li>
+        <li>${t("debrief.q4")}</li>
       </ul>
       </div>
 
@@ -1832,7 +1725,7 @@ function viewDebrief(code, { round, names, back, mySeat = null, unplayed = false
 // Classement et récapitulatif des manches, partagés par l'écran animateur et les téléphones.
 // roundHref(round) : lien vers le débrief de la manche (qui avait quelle carte).
 function resultsHtml(game, names, results, mySeat, roundHref) {
-  const label = (seat) => names[seat] || `Joueur ${seat}`;
+  const label = (seat) => names[seat] || t("player.n", { n: seat });
   const rounds = Object.keys(results).map(Number).sort((a, b) => a - b);
 
   return `
@@ -1840,13 +1733,15 @@ function resultsHtml(game, names, results, mySeat, roundHref) {
     ${
       rounds.length
         ? `<div class="results-rounds">
-          <h2 class="section-title">Les manches</h2>
-          ${roundHref ? `<p class="hint">Touchez une manche pour revoir les cartes distribuées et qui les avait.</p>` : ""}
+          <h2 class="section-title">${t("results.rounds")}</h2>
+          ${roundHref ? `<p class="hint">${t("results.hint")}</p>` : ""}
           <ol class="recap">
             ${rounds
               .map((round) => {
                 const deal = dealRound(game, round);
-                const undercovers = deal.roles.filter((r) => r.role === "undercover").map((r) => label(r.seat) + (r.seat === mySeat ? " (toi)" : ""));
+                const undercovers = deal.roles
+                  .filter((r) => r.role === "undercover")
+                  .map((r) => (r.seat === mySeat ? t("player.you", { name: label(r.seat) }) : label(r.seat)));
                 const res = results[round];
                 return `
                 <li class="${roundHref ? "recap-item--link" : ""}">
@@ -1854,11 +1749,11 @@ function resultsHtml(game, names, results, mySeat, roundHref) {
                   <div>
                     <p class="recap-title">${
                       roundHref
-                        ? `<a class="recap-link" href="${roundHref(round)}">Manche ${round} · ${esc(deal.rule.theme)}</a>`
-                        : `Manche ${round} · ${esc(deal.rule.theme)}`
+                        ? `<a class="recap-link" href="${roundHref(round)}">${t("round.n", { round })} · ${esc(deal.rule.theme)}</a>`
+                        : `${t("round.n", { round })} · ${esc(deal.rule.theme)}`
                     }</p>
                     <p class="small">${
-                      res === "n" ? "Cartes qui auraient été distribuées" : `Undercover : <strong>${esc(undercovers.join(", "))}</strong>`
+                      res === "n" ? t("results.unplayed") : t("results.undercover", { names: esc(undercovers.join(", ")) })
                     }</p>
                   </div>
                   <span class="result result--${resultClass(res)}">${resultLabel(res)}</span>
@@ -1883,41 +1778,41 @@ function viewEnd(code) {
 
   app.innerHTML = `
     <section class="end">
-      <p class="label center-text">Partie ${esc(prettyCode(code))}</p>
-      <h1 class="center-text">Fin de partie</h1>
+      <p class="label center-text">${t("end.game", { code: esc(prettyCode(code)) })}</p>
+      <h1 class="center-text">${t("end.title")}</h1>
       ${resultsHtml(game, state.names, results, null, (round) => `#/debrief/${code}/${round}`)}
 
       <div class="share share--results">
-        ${qrSlot(shareUrl, "QR code des résultats de la partie")}
+        ${qrSlot(shareUrl, t("end.qr"))}
         <div>
-          <p class="label">Résultats sur les téléphones</p>
-          <p>Les joueurs scannent ce QR code pour retrouver le score et le récapitulatif des manches.</p>
-          <button class="btn btn--small" id="copy-results">Copier le lien des résultats</button>
+          <p class="label">${t("end.share")}</p>
+          <p>${t("end.shareHint")}</p>
+          <button class="btn btn--small" id="copy-results">${t("end.copy")}</button>
         </div>
       </div>
 
       <div class="actions">
-        <a class="btn btn--primary" href="#/host">Nouvelle partie</a>
-        <a class="btn" href="#/host/${code}">Retour au tableau de bord</a>
+        <a class="btn btn--primary" href="#/host">${t("setup.title")}</a>
+        <a class="btn" href="#/host/${code}">${t("end.backHost")}</a>
       </div>
       <div class="actions actions--secondary">
-        <button class="btn btn--ghost btn--ghost-danger" id="forget">Supprimer la partie</button>
+        <button class="btn btn--ghost btn--ghost-danger" id="forget">${t("host.forget")}</button>
       </div>
     </section>`;
   document.getElementById("copy-results").onclick = async (e) => {
     try {
       await navigator.clipboard.writeText(shareUrl);
-      e.target.textContent = "Lien copié";
-      announce("Lien des résultats copié.");
+      e.target.textContent = t("common.copied");
+      announce(t("end.copiedAnnounce"));
     } catch {
       openModal(`
-        <h2>Lien des résultats</h2>
-        <input class="share-url" id="share-url" readonly value="${esc(shareUrl)}" aria-label="Lien des résultats">
-        <button class="btn btn--primary" data-close>Fermer</button>`);
+        <h2>${t("end.link")}</h2>
+        <input class="share-url" id="share-url" readonly value="${esc(shareUrl)}" aria-label="${t("end.link")}">
+        <button class="btn btn--primary" data-close>${t("common.close")}</button>`);
       document.getElementById("share-url").select();
     }
   };
-  document.getElementById("forget").onclick = () => confirmForget(code, "cette partie");
+  document.getElementById("forget").onclick = () => confirmForget(code, "game");
   animateFinalScore();
 }
 
@@ -1930,23 +1825,23 @@ function viewResults(code, token, round) {
   const resultsHref = `#results-${game.code}~${token}`;
   // Revue d'une manche jouée : même écran que le débrief, avec les prénoms reçus par QR code.
   if (round && data.results[round]) {
-    return viewDebrief(game.code, { round, names: data.names, mySeat, back: [resultsHref, "Retour aux résultats"], unplayed: data.results[round] === "n" });
+    return viewDebrief(game.code, { round, names: data.names, mySeat, back: [resultsHref, t("debrief.backResults")], unplayed: data.results[round] === "n" });
   }
 
   app.innerHTML = `
     <section class="end">
-      <p class="label center-text">Partie ${esc(prettyCode(game.code))}</p>
-      <h1 class="center-text">Résultats</h1>
+      <p class="label center-text">${t("end.game", { code: esc(prettyCode(game.code)) })}</p>
+      <h1 class="center-text">${t("results.title")}</h1>
       ${resultsHtml(game, data.names, data.results, mySeat, (r) => `${resultsHref}~${r}`)}
       <div class="actions">
-        <a class="btn btn--primary" href="#/">Accueil</a>
-        <a class="btn" href="#/cards">Revoir toutes les cartes</a>
+        <a class="btn btn--primary" href="#/">${t("common.home")}</a>
+        <a class="btn" href="#/cards">${t("results.allCards")}</a>
       </div>
       <div class="actions actions--secondary">
-        <button class="btn btn--ghost btn--ghost-danger" id="forget">Supprimer la partie de ce téléphone</button>
+        <button class="btn btn--ghost btn--ghost-danger" id="forget">${t("common.forgetHere")}</button>
       </div>
     </section>`;
-  document.getElementById("forget").onclick = () => confirmForget(game.code, "cette partie");
+  document.getElementById("forget").onclick = () => confirmForget(game.code, "game");
   animateFinalScore();
 }
 
@@ -1958,9 +1853,9 @@ function viewJoin(prefill, seatPrefill, namesToken) {
   }
   app.innerHTML = `
     <section>
-      <h1>Rejoindre une partie</h1>
+      <h1>${t("join.title")}</h1>
       <form id="join" class="form">
-        <label>Code de la partie
+        <label>${t("host.code")}
           <input id="join-code" name="code" class="code-input" autocomplete="off" autocapitalize="characters" maxlength="${CODE_LENGTH + 1}" placeholder="ABCD 12345" value="${esc(game ? prettyCode(game.code) : prefill || "")}">
         </label>
         <div id="seats"></div>
@@ -1978,27 +1873,23 @@ function viewJoin(prefill, seatPrefill, namesToken) {
     errorEl.textContent = "";
     if (!g) {
       seatsEl.innerHTML = "";
-      if (raw.replace(/\s/g, "").length >= CODE_LENGTH) errorEl.textContent = "Code invalide. Vérifiez auprès de l'animateur.";
+      if (raw.replace(/\s/g, "").length >= CODE_LENGTH) errorEl.textContent = t("join.invalid");
       return;
     }
     const names = knownNames(g.code);
     const hasNames = Object.keys(names).length > 0;
     seatsEl.innerHTML = `
-      <p class="label">${hasNames ? "Qui es-tu ?" : "Quel est ton numéro de joueur ?"}</p>
+      <p class="label">${t(hasNames ? "join.who" : "join.whichSeat")}</p>
       <div class="seat-grid ${hasNames ? "seat-grid--names" : ""}">
         ${Array.from(
           { length: g.players },
           (_, i) => `
           <a class="seat-btn" href="#/play/${g.code}/${i + 1}">
-            ${names[i + 1] ? `<span>${esc(names[i + 1])}</span><small>joueur ${i + 1}</small>` : i + 1}
+            ${names[i + 1] ? `<span>${esc(names[i + 1])}</span><small>${t("player.seat", { n: i + 1 })}</small>` : i + 1}
           </a>`
         ).join("")}
       </div>
-      <p class="hint">${
-        hasNames
-          ? "Touche ton prénom."
-          : "Choisis le numéro affiché à côté de ton prénom sur l'écran de l'animateur."
-      }</p>`;
+      <p class="hint">${t(hasNames ? "join.tapName" : "join.pickSeat")}</p>`;
   };
   form.elements.code.addEventListener("input", update);
   form.addEventListener("submit", (e) => e.preventDefault());
@@ -2019,21 +1910,21 @@ function viewPlay(code, seat) {
   app.innerHTML = `
     <section class="play">
       <div class="play-head">
-        <h1>${myName ? `${esc(myName)} <small class="small">joueur ${seat}</small>` : `Joueur ${seat}`}</h1>
+        <h1>${myName ? `${esc(myName)} <small class="small">${t("player.seat", { n: seat })}</small>` : t("player.n", { n: seat })}</h1>
         <span class="small">${esc(prettyCode(game.code))}</span>
       </div>
       ${
         myName
           ? ""
-          : `<p class="hint seat-check">Vérifie sur l'écran de l'animateur que le numéro ${seat} est bien à côté de ton prénom. <a href="#join-${game.code}">Changer de numéro</a></p>`
+          : `<p class="hint seat-check">${t("play.seatCheck", { n: seat })} <a href="#join-${game.code}">${t("play.changeSeat")}</a></p>`
       }
       <div class="round-switch">
-        <button class="btn btn--small" id="prev" ${round <= 1 ? "disabled" : ""} aria-label="Manche précédente">←</button>
-        <strong>Manche ${round} <span class="of">/ ${game.rounds}</span></strong>
+        <button class="btn btn--small" id="prev" ${round <= 1 ? "disabled" : ""} aria-label="${t("play.prevRound")}">←</button>
+        <strong>${t("round.title", { round, rounds: game.rounds })}</strong>
         ${
           last
-            ? `<a class="btn btn--small btn--primary" href="#/over/${game.code}/${seat}">Fin de partie →</a>`
-            : `<button class="btn btn--small" id="next">Manche suivante →</button>`
+            ? `<a class="btn btn--small btn--primary" href="#/over/${game.code}/${seat}">${t("play.end")}</a>`
+            : `<button class="btn btn--small" id="next">${t("play.next")}</button>`
         }
       </div>
 
@@ -2062,19 +1953,19 @@ function viewOver(code, seat) {
 
   app.innerHTML = `
     <section class="end">
-      <h1 class="center-text">Partie terminée${myName ? `, ${esc(myName)}` : ""} !</h1>
-      <p class="center-text">Scanne le <strong>QR code des résultats</strong> affiché par l'animateur pour voir le score ${game.mode === "coop" ? "de l'équipe" : "des deux camps"} et l'undercover de chaque manche jouée.</p>
-      <p class="hint center-text">La partie n'est pas finie ? Reviens à tes cartes : rien n'a été révélé.</p>
+      <h1 class="center-text">${myName ? t("over.titleName", { name: esc(myName) }) : t("over.title")}</h1>
+      <p class="center-text">${t(game.mode === "coop" ? "over.textCoop" : "over.textCompet")}</p>
+      <p class="hint center-text">${t("over.notOver")}</p>
 
       <div class="actions">
-        <a class="btn btn--primary" href="#/play/${game.code}/${seat}">Revoir mes cartes</a>
-        <a class="btn" href="#/">Accueil</a>
+        <a class="btn btn--primary" href="#/play/${game.code}/${seat}">${t("over.cards")}</a>
+        <a class="btn" href="#/">${t("common.home")}</a>
       </div>
       <div class="actions actions--secondary">
-        <button class="btn btn--ghost btn--ghost-danger" id="forget">Supprimer la partie de ce téléphone</button>
+        <button class="btn btn--ghost btn--ghost-danger" id="forget">${t("common.forgetHere")}</button>
       </div>
     </section>`;
-  document.getElementById("forget").onclick = () => confirmForget(game.code, "cette partie");
+  document.getElementById("forget").onclick = () => confirmForget(game.code, "game");
 }
 
 function viewPass(code) {
@@ -2088,9 +1979,9 @@ function viewPass(code) {
     if (seat > game.players) {
       app.innerHTML = `
         <section class="center">
-          <h1>Distribution terminée</h1>
-          <p>Rendez le téléphone à l'animateur.</p>
-          <a class="btn btn--primary" href="#/host/${code}">Aller au tableau de bord</a>
+          <h1>${t("pass.doneTitle")}</h1>
+          <p>${t("pass.doneText")}</p>
+          <a class="btn btn--primary" href="#/host/${code}">${t("pass.toHost")}</a>
         </section>`;
       announceView();
       return;
@@ -2098,12 +1989,12 @@ function viewPass(code) {
     const me = deal.roles[seat - 1];
     app.innerHTML = `
       <section class="center pass">
-        <p class="label">Manche ${state.round} / ${game.rounds} · distribution</p>
+        <p class="label">${t("round.plain", { round: state.round, rounds: game.rounds })} · ${t("pass.label")}</p>
         <h1>${esc(playerName(state, seat))}</h1>
-        <p>Prends le téléphone, puis touche la carte pour la retourner. Elle sera cachée pour le joueur suivant.</p>
+        <p>${t("pass.text")}</p>
         ${secretHtml(deal.rule, playerCardHtml(game, deal, me))}
         <p class="hint">${playerHint(game)}</p>
-        <button class="btn btn--primary" id="next-seat">J'ai vu ma carte → joueur suivant</button>
+        <button class="btn btn--primary" id="next-seat">${t("pass.next")}</button>
       </section>`;
     bindSecret();
     announceView();
@@ -2118,9 +2009,9 @@ function viewPass(code) {
 function viewInvalid(code) {
   app.innerHTML = `
     <section class="center">
-      <h1>Code introuvable</h1>
-      <p>Le code « ${esc(code || "")} » n'est pas valide. S'il s'agit d'une partie créée avant la dernière mise à jour, demandez à l'animateur d'en créer une nouvelle.</p>
-      <a class="btn btn--primary" href="#/join">Saisir un code</a>
+      <h1>${t("invalid.title")}</h1>
+      <p>${t("invalid.text", { code: esc(code || "") })}</p>
+      <a class="btn btn--primary" href="#/join">${t("invalid.enter")}</a>
     </section>`;
 }
 
@@ -2131,7 +2022,7 @@ let firstRender = true;
 function announceView() {
   const h1 = app.querySelector("h1");
   const name = h1?.textContent.replace(/\s+/g, " ").trim();
-  document.title = name ? `${name} – Undercover IA responsable` : "Undercover IA responsable";
+  document.title = name ? `${name} – ${t("app.name")}` : t("app.name");
   if (h1 && !firstRender) {
     h1.tabIndex = -1;
     h1.focus({ preventScroll: true });
@@ -2147,7 +2038,7 @@ function applyEdition(id) {
   else delete document.documentElement.dataset.edition;
   const badge = document.getElementById("edition-badge");
   badge.hidden = !special;
-  badge.textContent = special ? EDITIONS[id].label : "";
+  badge.textContent = special ? t(`edition.${id}`) : "";
   document.querySelector('meta[name="theme-color"]').content = special ? "#0b5f55" : "#00008f";
 }
 
@@ -2231,6 +2122,14 @@ function render() {
   setTimeout(paintWeight, 1500);
 }
 
+// Textes fixes de index.html (barre du haut), dans la langue de l'interface.
+function localizeShell() {
+  document.querySelector(".switch-label").textContent = t("lowtech.switch");
+  document.querySelector(".brand").setAttribute("aria-label", t("common.home"));
+  document.querySelector(".brand small").textContent = t("app.tagline");
+}
+
+localizeShell();
 document.getElementById("mode-toggle")?.addEventListener("click", () => setLowTech(!isLowTech()));
 window.addEventListener("load", paintWeight);
 // Retour visuel à l'appui : la classe .is-pressed reste au moins 150 ms, même pour un toucher très

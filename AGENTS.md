@@ -22,6 +22,7 @@ npm run k8s:render     # rendu Kustomize des manifestes Kubernetes
 | `js/app.js` | Écrans, routeur (fragment d'URL `#/…`), minuteur, accessibilité |
 | `js/game.js` | Moteur déterministe : code de partie, distribution, conditions de victoire, scores |
 | `js/cards.js` | Contenu des 7 règles d'or et des 132 cartes : 44 du jeu de base (`deck: "base"`, validées) et 88 de l'extension (`deck: "ext"`, à valider) |
+| `js/i18n.js`, `js/i18n/` | Textes de l'interface par langue (`fr.js` : référence), fonction `t()` |
 | `js/changelog.js` | Notes de version (page « Nouveautés ») |
 | `js/xlsx.js` | Export Excel des cartes (navigateur et scripts), sans dépendance |
 | `js/icons.js` | Dessins SVG du mode low-tech |
@@ -54,7 +55,8 @@ C'est un engagement documenté dans `doc/fonctionnement-technique.md`. Ne le cas
 
 ### Interface et accessibilité
 
-- **Langue :** les textes de l'interface, les commentaires et les messages de commit sont en **français**.
+- **Langue :** les commentaires et les messages de commit sont en **français**.
+- **Textes de l'interface :** jamais écrits en dur dans le code. Ajoutez-les à `js/i18n/fr.js` et affichez-les avec `t("clé", { paramètres })` (voir `js/i18n.js`) : pluriels avec une entrée `{ one, other }`, dates avec `formatDate()`. Échappez avec `esc()` les valeurs saisies par l'utilisateur (prénoms) avant de les passer à `t()`.
 - **Thèmes :** toute nouvelle interface doit fonctionner dans les deux thèmes (normal et low-tech), en clair et en sombre. Les couleurs passent par les variables CSS de `:root`.
 - **Accessibilité (WCAG 2.1 AA) :**
   - contraste d'au moins 4,5:1 ;

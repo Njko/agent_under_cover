@@ -44,6 +44,12 @@ Le jeu repose sur une **distribution déterministe** (`js/game.js`) :
 
 Les tests automatiques (`npm test`) vérifient que deux appareils obtiennent toujours la même distribution à partir du même code.
 
+Le moteur désigne chaque carte par un identifiant (`classique:R1-C03`, `po:R2-U01` : édition, règle, type et rang dans `js/cards.js`), jamais par son texte. Corriger ou traduire un texte ne change donc pas la distribution ; ajouter, supprimer ou déplacer une carte la change.
+
+## Textes de l'interface
+
+Les textes affichés ne sont pas écrits dans le code : ils sont rangés par clé dans `js/i18n/fr.js` (le français, langue de référence) et affichés par la fonction `t("clé", { paramètres })` de `js/i18n.js`. Les pluriels s'appuient sur `Intl.PluralRules` et les dates sur `toLocaleDateString`, intégrés au navigateur : aucune bibliothèque, aucune requête. Les textes des cartes et des règles d'or restent dans `js/cards.js`.
+
 ## Éditions spéciales
 
 Le jeu existe en plusieurs éditions (`EDITIONS` dans `js/cards.js`) : « Classique » et « Product Owner ». Elles partagent les 7 règles d'or, leurs dos de cartes et la même répartition en jeu de base et extension (44 + 88 cartes) : seules les situations changent. L'édition est stockée sur 3 bits dans le code de partie (la graine fait 16 bits) : les joueurs qui rejoignent une partie en héritent sans rien choisir. `data-edition` posé sur `<html>` change le thème (couleur verte, bandeau hachuré, badge dans la barre du haut). Pour ajouter une édition, ajouter une entrée à la fin de `EDITIONS` (8 au maximum : au-delà, recycler une édition existante) et, si besoin, un bloc `:root[data-edition="…"]` dans `css/style.css`.

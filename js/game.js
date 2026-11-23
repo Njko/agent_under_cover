@@ -6,6 +6,7 @@
 // exactement le même résultat sans jamais communiquer entre eux.
 
 import { EDITION_IDS, RULES, rulesOf } from "./cards.js";
+import { t } from "./i18n.js";
 
 const ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // 32 symboles, sans 0/O/1/I
 export const CODE_LENGTH = 9; // 9 × 5 bits = 45 bits
@@ -86,37 +87,43 @@ function checksum(payload) {
 
 export function validateSettings({ players, undercovers, rules = [1], rounds = 1, mode = "coop", deck = "base", edition = "classique" }) {
   if (!Number.isInteger(players) || players < MIN_PLAYERS || players > MAX_PLAYERS) {
-    return `Le nombre de joueurs doit être compris entre ${MIN_PLAYERS} et ${MAX_PLAYERS}.`;
+    return t("error.players", { min: MIN_PLAYERS, max: MAX_PLAYERS });
   }
   if (undercovers !== 1 && undercovers !== 2) {
-    return "Il faut 1 ou 2 undercovers.";
+    return t("error.undercovers");
   }
   if (players - undercovers < 2) {
-    return "Il faut au moins 2 équipiers : ajoutez des joueurs ou retirez un undercover.";
+    return t("error.civilians");
   }
   if (undercovers === 2 && players < MIN_PLAYERS_TWO_UNDERCOVERS) {
-    return `Deux undercovers, c'est à partir de ${MIN_PLAYERS_TWO_UNDERCOVERS} joueurs : ajoutez des joueurs ou choisissez 1 undercover.`;
+    return t("error.twoUndercovers", { n: MIN_PLAYERS_TWO_UNDERCOVERS });
   }
   if (mode === "compet" && players < MIN_COMPET_PLAYERS) {
-    return `En compétitif, il faut au moins ${MIN_COMPET_PLAYERS} joueurs : à 3, un seul équipier éliminé à tort fait perdre la manche. Choisissez le mode coopératif.`;
+    return t("error.compet", { n: MIN_COMPET_PLAYERS });
   }
   if (!rules.length) {
-    return "Choisissez au moins une règle d'or.";
+    return t("error.noRule");
   }
   if (deck === "base" && players > MAX_BASE_PLAYERS) {
-    return `Au-delà de ${MAX_BASE_PLAYERS} joueurs, choisissez « Jeu de base et extension » : le jeu de base n'a pas assez de cartes différentes.`;
+    return t("error.baseDeck", { n: MAX_BASE_PLAYERS });
   }
-  // Deux joueurs ne doivent jamais recevoir la même carte : chaque règle jouée doit avoir au moins une
-  // bonne pratique par équipier.
+  const shortage = deckShortage({ players, undercovers, rules, deck, edition });
+  if (shortage) return shortage;
+  if (!Number.isInteger(rounds) || rounds < 1 || rounds > MAX_ROUNDS) {
+    return t("error.rounds", { max: MAX_ROUNDS });
+  }
+  return null;
+}
+
+/**
+ * Deux joueurs ne doivent jamais recevoir la même carte : chaque règle jouée doit avoir au moins une
+ * bonne pratique par équipier. Renvoie le message à afficher, ou null s'il y a assez de cartes.
+ */
+export function deckShortage({ players, undercovers, rules, deck = "base", edition = "classique" }) {
   const civilians = players - undercovers;
   for (const rule of rulesOf(edition).filter((r) => rules.includes(r.id))) {
     const available = rulePool(rule, deck).civilians.length;
-    if (available < civilians) {
-      return `La règle d'or ${rule.id} n'a que ${available} bonnes pratiques dans ce jeu de cartes, pour ${civilians} équipiers : choisissez « Jeu de base et extension », ajoutez un undercover ou retirez cette règle.`;
-    }
-  }
-  if (!Number.isInteger(rounds) || rounds < 1 || rounds > MAX_ROUNDS) {
-    return `Le nombre de manches doit être compris entre 1 et ${MAX_ROUNDS}.`;
+    if (available < civilians) return t("error.shortage", { id: rule.id, available, civilians });
   }
   return null;
 }
