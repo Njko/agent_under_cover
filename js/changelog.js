@@ -6,6 +6,14 @@
 
 export const CHANGELOG = [
   {
+    date: "2026-11-23",
+    title: "Illustrations des règles d'or remises à leur place",
+    items: [
+      "Chaque dos de carte montre désormais l'illustration de sa règle d'or : la main qui garde le contrôle pour le contrôle humain, le bouclier pour la sécurité, l'institution reliée à tous les domaines pour la gouvernance, la feuille pour l'impact environnemental, le cercle de personnes pour l'équité et l'inclusion, le cœur pour l'IA au cœur de l'humain. Les titres et les couleurs ne changent pas.",
+      "Le mode low-tech suit le même changement.",
+    ],
+  },
+  {
     date: "2026-11-17",
     title: "Aperçu des liens, code plus long, écran animateur allégé",
     items: [
