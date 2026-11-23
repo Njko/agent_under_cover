@@ -9,20 +9,47 @@
 export const CHANGELOG = [
   {
     date: "2026-11-23",
-    title: "Le jeu en anglais",
+    title: "Le jeu en cinq langues",
     items: [
-      "Le jeu est désormais disponible en anglais : interface, aide et toutes les cartes des deux éditions. La traduction est encore à relire.",
+      "Le jeu est désormais disponible en français, anglais, allemand, italien et espagnol : interface, aide et toutes les cartes des deux éditions. Les traductions sont encore à relire.",
       "La langue est celle du téléphone, ou celle du lien ouvert. Pour en changer, utilisez le choix « Langue » en bas de l'accueil, de l'écran « Rejoindre une partie » ou de l'écran de sa carte : il est mémorisé sur ce téléphone.",
       "Dans une même partie, chacun peut jouer dans sa langue : le code de partie et la distribution des cartes ne changent pas.",
       "Les liens et QR codes de l'animateur sont dans sa langue : dans Teams ou une messagerie, leur aperçu (titre, description, image) est traduit.",
     ],
     en: {
-      title: "The game in English",
+      title: "The game in five languages",
       items: [
-        "The game is now available in English: interface, help and all the cards of both editions. The translation still needs to be reviewed.",
+        "The game is now available in French, English, German, Italian and Spanish: interface, help and all the cards of both editions. The translations still need to be reviewed.",
         "The language follows your phone's settings, or the link you opened. To change it, use the “Language” option at the bottom of the home screen, the “Join a game” screen or your card screen: it is remembered on this phone.",
         "Within the same game, everyone can play in their own language: the game code and the cards dealt do not change.",
         "The facilitator's links and QR codes are in their language: in Teams or a messaging app, their preview (title, description, image) is translated.",
+      ],
+    },
+    de: {
+      title: "Das Spiel in fünf Sprachen",
+      items: [
+        "Das Spiel ist jetzt auf Französisch, Englisch, Deutsch, Italienisch und Spanisch verfügbar: Oberfläche, Hilfe und alle Karten beider Editionen. Die Übersetzungen müssen noch geprüft werden.",
+        "Die Sprache richtet sich nach dem Telefon oder nach dem geöffneten Link. Zum Wechseln nutzen Sie die Auswahl „Sprache“ unten auf der Startseite, auf dem Bildschirm „Spiel beitreten“ oder auf dem Bildschirm Ihrer Karte: Sie wird auf diesem Telefon gespeichert.",
+        "Im selben Spiel kann jeder in seiner Sprache spielen: Der Spielcode und die verteilten Karten ändern sich nicht.",
+        "Die Links und QR-Codes der Spielleitung sind in ihrer Sprache: In Teams oder einem Messenger ist ihre Vorschau (Titel, Beschreibung, Bild) übersetzt.",
+      ],
+    },
+    it: {
+      title: "Il gioco in cinque lingue",
+      items: [
+        "Il gioco è ora disponibile in francese, inglese, tedesco, italiano e spagnolo: interfaccia, aiuto e tutte le carte delle due edizioni. Le traduzioni sono ancora da rivedere.",
+        "La lingua è quella del telefono, o quella del link aperto. Per cambiarla, usate la scelta «Lingua» in fondo alla home, alla schermata «Entra in una partita» o alla schermata della propria carta: viene memorizzata su questo telefono.",
+        "Nella stessa partita, ognuno può giocare nella propria lingua: il codice della partita e la distribuzione delle carte non cambiano.",
+        "I link e i QR code di chi conduce sono nella sua lingua: in Teams o in una chat, la loro anteprima (titolo, descrizione, immagine) è tradotta.",
+      ],
+    },
+    es: {
+      title: "El juego en cinco idiomas",
+      items: [
+        "El juego ya está disponible en francés, inglés, alemán, italiano y español: interfaz, ayuda y todas las cartas de las dos ediciones. Las traducciones aún están por revisar.",
+        "El idioma es el del teléfono, o el del enlace abierto. Para cambiarlo, usad la opción «Idioma» al pie de la página de inicio, de la pantalla «Unirse a una partida» o de la pantalla de vuestra carta: se guarda en este teléfono.",
+        "En una misma partida, cada uno puede jugar en su idioma: el código de la partida y el reparto de las cartas no cambian.",
+        "Los enlaces y códigos QR de quien dirige están en su idioma: en Teams o en una mensajería, su vista previa (título, descripción, imagen) está traducida.",
       ],
     },
   },
@@ -31,13 +58,34 @@ export const CHANGELOG = [
     title: "Dos de cartes plus lisibles",
     items: [
       "Le titre de la règle d'or est désormais écrit en texte sur le dos des cartes, et non plus dans l'image : il reste net à toutes les tailles d'écran et il est lu par les lecteurs d'écran. Le libellé « Règle d'or » est un peu plus clair, pour mieux ressortir sur le fond.",
-      "Les illustrations et les couleurs ne changent pas. C'est une première étape vers un jeu disponible en anglais, allemand, italien et espagnol.",
+      "Les illustrations et les couleurs ne changent pas.",
     ],
     en: {
       title: "Easier-to-read card backs",
       items: [
         "The golden rule's title is now written as text on the card backs, rather than in the image: it stays sharp at every screen size and is read out by screen readers. The “Golden rule” label is slightly lighter, to stand out better against the background.",
-        "The illustrations and colours are unchanged. This is a first step towards a game available in English, German, Italian and Spanish.",
+        "The illustrations and colours are unchanged.",
+      ],
+    },
+    de: {
+      title: "Besser lesbare Kartenrückseiten",
+      items: [
+        "Der Titel der goldenen Regel steht jetzt als Text auf der Kartenrückseite und nicht mehr im Bild: Er bleibt auf allen Bildschirmgrößen scharf und wird von Screenreadern vorgelesen. Die Beschriftung „Goldene Regel“ ist etwas heller, damit sie sich besser vom Hintergrund abhebt.",
+        "Illustrationen und Farben bleiben unverändert.",
+      ],
+    },
+    it: {
+      title: "Dorsi delle carte più leggibili",
+      items: [
+        "Il titolo della regola d'oro è ora scritto come testo sul dorso delle carte, e non più nell'immagine: resta nitido su tutti gli schermi ed è letto dai lettori di schermo. L'etichetta «Regola d'oro» è un po' più chiara, per risaltare meglio sullo sfondo.",
+        "Le illustrazioni e i colori non cambiano.",
+      ],
+    },
+    es: {
+      title: "Dorsos de las cartas más legibles",
+      items: [
+        "El título de la regla de oro aparece ahora como texto en el dorso de las cartas, y no en la imagen: se ve nítido en todos los tamaños de pantalla y lo leen los lectores de pantalla. La etiqueta «Regla de oro» es algo más clara, para destacar mejor sobre el fondo.",
+        "Las ilustraciones y los colores no cambian.",
       ],
     },
   },

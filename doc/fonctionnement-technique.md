@@ -52,6 +52,8 @@ Les textes affichés ne sont pas écrits dans le code : ils sont rangés par cl�
 
 Langues proposées : `LANGUAGES` dans `js/i18n.js`. Chaque langue a deux fichiers : `js/i18n/<langue>.js` pour l'interface (mêmes clés que `fr.js`) et `js/i18n/cards-<langue>.js` pour les règles d'or et les cartes, rangées par identifiant de carte. Les textes français des cartes restent dans `js/cards.js`, qui reste la source de l'export Excel ; `cardText()` et `ruleText()` renvoient le texte dans la langue active. Seuls les fichiers de la langue active sont chargés à l'ouverture ; le service worker les garde tous en cache pour le hors-ligne.
 
+Langues actuelles : français (référence), anglais, allemand, italien et espagnol. Les traductions sont à faire relire par des personnes du métier dans chaque pays. Pour **ajouter une langue** : créez `js/i18n/<code>.js` et `js/i18n/cards-<code>.js` (en partant de l'anglais pour la structure), ajoutez le code à `LANGUAGES`, puis lancez `npm run liens:generer` et `npm run apercu`, ajoutez les fichiers et les pages `links/<code>/join/` et `links/<code>/results/` à `ASSETS` dans `sw.js`, et traduisez la dernière entrée de `js/changelog.js`. `npm test` signale tout oubli.
+
 La langue est un réglage du téléphone, pas de la partie : elle n'entre pas dans le code de partie, et des joueurs d'une même partie peuvent jouer dans des langues différentes. Ordre de choix : langue choisie sur le téléphone (`lang`), sinon celle du lien ouvert, sinon la première langue du navigateur que le jeu connaît, sinon le français. Les tests (`tests/i18n.test.js`) vérifient que chaque traduction est complète : mêmes clés et mêmes paramètres que le français, une traduction pour chaque carte et chaque explication.
 
 ## Éditions spéciales

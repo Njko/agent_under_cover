@@ -94,7 +94,12 @@ def apercu(textes):
     draw = ImageDraw.Draw(image)
     titre = police(True, 86)
     draw.text((62, 361), "Undercover", font=titre, fill=BLANC, anchor="ls")
-    draw.text((62, 456), textes["tagline"], font=titre, fill=ACCENT, anchor="ls")
+    # Le sous-titre de la marque (« IA responsable », « Verantwortungsvolle KI »…) est réduit s'il passerait
+    # sous l'éventail de cartes (640 px de large au plus).
+    taille = 86
+    while draw.textlength(textes["tagline"], font=police(True, taille)) > 640:
+        taille -= 2
+    draw.text((62, 456), textes["tagline"], font=police(True, taille), fill=ACCENT, anchor="ls")
     sous_titre = police(False, 36)
     # Lignes équilibrées : la plus petite largeur qui garde le même nombre de lignes qu'à 560 px.
     n = len(lignes(draw, textes["text"], sous_titre, 560))

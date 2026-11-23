@@ -6,7 +6,7 @@
 import fr from "./i18n/fr.js";
 
 // Langues proposées, sous leur propre nom.
-export const LANGUAGES = { fr: "Français", en: "English" };
+export const LANGUAGES = { fr: "Français", en: "English", de: "Deutsch", it: "Italiano", es: "Español" };
 
 export let lang = "fr";
 let dict = fr;
