@@ -226,6 +226,7 @@ input[type="number"], input.code-input, input.name {
 }
 .fan-card { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .fan-card img { display: block; width: 100%; height: 100%; filter: drop-shadow(0 3px 6px rgba(10, 18, 38, 0.3)); }
+.fan-back { width: 100%; height: 100%; }
 /* Carte présentée : redressée, agrandie et centrée, devant les autres.
    Le pivot est sous la carte (160 %) : translateY compense la montée due à l'agrandissement. */
 .fan { --s: 1.9; }

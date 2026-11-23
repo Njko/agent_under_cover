@@ -504,12 +504,13 @@ function backImg(rule, className = "back", { lazy = true, small = false } = {}) 
       </div>`;
   }
   const loading = lazy ? 'loading="lazy"' : "";
-  // Les vignettes sont toujours accompagnées du nom de la règle en texte : elles sont décoratives.
-  if (small) return `<img class="${className}" src="${rule.back.replace(".webp", "-mini.webp")}" width="200" height="279" draggable="false" ${loading} alt="">`;
-  // Grand dos : illustration sans texte, et le texte de la carte en HTML (traduisible).
+  // Illustration sans texte, et le texte de la carte en HTML (traduisible), à l'échelle de la carte.
+  // Les vignettes (small) sont toujours accompagnées du nom de la règle en texte : elles sont décoratives.
+  const label = small ? 'aria-hidden="true"' : `role="img" aria-label="${alt}"`;
+  const [src, w, h] = small ? [rule.back.replace(".webp", "-mini.webp"), 200, 279] : [rule.back, 640, 893];
   return `
-    <div class="${className} back-art back--r${rule.id}" role="img" aria-label="${alt}">
-      <img src="${rule.back}" width="640" height="893" draggable="false" ${loading} alt="">
+    <div class="${className} back-art back--r${rule.id}" ${label}>
+      <img src="${src}" width="${w}" height="${h}" draggable="false" ${loading} alt="">
       <span class="back-text" aria-hidden="true">
         <span class="back-label">${t("back.label")}</span>
         <strong>${esc(ruleText(rule, "theme"))}</strong>
@@ -767,11 +768,8 @@ function bindFan() {
     fan.querySelectorAll(".fan-card").forEach((c) => c.classList.toggle("fan-card--presented", c === card));
     fan.classList.toggle("is-presenting", Boolean(card));
     // Agrandie, la vignette serait floue : on charge l'image en taille réelle à la première présentation.
-    const img = card?.querySelector("img[data-full]");
-    if (img) {
-      img.src = img.dataset.full;
-      img.removeAttribute("data-full");
-    }
+    const img = card?.querySelector('img[src$="-mini.webp"]');
+    if (img) img.src = img.getAttribute("src").replace("-mini.webp", ".webp");
   };
   fan.addEventListener("click", (e) => {
     const card = e.target.closest(".fan-card");
@@ -805,7 +803,7 @@ function viewHome() {
           ? `<p class="lt-logo" aria-hidden="true">UNDER←COVER</p>`
           : `<div class="fan" aria-hidden="true">
               ${RULES.map(
-                (r, i) => `<span class="fan-card fan-${i}"><img src="${r.back.replace(".webp", "-mini.webp")}" data-full="${r.back}" alt="" width="200" height="279" draggable="false"></span>`
+                (r, i) => `<span class="fan-card fan-${i}">${backImg(r, "fan-back", { lazy: false, small: true })}</span>`
               ).join("")}
             </div>`
       }
