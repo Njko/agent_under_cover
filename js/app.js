@@ -8,14 +8,12 @@ import {
   MAX_ROUNDS,
   MIN_PLAYERS,
   MAX_PLAYERS,
-  MAX_BASE_PLAYERS,
   MIN_PLAYERS_TWO_UNDERCOVERS,
   decodeCode,
   dealRound,
   COOP_MAX_POINTS,
   coopFound,
   coopPoints,
-  deckShortage,
   newCode,
   outcome,
   rulePool,
@@ -124,16 +122,26 @@ const store = {
 // Efface d'un téléphone tout ce qui concerne une partie (animateur ou joueur).
 function forgetGame(code) {
   for (const key of store.keys()) {
-    if (key === `host:${code}` || key === `names:${code}` || key.startsWith(`player:${code}:`)) store.remove(key);
+    if ([`host:${code}`, `names:${code}`, `title:${code}`].includes(key) || key.startsWith(`player:${code}:`)) store.remove(key);
   }
-  if (store.get("lastHost", null) === code) store.remove("lastHost");
   if (store.get("lastPlayer", null)?.code === code) store.remove("lastPlayer");
 }
 
 function forgetAllGames() {
   for (const key of store.keys()) {
-    if (/^(host|names|player):/.test(key) || key === "lastHost" || key === "lastPlayer") store.remove(key);
+    if (/^(host|names|player|title):/.test(key) || key === "lastHost" || key === "lastPlayer") store.remove(key);
   }
+}
+
+// Nom donné à la partie par l'animateur, pour la retrouver dans la liste de l'accueil (facultatif).
+const MAX_TITLE_LENGTH = 40;
+
+function cleanTitle(title) {
+  return String(title || "").replace(/[|\n]/g, " ").trim().slice(0, MAX_TITLE_LENGTH);
+}
+
+function gameTitle(code) {
+  return store.get(`title:${code}`, "");
 }
 
 // Une page peut imposer son adresse publique (ex. quand elle est intégrée dans une iframe).
@@ -170,27 +178,29 @@ function nameList(names, players) {
   return Array.from({ length: players }, (_, i) => cleanName(names[i + 1]));
 }
 
-function encodeNames(names, players) {
+// Le nom de la partie suit les prénoms, comme un joueur de plus : les versions précédentes de
+// l'application l'ignorent (elles n'affichent que les places de la partie).
+function encodeNames(names, players, title = "") {
   const list = nameList(names, players);
-  return list.some(Boolean) ? toBase64Url(list.join("|")) : "";
+  const name = cleanTitle(title);
+  return list.some(Boolean) || name ? toBase64Url([...list, ...(name ? [name] : [])].join("|")) : "";
 }
 
-function decodeNames(token) {
+function decodeNames(token, players) {
   try {
+    const parts = fromBase64Url(token).split("|");
     const names = {};
-    fromBase64Url(token)
-      .split("|")
-      .forEach((n, i) => {
-        if (cleanName(n)) names[i + 1] = cleanName(n);
-      });
-    return names;
+    parts.slice(0, players).forEach((n, i) => {
+      if (cleanName(n)) names[i + 1] = cleanName(n);
+    });
+    return { names, title: cleanTitle(parts[players]) };
   } catch {
-    return {};
+    return { names: {}, title: "" };
   }
 }
 
 function joinUrl(code, seat, names = {}, players = 0) {
-  const token = encodeNames(names, players);
+  const token = encodeNames(names, players, gameTitle(code));
   return `${entryUrl("join")}#join-${code}${seat ? `-${seat}` : ""}${token ? `~${token}` : ""}`;
 }
 
@@ -605,8 +615,8 @@ function hostState(code) {
 }
 
 function saveHostState(code, state) {
-  store.set(`host:${code}`, state);
-  store.set("lastHost", code);
+  // updated : dernière ouverture, pour lister les animations de la plus récente à la plus ancienne.
+  store.set(`host:${code}`, { ...state, updated: Date.now() });
 }
 
 function playerName(state, seat) {
@@ -789,12 +799,49 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && modal.hidden) unpresentFan?.();
 });
 
+// Parties enregistrées sur ce téléphone : animations (de la plus récente à la plus ancienne), puis
+// parties rejointes (la dernière ouverte en tête). Le nom de la partie, s'il y en a un, sert de titre.
+function savedGamesHtml() {
+  const keys = store.keys();
+  const hosted = keys
+    .map((k) => k.match(/^host:(\w+)$/)?.[1])
+    .filter((code) => code && decodeCode(code))
+    .map((code) => ({ code, state: hostState(code) }))
+    .sort((a, b) => (b.state.updated || 0) - (a.state.updated || 0));
+  const last = store.get("lastPlayer", null);
+  const joined = keys
+    .map((k) => k.match(/^player:(\w+):(\d+)$/))
+    .filter((m) => m && decodeCode(m[1]))
+    .map(([, code, seat]) => ({ code, seat: Number(seat) }))
+    .sort((a, b) => (b.code === last?.code && b.seat === last?.seat) - (a.code === last?.code && a.seat === last?.seat));
+  const item = (href, title, fallback, role, detail, code, label, forgetKey) => `
+    <li class="resume-item">
+      <a href="${href}">
+        <strong>${title ? esc(title) : t(fallback)}</strong>
+        <small>${title ? `${t(role)} · ` : ""}${detail}</small>
+      </a>
+      <button class="icon-btn" data-forget="${code}" data-label="${label}" aria-label="${t(forgetKey, { code: esc(prettyCode(code)) })}">${TRASH_ICON}</button>
+    </li>`;
+  const items = [
+    ...hosted.map(({ code, state }) =>
+      item(`#/host/${code}`, gameTitle(code), "home.resumeHost", "home.asHost",
+        t("home.hostGame", { code: esc(prettyCode(code)), round: state.round, rounds: decodeCode(code).rounds }), code, "host", "home.forgetHost")
+    ),
+    ...joined.map(({ code, seat }) =>
+      item(`#/play/${code}/${seat}`, gameTitle(code), "home.resumePlayer", "home.asPlayer",
+        t("home.playerGame", { code: esc(prettyCode(code)), name: esc(knownNames(code)[seat] || t("player.seat", { n: seat })) }), code, "game", "home.forgetGame")
+    ),
+  ];
+  return items.length
+    ? `<section class="resume">
+        <h2 class="section-title" id="resume-title">${t("home.resume")}</h2>
+        <ul class="resume-list" aria-labelledby="resume-title">${items.join("")}</ul>
+      </section>`
+    : "";
+}
+
 function viewHome() {
-  const lastHost = store.get("lastHost", null);
-  const lastPlayer = store.get("lastPlayer", null);
-  const hostGame = lastHost && decodeCode(lastHost);
-  const playerGame = lastPlayer && decodeCode(lastPlayer.code);
-  const hasData = store.keys().some((k) => /^(host|names|player):/.test(k));
+  const hasData = store.keys().some((k) => /^(host|names|player|title):/.test(k));
 
   app.innerHTML = `
     <section class="hero">
@@ -815,35 +862,7 @@ function viewHome() {
       <a class="btn" href="#/join">${t("home.join")}</a>
     </div>
 
-    ${
-      hostGame || playerGame
-        ? `<section class="resume">
-            <h2 class="section-title">${t("home.resume")}</h2>
-            ${
-              hostGame
-                ? `<div class="resume-item">
-                    <a href="#/host/${lastHost}">
-                      <strong>${t("home.resumeHost")}</strong>
-                      <small>${t("home.hostGame", { code: esc(prettyCode(lastHost)), round: hostState(lastHost).round, rounds: hostGame.rounds })}</small>
-                    </a>
-                    <button class="icon-btn" data-forget="${lastHost}" data-label="host" aria-label="${t("home.forgetHost", { code: esc(prettyCode(lastHost)) })}">${TRASH_ICON}</button>
-                  </div>`
-                : ""
-            }
-            ${
-              playerGame
-                ? `<div class="resume-item">
-                    <a href="#/play/${lastPlayer.code}/${lastPlayer.seat}">
-                      <strong>${t("home.resumePlayer")}</strong>
-                      <small>${t("home.playerGame", { code: esc(prettyCode(lastPlayer.code)), name: esc(knownNames(lastPlayer.code)[lastPlayer.seat] || t("player.seat", { n: lastPlayer.seat })) })}</small>
-                    </a>
-                    <button class="icon-btn" data-forget="${lastPlayer.code}" data-label="game" aria-label="${t("home.forgetGame", { code: esc(prettyCode(lastPlayer.code)) })}">${TRASH_ICON}</button>
-                  </div>`
-                : ""
-            }
-          </section>`
-        : ""
-    }
+    ${savedGamesHtml()}
 
     <nav class="tiles" aria-label="${t("home.discover")}">
       <a class="tile" href="#/rules">
@@ -1122,6 +1141,14 @@ function onCatalogResize() {
   equalizeFrame = requestAnimationFrame(equalizeCards);
 }
 
+// Durée d'atelier, en gros : aux premiers essais, une équipe qui découvre le jeu fait 3 à 4 manches en
+// une heure (lecture des cartes, débrief de chaque manche et débrief final compris), soit ~15 min par manche.
+function workshopDuration(rounds) {
+  const minutes = Math.max(30, rounds * 15);
+  const [h, m] = [Math.floor(minutes / 60), minutes % 60];
+  return !h ? t("unit.minutes", { n: m }) : m ? t("unit.hoursMinutes", { h, m }) : t("unit.hours", { h });
+}
+
 function viewHostSetup() {
   const prefs = {
     players: 5,
@@ -1130,9 +1157,8 @@ function viewHostSetup() {
     ordered: false,
     rounds: 5,
     mode: "coop",
-    deck: "base",
-    ucCards: "same",
     edition: "classique",
+    setup: "simple",
     names: {},
     ...store.get("hostPrefs", {}),
   };
@@ -1149,6 +1175,22 @@ function viewHostSetup() {
     <section>
       <h1>${t("setup.title")}</h1>
       <form id="setup" class="form">
+        <label class="fs-title" for="game-title"><span>${t("setup.gameTitle")}</span>
+          <input id="game-title" name="title" class="name" maxlength="${MAX_TITLE_LENGTH}" autocomplete="off" placeholder="${t("setup.gameTitlePlaceholder")}" aria-describedby="game-title-hint">
+          <small class="hint" id="game-title-hint">${t("setup.gameTitleHint")}</small>
+        </label>
+
+        <fieldset class="fs-setup">
+          <legend>${t("setup.setup")}</legend>
+          ${["simple", "advanced"]
+            .map(
+              (id) => `
+          <label class="radio mode-pick"><input type="radio" name="setup" value="${id}" ${prefs.setup === id ? "checked" : ""}>
+            <span><strong>${t(`setup.${id}`)}</strong><br><small>${t(`setup.${id}Hint`)}</small></span></label>`
+            )
+            .join("")}
+        </fieldset>
+
         <fieldset class="fs-edition">
           <legend>${t("setup.edition")}</legend>
           ${EDITION_IDS.map(
@@ -1192,6 +1234,7 @@ function viewHostSetup() {
             <input id="rounds" name="rounds" type="number" inputmode="numeric" min="1" max="${MAX_ROUNDS}" value="${prefs.rounds}" aria-label="${t("setup.roundsCount")}">
             <button type="button" data-step="1" aria-label="${t("setup.roundsMore")}">+</button>
           </div>
+          <p class="hint" id="rounds-duration" aria-live="polite"></p>
           <p class="hint">${t("setup.roundsHint")}</p>
         </fieldset>
 
@@ -1216,22 +1259,10 @@ function viewHostSetup() {
           <p class="rules-hint" id="rules-hint" aria-live="polite"></p>
         </fieldset>
 
-        <fieldset class="fs-deck">
-          <legend>${t("setup.deck")}</legend>
-          <label class="radio"><input type="radio" name="deck" value="base" ${prefs.deck !== "ext" ? "checked" : ""}> <span>${t("deck.base")} <small>${t("setup.deckBaseCount", { n: countCards("base") })}</small></span></label>
-          <label class="radio"><input type="radio" name="deck" value="ext" ${prefs.deck === "ext" ? "checked" : ""}> <span>${t("setup.deckExt")} <small>${t("setup.deckExtCount", { n: countCards("ext") })}</small></span></label>
-          <p class="hint" id="deck-hint" aria-live="polite"></p>
-        </fieldset>
-
         <fieldset class="fs-undercovers">
           <legend>${t("setup.undercovers")}</legend>
           <label class="radio"><input type="radio" name="undercovers" value="1" ${prefs.undercovers === 1 ? "checked" : ""}> <span>${t("setup.oneUndercover")}</span></label>
           <label class="radio"><input type="radio" name="undercovers" value="2" ${prefs.undercovers === 2 ? "checked" : ""}> <span>${t("setup.twoUndercovers", { n: MIN_PLAYERS_TWO_UNDERCOVERS })}</span></label>
-          <fieldset class="uc-cards" id="uc-cards" ${prefs.undercovers === 2 ? "" : "hidden"}>
-            <legend>${t("setup.ucCards")}</legend>
-            <label class="radio"><input type="radio" name="ucCards" value="same" ${prefs.ucCards !== "distinct" ? "checked" : ""}> <span>${t("setup.ucSame")}</span></label>
-            <label class="radio"><input type="radio" name="ucCards" value="distinct" ${prefs.ucCards === "distinct" ? "checked" : ""}> <span>${t("setup.ucDistinct")}</span></label>
-          </fieldset>
         </fieldset>
 
         <p class="error" id="setup-error" role="alert"></p>
@@ -1266,7 +1297,7 @@ function viewHostSetup() {
     const bulk = e.target.closest("[data-rules]");
     if (bulk) form.querySelectorAll('input[name="rules"]').forEach((c) => (c.checked = bulk.dataset.rules === "all"));
     syncRulesHint();
-    syncDeck();
+    syncUcCards();
   });
   form.elements.players.addEventListener("change", renderNames);
 
@@ -1283,6 +1314,9 @@ function viewHostSetup() {
 
   // Compare le nombre de manches au nombre de règles choisies : toutes ne seront pas forcément jouées.
   const syncRulesHint = () => {
+    document.getElementById("rounds-duration").textContent = t("setup.duration", {
+      duration: workshopDuration(Number(form.elements.rounds.value) || 1),
+    });
     const hint = document.getElementById("rules-hint");
     const rules = form.querySelectorAll('input[name="rules"]:checked').length;
     const rounds = Number(form.elements.rounds.value) || 0;
@@ -1303,39 +1337,25 @@ function viewHostSetup() {
             : t("setup.rulesEqual");
     hint.classList.toggle("rules-hint--warn", rules > 0 && rounds > 0 && rounds < rules);
   };
-  // Undercovers : 2 seulement à partir de 7 joueurs (le choix reste visible, mais indisponible) ; le
-  // choix de leurs cartes n'apparaît qu'avec 2 undercovers.
+  // Préparation simplifiée : mode coopératif et 1 undercover, sans montrer ces choix. La préparation
+  // avancée les débloque (les choix faits restent en place quand on repasse en simplifiée).
+  const simple = () => form.elements.setup.value === "simple";
+  const chosenUndercovers = () => (simple() ? 1 : Number(form.elements.undercovers.value));
+  // Undercovers : 2 seulement à partir de 7 joueurs (le choix reste visible, mais indisponible).
   const syncUcCards = () => {
     const players = Number(form.elements.players.value) || MIN_PLAYERS;
     const one = form.querySelector('input[name="undercovers"][value="1"]');
     const two = form.querySelector('input[name="undercovers"][value="2"]');
     two.disabled = players < MIN_PLAYERS_TWO_UNDERCOVERS;
     if (two.disabled && two.checked) one.checked = true;
-    document.getElementById("uc-cards").hidden = !two.checked;
+    form.querySelector(".fs-mode").hidden = simple();
+    form.querySelector(".fs-undercovers").hidden = simple();
   };
   form.addEventListener("change", syncUcCards);
   syncUcCards();
 
-  // Jeu de cartes : au-delà de 5 joueurs, l'extension est obligatoire (jeu de base trop petit pour que
-  // chacun ait une carte différente). En dessous, on signale une règle qui manquerait de cartes.
-  const syncDeck = () => {
-    const players = Number(form.elements.players.value) || MIN_PLAYERS;
-    const baseInput = form.querySelector('input[name="deck"][value="base"]');
-    const tooMany = players > MAX_BASE_PLAYERS;
-    baseInput.disabled = tooMany;
-    if (tooMany && baseInput.checked) form.querySelector('input[name="deck"][value="ext"]').checked = true;
-    const rules = [...form.querySelectorAll('input[name="rules"]:checked')].map((c) => Number(c.value));
-    const shortage =
-      !tooMany && baseInput.checked && rules.length
-        ? deckShortage({ players, undercovers: Number(form.elements.undercovers.value), rules, deck: "base", edition: form.elements.edition.value })
-        : null;
-    document.getElementById("deck-hint").textContent = tooMany ? t("setup.extRequired", { n: MAX_BASE_PLAYERS }) : shortage || "";
-    syncUcCards();
-  };
-  form.addEventListener("change", syncDeck);
   form.elements.edition.forEach((r) => r.addEventListener("change", () => applyEdition(form.elements.edition.value)));
-  form.elements.players.addEventListener("input", syncDeck);
-  syncDeck();
+  form.elements.players.addEventListener("input", syncUcCards);
   form.addEventListener("input", syncRulesHint);
   form.addEventListener("change", syncRulesHint);
   syncRulesHint();
@@ -1343,16 +1363,19 @@ function viewHostSetup() {
 
   form.addEventListener("submit", (e) => {
     e.preventDefault();
+    const undercovers = chosenUndercovers();
     const settings = {
       players: Number(form.elements.players.value),
-      undercovers: Number(form.elements.undercovers.value),
+      undercovers,
       rules: [...form.querySelectorAll('input[name="rules"]:checked')].map((c) => Number(c.value)),
       ordered: form.elements.ordered.value === "1",
       rounds: Number(form.elements.rounds.value),
-      mode: form.elements.mode.value,
-      deck: form.elements.deck.value,
+      mode: simple() ? "coop" : form.elements.mode.value,
+      // Jeu de base et extension, toujours : le choix du jeu de cartes a été retiré.
+      deck: "ext",
       edition: form.elements.edition.value,
-      ucCards: form.elements.undercovers.value === "2" ? form.elements.ucCards.value : "same",
+      // Deux undercovers ont toujours chacun leur carte (l'extension, obligatoire à 7 joueurs, en a 4 par règle).
+      ucCards: undercovers === 2 ? "distinct" : "same",
     };
     const error = validateSettings(settings);
     if (error) {
@@ -1363,8 +1386,11 @@ function viewHostSetup() {
     for (let seat = 1; seat <= settings.players; seat++) {
       if (cleanName(typedNames[seat])) names[seat] = cleanName(typedNames[seat]);
     }
-    store.set("hostPrefs", { ...settings, names: typedNames });
+    // Les choix avancés sont mémorisés tels quels, même si la préparation simplifiée les a ignorés.
+    store.set("hostPrefs", { ...settings, mode: form.elements.mode.value, undercovers: Number(form.elements.undercovers.value), setup: form.elements.setup.value, names: typedNames });
     const code = newCode(settings, () => crypto.getRandomValues(new Uint32Array(1))[0] / 2 ** 32);
+    const title = cleanTitle(form.elements.title.value);
+    if (title) store.set(`title:${code}`, title);
     saveHostState(code, { ...hostState(code), names });
     go(`#/host/${code}`);
   });
@@ -1396,6 +1422,7 @@ function viewHost(code) {
       <div class="share">
         ${qrSlot(url, t("host.qr"))}
         <div>
+          ${gameTitle(code) ? `<p class="game-title">${esc(gameTitle(code))}</p>` : ""}
           <p class="label">${t("host.code")}</p>
           <p class="code">${esc(prettyCode(code))}</p>
           <p class="small">${summary}</p>
@@ -1432,6 +1459,7 @@ function viewHost(code) {
             </div>`
       }
 
+      ${coop && !result ? `<p class="show-all"><button class="btn btn--small" id="show-all">${t("host.showAll")}</button></p>` : ""}
       <ul class="players">
         ${deal.roles
           .map((r) => {
@@ -1458,13 +1486,14 @@ function viewHost(code) {
 
       <div class="actions">
         ${result ? `<button class="btn btn--primary" id="debrief">${t("host.debrief")}</button>` : ""}
+        ${/* Option « Distribuer sur ce téléphone » masquée : sans objet quand l'animateur projette son écran. La route #/pass reste en place. */ ""}
+        ${!result ? `<button class="btn btn--ghost" id="debrief">${t("host.reveal")}</button>` : ""}
         ${
+          // « Manche suivante » (ou « Voir les résultats ») toujours en dernier : à droite, ou en bas sur téléphone.
           lastRound
             ? `<a class="btn" href="#/end/${code}" id="finish">${t("host.results")}</a>`
             : `<button class="btn" id="next">${t("round.next")}</button>`
         }
-        ${/* Option « Distribuer sur ce téléphone » masquée : sans objet quand l'animateur projette son écran. La route #/pass reste en place. */ ""}
-        ${!result ? `<button class="btn btn--ghost" id="debrief">${t("host.reveal")}</button>` : ""}
       </div>
       ${!lastRound ? `<div class="actions actions--secondary"><button class="btn btn--ghost" id="end-now">${t("host.endNow")}</button></div>` : ""}
       <div class="danger-zone">
@@ -1517,15 +1546,22 @@ function viewHost(code) {
     })
   );
 
+  // Coopératif : toutes les cartes de la manche d'un coup, pour comparer avant de désigner. Comme pour
+  // une carte seule, ni rôle ni mention « Extension », et la manche continue.
+  document.getElementById("show-all")?.addEventListener("click", () => {
+    const s = hostState(code);
+    openModal(`
+      <h2>${t("host.allCardsTitle", { round: s.round })}</h2>
+      <p class="small">${t("host.allCardsHint")}</p>
+      <div class="all-cards">
+        ${deal.roles.map((r) => cardHtml({ ruleId: deal.rule.id, text: cardText(r.card), label: playerName(s, r.seat) })).join("")}
+      </div>
+      <button class="btn btn--primary" data-close>${t("common.close")}</button>`);
+  });
+
   app.querySelectorAll("[data-eliminate]").forEach((btn) =>
     btn.addEventListener("click", () => eliminate(code, game, deal, Number(btn.dataset.eliminate)))
   );
-
-  // Une manche interrompue sans vainqueur est marquée « révélée » (sans points).
-  const closeRound = (s, mark) => {
-    if (!s.results[s.round]) s.results[s.round] = mark;
-    if (!s.finished) s.finished = "revealed";
-  };
 
   document.getElementById("debrief").onclick = () => {
     const s = hostState(code);
@@ -1537,20 +1573,7 @@ function viewHost(code) {
     });
   };
 
-  const nextRound = () => {
-    const s = hostState(code);
-    closeRound(s, "s");
-    s.round += 1;
-    s.eliminated = [];
-    s.finished = null;
-    saveHostState(code, s);
-    render();
-    openModal(`
-      <h2>${t("round.plain", { round: s.round, rounds: game.rounds })}</h2>
-      ${ruleTag(dealRound(game, s.round).rule)}
-      <p>${t("host.nextRoundInfo")}</p>
-      <button class="btn btn--primary" data-close>${t("common.ok")}</button>`);
-  };
+  const nextRound = () => startNextRound(code, game);
   document.getElementById("next")?.addEventListener("click", () =>
     result ? nextRound() : confirmModal(t("host.skipConfirm"), t("host.skipOk"), nextRound)
   );
@@ -1576,6 +1599,30 @@ function viewHost(code) {
     )
   );
   document.getElementById("forget").onclick = () => confirmForget(code, "game");
+}
+
+// Une manche interrompue sans vainqueur est marquée « révélée » (sans points).
+function closeRound(s, mark) {
+  if (!s.results[s.round]) s.results[s.round] = mark;
+  if (!s.finished) s.finished = "revealed";
+}
+
+// Passe à la manche suivante et affiche l'écran de l'animateur, depuis l'animation ou le débrief.
+// replaceState : le retour arrière ne ramène pas au débrief, qui montrerait la nouvelle manche.
+function startNextRound(code, game) {
+  const s = hostState(code);
+  closeRound(s, "s");
+  s.round += 1;
+  s.eliminated = [];
+  s.finished = null;
+  saveHostState(code, s);
+  history.replaceState(null, "", `#/host/${code}`);
+  render();
+  openModal(`
+    <h2>${t("round.plain", { round: s.round, rounds: game.rounds })}</h2>
+    ${ruleTag(dealRound(game, s.round).rule)}
+    <p>${t("host.nextRoundInfo")}</p>
+    <button class="btn btn--primary" data-close>${t("common.ok")}</button>`);
 }
 
 function resultBanner(result, tag = "p", code = "") {
@@ -1699,7 +1746,6 @@ function viewDebrief(code, { round, names, back, mySeat = null, unplayed = false
       .filter((r) => r.card === card)
       .map((r) => label(r.seat))
       .join(", ");
-  const [backHref, backText] = back || (round ? [`#/end/${code}`, t("debrief.backResults")] : [`#/host/${code}`, t("debrief.backGame")]);
   const distributed = rule.civilians.filter((c) => holders(c));
 
   app.innerHTML = `
@@ -1742,11 +1788,20 @@ function viewDebrief(code, { round, names, back, mySeat = null, unplayed = false
       </div>
 
       <div class="actions">
-        <a class="btn btn--primary" href="${backHref}">${backText}</a>
+        ${
+          // Débrief de la manche en cours : on enchaîne sur la manche suivante (ou les résultats), sans
+          // repasser par l'écran d'animation de la manche terminée.
+          back || round
+            ? `<a class="btn btn--primary" href="${back ? back[0] : `#/end/${code}`}">${back ? back[1] : t("debrief.backResults")}</a>`
+            : shown >= game.rounds
+              ? `<a class="btn btn--primary" href="#/end/${code}">${t("host.results")}</a>`
+              : `<button class="btn btn--primary" id="debrief-next">${t("round.next")}</button>`
+        }
       </div>
     </section>`;
   app.querySelectorAll(".debrief-civ .grid > .card").forEach((card, i) => card.style.setProperty("--i", Math.min(i, 16)));
   if (!names) mountTimer(`debrief:${code}:${shown}`, "debrief");
+  document.getElementById("debrief-next")?.addEventListener("click", () => startNextRound(code, game));
 }
 
 // Classement et récapitulatif des manches, partagés par l'écran animateur et les téléphones.
@@ -1820,7 +1875,7 @@ function viewEnd(code) {
 
       <div class="actions">
         <a class="btn btn--primary" href="#/host">${t("setup.title")}</a>
-        <a class="btn" href="#/host/${code}">${t("end.backHost")}</a>
+        <a class="btn" href="#/">${t("common.backHome")}</a>
       </div>
       <div class="actions actions--secondary">
         <button class="btn btn--ghost btn--ghost-danger" id="forget">${t("host.forget")}</button>
@@ -1874,7 +1929,11 @@ function viewResults(code, token, round) {
 
 function viewJoin(prefill, seatPrefill, namesToken) {
   const game = prefill ? decodeCode(prefill) : null;
-  if (game && namesToken) store.set(`names:${game.code}`, decodeNames(namesToken));
+  if (game && namesToken) {
+    const { names, title } = decodeNames(namesToken, game.players);
+    store.set(`names:${game.code}`, names);
+    if (title) store.set(`title:${game.code}`, title);
+  }
   if (game && seatPrefill && seatPrefill >= 1 && seatPrefill <= game.players) {
     return go(`#/play/${game.code}/${seatPrefill}`);
   }
@@ -1930,7 +1989,9 @@ function viewPlay(code, seat) {
   if (!game || !(seat >= 1 && seat <= game.players)) return viewInvalid(code);
   const key = `player:${game.code}:${seat}`;
   const round = Math.min(game.rounds, store.get(key, 1));
+  store.set(key, round); // la partie apparaît dans la liste de l'accueil
   store.set("lastPlayer", { code: game.code, seat });
+  const title = gameTitle(game.code);
   const deal = dealRound(game, round);
   const me = deal.roles[seat - 1];
   const myName = knownNames(game.code)[seat];
@@ -1940,7 +2001,7 @@ function viewPlay(code, seat) {
     <section class="play">
       <div class="play-head">
         <h1>${myName ? `${esc(myName)} <small class="small">${t("player.seat", { n: seat })}</small>` : t("player.n", { n: seat })}</h1>
-        <span class="small">${esc(prettyCode(game.code))}</span>
+        <span class="small">${title ? `${esc(title)} · ` : ""}${esc(prettyCode(game.code))}</span>
       </div>
       ${
         myName

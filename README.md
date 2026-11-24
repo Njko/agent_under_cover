@@ -8,8 +8,8 @@ L'application est **100 % statique** : elle tourne sur GitHub Pages, sans serveu
 - L'animateur saisit les **prénoms** des joueurs (3 à 10) : chacun touche son prénom en rejoignant la partie.
 - Il choisit le **nombre de manches** et les **règles d'or** jouées (toutes, quelques-unes ou une seule), au hasard ou dans l'ordre.
 - À chaque manche, une règle est tirée parmi celles choisies (toutes passent avant qu'une revienne) et annoncée : les cartes apparaissent face cachée avec le dos de la règle.
-- Les **équipiers** reçoivent chacun une bonne pratique de cette règle : deux joueurs n'ont jamais la même carte. Au-delà de 5 joueurs, l'extension est obligatoire, le jeu de base seul n'ayant pas assez de cartes différentes (4 bonnes pratiques pour la règle 1).
-- L'**undercover** reçoit la carte « UNDERCOVER » de la règle : elle parle du même sujet mais *enfreint* la règle. Deux undercovers sont possibles à partir de 7 joueurs (donc avec l'extension, qui compte 4 cartes undercover par règle) : l'animateur choisit alors s'ils ont la même carte ou une carte différente chacun.
+- Les **équipiers** reçoivent chacun une bonne pratique de cette règle : deux joueurs n'ont jamais la même carte. Les parties se jouent toujours avec le jeu de base et l'extension : le jeu de base seul n'aurait pas assez de cartes différentes au-delà de 5 joueurs (4 bonnes pratiques pour la règle 1).
+- L'**undercover** reçoit la carte « UNDERCOVER » de la règle : elle parle du même sujet mais *enfreint* la règle. Deux undercovers sont possibles à partir de 7 joueurs (l'extension compte 4 cartes undercover par règle) : chacun reçoit alors une carte différente. Le mode compétitif et les 2 undercovers se choisissent en préparation « avancée » ; la préparation « simplifiée » joue en coopératif avec 1 undercover.
 - Deux **modes de jeu**, choisis à la création :
   - **Coopératif** (par défaut) : l'application ne révèle aucun rôle (celui qui a la carte undercover peut la reconnaître, mais la lit comme les autres). Chacun **lit sa carte à voix haute**, l'équipe débat puis désigne un suspect ; un équipier désigné à tort est disculpé et reste en jeu. **Score d'équipe** : 3 points si l'undercover est trouvé au premier vote, 2 au deuxième, 1 au troisième, 0 ensuite.
   - **Compétitif** : l'undercover **sait qu'il l'est** en retournant sa carte et bluffe. Chacun peut garder sa carte sous les yeux mais la **décrit avec ses mots**. Vote, élimination ; le score compte les **manches gagnées par chaque camp** (équipiers contre undercover).
@@ -117,7 +117,7 @@ Chaque carte indique son jeu :
 - `deck: "base"` : **jeu de base**, les cartes du jeu imprimé, validées (44 au départ) ;
 - `deck: "ext"` : **extension**, cartes à valider en atelier (88 au départ, 102 avec les cartes undercover plus subtiles), avec le métier dont la situation est tirée (`job`).
 
-À la création d'une partie, l'animateur choisit de jouer avec le jeu de base seul ou avec l'extension. Le catalogue « Toutes les cartes » peut n'afficher que l'un ou l'autre, et les cartes de l'extension y sont marquées « Extension », comme au débrief (jamais pendant le jeu, pour ne pas aider à deviner un rôle). Une fois une carte validée, passez son `deck` à `"base"`.
+Les parties se jouent toujours avec le jeu de base et l'extension (le choix a été retiré de la création de partie). Le catalogue « Toutes les cartes » peut n'afficher que l'un ou l'autre, et les cartes de l'extension y sont marquées « Extension », comme au débrief (jamais pendant le jeu, pour ne pas aider à deviner un rôle). Une fois une carte validée, passez son `deck` à `"base"`.
 
 ### Modifier les textes dans Excel
 

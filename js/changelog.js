@@ -8,6 +8,77 @@
 
 export const CHANGELOG = [
   {
+    date: "2026-11-24",
+    title: "Toutes les cartes à l'écran, parties nommées",
+    items: [
+      "Mode coopératif : le bouton « Afficher toutes les cartes » montre au groupe les cartes de tous les joueurs sur un même écran, sans les rôles, pour comparer avant de désigner. La manche continue.",
+      "Chaque partie peut recevoir un nom à sa création. L'accueil liste toutes les parties enregistrées sur l'appareil (animées ou rejointes), avec leur nom : une nouvelle partie ne remplace plus la précédente.",
+      "Deux préparations de partie : « simplifiée » (mode coopératif, 1 undercover) et « avancée » (toutes les options).",
+      "Avec 2 undercovers, chacun a désormais sa propre carte : l'option « la même carte pour les deux » disparaît.",
+      "Les parties se jouent désormais toujours avec le jeu de base et l'extension : le choix du jeu de cartes disparaît de la création de partie.",
+      "En créant une partie, l'animateur voit une estimation de la durée de l'atelier selon le nombre de manches (environ une heure pour 3 à 4 manches).",
+      "Après le débrief d'une manche, le bouton « Manche suivante » (ou « Voir les résultats » à la dernière manche) enchaîne directement, sans repasser par l'écran des rôles de la manche terminée.",
+      "En fin de partie, « Retour au tableau de bord » devient « Retour à l'accueil » et ramène à l'accueil (parties enregistrées, cartes, aide).",
+      "Les consignes parlent d'« appareil » plutôt que de « téléphone » : on peut aussi jouer sur ordinateur.",
+    ],
+    en: {
+      title: "All cards on screen, named games",
+      items: [
+        "Cooperative mode: the “Show all cards” button shows the group every player's card on a single screen, without roles, to compare before designating someone. The round goes on.",
+        "Each game can be given a name when it is created. The home screen lists all the games saved on the device (run or joined), with their name: a new game no longer replaces the previous one.",
+        "Two ways to set up a game: “simple” (cooperative mode, 1 undercover) and “advanced” (all options).",
+        "With 2 undercovers, each now has their own card: the “same card for both” option is gone.",
+        "Games are now always played with the base deck and the expansion: the choice of deck is gone from game creation.",
+        "When creating a game, the facilitator sees an estimate of the workshop length based on the number of rounds (about an hour for 3 to 4 rounds).",
+        "After a round's debrief, the “Next round” button (or “See the results” after the last round) moves straight on, without going back through the roles screen of the finished round.",
+        "At the end of the game, “Back to the dashboard” becomes “Back to home” and returns to the home screen (saved games, cards, help).",
+        "Instructions now say “device” rather than “phone”: the game can also be played on a computer.",
+      ],
+    },
+    de: {
+      title: "Alle Karten auf dem Bildschirm, benannte Spiele",
+      items: [
+        "Kooperativer Modus: Die Schaltfläche „Alle Karten anzeigen“ zeigt der Gruppe die Karten aller Spieler auf einem Bildschirm, ohne Rollen, um vor der Wahl zu vergleichen. Die Runde geht weiter.",
+        "Jedes Spiel kann beim Erstellen einen Namen erhalten. Die Startseite listet alle auf dem Gerät gespeicherten Spiele (moderiert oder beigetreten) mit ihrem Namen: Ein neues Spiel ersetzt das vorherige nicht mehr.",
+        "Zwei Arten der Vorbereitung: „vereinfacht“ (kooperativer Modus, 1 Undercover) und „erweitert“ (alle Optionen).",
+        "Mit 2 Undercover hat jeder jetzt seine eigene Karte: Die Option „dieselbe Karte für beide“ entfällt.",
+        "Gespielt wird jetzt immer mit dem Grundspiel und der Erweiterung: Die Auswahl der Karten entfällt beim Erstellen eines Spiels.",
+        "Beim Erstellen eines Spiels sieht die Spielleitung eine Schätzung der Workshop-Dauer je nach Anzahl der Runden (etwa eine Stunde für 3 bis 4 Runden).",
+        "Nach der Nachbesprechung einer Runde geht es mit „Nächste Runde“ (oder „Ergebnisse ansehen“ nach der letzten Runde) direkt weiter, ohne Umweg über den Rollenbildschirm der beendeten Runde.",
+        "Am Spielende wird „Zurück zur Übersicht“ zu „Zurück zur Startseite“ und führt zur Startseite (gespeicherte Spiele, Karten, Hilfe).",
+        "Die Anleitungen sprechen von „Gerät“ statt „Telefon“: Man kann auch am Computer spielen.",
+      ],
+    },
+    it: {
+      title: "Tutte le carte sullo schermo, partite con un nome",
+      items: [
+        "Modalità cooperativa: il pulsante «Mostra tutte le carte» mostra al gruppo le carte di tutti i giocatori su un'unica schermata, senza i ruoli, per confrontarle prima di designare qualcuno. La manche continua.",
+        "Ogni partita può ricevere un nome alla creazione. La home elenca tutte le partite salvate sul dispositivo (condotte o a cui si partecipa), con il loro nome: una nuova partita non sostituisce più la precedente.",
+        "Due preparazioni della partita: «semplificata» (modalità cooperativa, 1 undercover) e «avanzata» (tutte le opzioni).",
+        "Con 2 undercover, ognuno ha ora la propria carta: l'opzione «la stessa carta per entrambi» scompare.",
+        "Le partite si giocano ora sempre con il gioco base e l'espansione: la scelta del mazzo scompare dalla creazione della partita.",
+        "Creando una partita, chi conduce vede una stima della durata del workshop in base al numero di manche (circa un'ora per 3-4 manche).",
+        "Dopo il debriefing di una manche, il pulsante «Manche successiva» (o «Vedi i risultati» all'ultima manche) prosegue direttamente, senza ripassare dalla schermata dei ruoli della manche finita.",
+        "A fine partita, «Torna al pannello» diventa «Torna alla home» e riporta alla home (partite salvate, carte, aiuto).",
+        "Le istruzioni parlano di «dispositivo» invece che di «telefono»: si può giocare anche al computer.",
+      ],
+    },
+    es: {
+      title: "Todas las cartas en pantalla, partidas con nombre",
+      items: [
+        "Modo cooperativo: el botón «Mostrar todas las cartas» muestra al grupo las cartas de todos los jugadores en una misma pantalla, sin los roles, para compararlas antes de designar a alguien. La ronda continúa.",
+        "Cada partida puede recibir un nombre al crearla. La pantalla de inicio lista todas las partidas guardadas en el dispositivo (dirigidas o a las que se ha unido), con su nombre: una nueva partida ya no sustituye a la anterior.",
+        "Dos preparaciones de partida: «simplificada» (modo cooperativo, 1 undercover) y «avanzada» (todas las opciones).",
+        "Con 2 undercovers, cada uno tiene ahora su propia carta: desaparece la opción «la misma carta para los dos».",
+        "Las partidas se juegan ahora siempre con el juego básico y la expansión: la elección de las cartas desaparece de la creación de la partida.",
+        "Al crear una partida, quien dirige ve una estimación de la duración del taller según el número de rondas (alrededor de una hora para 3 a 4 rondas).",
+        "Después del debate de una ronda, el botón «Siguiente ronda» (o «Ver los resultados» en la última ronda) continúa directamente, sin volver a la pantalla de roles de la ronda terminada.",
+        "Al final de la partida, «Volver al panel» pasa a ser «Volver al inicio» y lleva a la pantalla de inicio (partidas guardadas, cartas, ayuda).",
+        "Las instrucciones hablan de «dispositivo» en lugar de «teléfono»: también se puede jugar en un ordenador.",
+      ],
+    },
+  },
+  {
     date: "2026-11-23",
     title: "Le jeu en cinq langues",
     items: [
