@@ -277,6 +277,8 @@ input[type="number"], input.code-input, input.name {
 .form label.check input { flex: none; margin-top: 1px; }
 .form label.check.rule-pick input { margin-top: 0; }
 .form label.check { align-items: flex-start; }
+.declare-pick label.check { min-height: 44px; align-items: center; }
+.declare-pick .hint { margin: 0; }
 .inline-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 input:disabled + small, label:has(input:disabled) { opacity: 0.6; }
 
@@ -814,7 +816,7 @@ a.chip { display: inline-flex; align-items: center; text-decoration: none; }
   }
   #app[data-view="setup"] :is(.fs-mode, .fs-players, .fs-rounds, .fs-undercovers) { grid-column: 1; }
   #app[data-view="setup"] .fs-rules { grid-column: 2; grid-row: 1 / span 4; }
-  #app[data-view="setup"] #setup-error { grid-column: 1 / -1; min-height: 0; margin: 0; }
+  #app[data-view="setup"] :is(#setup-error, .declare-pick) { grid-column: 1 / -1; min-height: 0; margin: 0; }
   /* Le bouton de validation reste visible en bas de l'écran pendant le défilement. */
   #app[data-view="setup"] .form > button[type="submit"] {
     grid-column: 1 / -1; justify-self: center; width: min(420px, 100%); position: sticky; bottom: 16px; z-index: 2;

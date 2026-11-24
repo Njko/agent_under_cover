@@ -8,7 +8,7 @@ Ce document explique comment fonctionne Undercover IA responsable et justifie qu
 | --- | --- |
 | Y a-t-il un serveur applicatif, une API, une base de données ? | **Non.** Un simple serveur de fichiers statiques (GitHub Pages, nginx…) envoie des fichiers HTML, CSS, JavaScript et images. Il ne reçoit, ne calcule et ne stocke rien. |
 | Les téléphones communiquent-ils entre eux ? | **Non.** Chaque téléphone recalcule seul sa carte à partir du code de la partie. |
-| Des données sont-elles envoyées quelque part ? | **Non.** L'application ne fait que des requêtes `GET` vers son propre site, pour télécharger ses fichiers. Aucun formulaire n'est envoyé, aucun appel d'API n'existe. |
+| Des données sont-elles envoyées quelque part ? | **Non, sauf déclaration volontaire.** L'application ne fait que des requêtes `GET` vers son propre site, pour télécharger ses fichiers. Aucun formulaire n'est envoyé, aucun appel d'API n'existe. Si l'organisation l'a configuré, l'animateur peut ouvrir en créant la partie le formulaire « Déclarer l'atelier », prérempli avec la date, l'édition, le nombre de joueurs et le code de partie (sans prénom ni score) : voir [Les requêtes réseau](#les-requêtes-réseau-une-par-une). |
 | Y a-t-il des comptes, des cookies, des traceurs, des statistiques ? | **Non.** Aucun cookie, aucune mesure d'audience, aucune publicité, aucune police ou bibliothèque chargée depuis un autre site. |
 | Où sont les données de jeu (prénoms, scores) ? | **Uniquement sur les téléphones** (stockage local du navigateur), et dans les liens/QR codes que les participants s'échangent en présentiel. |
 | Est-ce garanti techniquement ? | **Oui.** Une politique de sécurité du contenu (CSP) interdit au navigateur de contacter tout autre site que celui de l'application, et en Kubernetes une NetworkPolicy interdit au serveur toute connexion sortante. |
@@ -90,6 +90,8 @@ Les liens de l'application placent leurs informations **après le `#`** (le frag
 
 Le fragment d'URL **n'est jamais transmis au serveur** par le navigateur (RFC 3986, section 3.5). Le serveur ne voit passer que la demande de la page `/`, sans le code, les prénoms ni les scores.
 
+Exception : la déclaration de l'atelier (si elle est configurée) ouvre au formulaire Microsoft Forms de l'organisation. Ses valeurs préremplies (date, édition, nombre de joueurs, code de partie, sans prénom ni score) sont dans la **chaîne de requête** (après le `?`), donc reçues par Microsoft quand l'animateur ouvre le lien. Voir [Les requêtes réseau](#les-requêtes-réseau-une-par-une).
+
 À noter : les prénoms et résultats sont **encodés**, pas chiffrés. Toute personne qui scanne le QR code peut les lire, ce qui correspond à l'usage (des participants réunis dans la même salle).
 
 ## Ce qui est stocké sur les téléphones
@@ -119,7 +121,7 @@ Toutes les requêtes sont des `GET` vers le site de l'application :
 
 | Fichiers | Quand |
 | --- | --- |
-| `index.html`, `css/style.css`, `js/boot.js`, `js/app.js`, `js/game.js`, `js/cards.js`, `js/changelog.js`, `js/icons.js` | À l'ouverture |
+| `index.html`, `css/style.css`, `js/boot.js`, `js/app.js`, `js/game.js`, `js/cards.js`, `js/changelog.js`, `js/icons.js`, `js/declaration.js` | À l'ouverture |
 | `js/xlsx.js` | Uniquement au clic sur « Exporter en Excel » (catalogue) : le classeur est créé sur l'appareil, rien n'est envoyé |
 | `img/dos/regle-N-mini.webp`, `img/dos/regle-N.webp` | Selon les écrans affichés (aucune en mode low-tech) |
 | `vendor/qrcode.min.js` | Uniquement sur les écrans qui affichent un QR code (animateur) |
@@ -129,7 +131,10 @@ La bibliothèque de QR codes ([qrcode-generator](https://github.com/kazuhikoaras
 
 Le service worker (`sw.js`) ne traite que les requêtes `GET` vers le site lui-même. Il ignore tout le reste et ne contacte aucun autre domaine.
 
-**Seule exception, volontaire :** la page « Pourquoi un Web low-tech ? » contient deux liens vers Low-tech Magazine. Ils ne s'ouvrent que si l'utilisateur les touche, dans un nouvel onglet, sans transmettre l'adresse de la page d'origine (`Referrer-Policy: no-referrer`).
+**Exceptions, volontaires :** deux sortes de liens mènent à un autre site. Ils ne s'ouvrent que si l'utilisateur les touche, dans un nouvel onglet, sans transmettre l'adresse de la page d'origine (`Referrer-Policy: no-referrer`). La CSP ne bloque pas l'ouverture d'un lien, ce qui est voulu : ce n'est pas l'application qui contacte l'autre site, c'est la personne qui choisit de l'ouvrir.
+
+- **Low-tech Magazine :** la page « Pourquoi un Web low-tech ? » contient deux liens vers ce site.
+- **« Déclarer l'atelier » :** sur l'écran de création de partie, une case cochée par défaut ouvre, au moment où l'animateur touche « Générer la partie », le formulaire Microsoft Forms de l'organisation dans un nouvel onglet, pour compter les participants par direction. Rien ne s'affiche sur l'écran de la partie, souvent projeté. La case n'apparaît que si l'adresse du formulaire est renseignée dans `js/declaration.js` (`DECLARATION_FORM_URL`, vide par défaut). Le lien contient la date du jour, l'édition, le nombre de joueurs et le code de partie, qui préremplissent le formulaire. **Aucun prénom ni score** n'y figure. L'animateur relit et envoie lui-même le formulaire. Les réponses sont stockées dans l'espace Microsoft 365 de l'organisation, pas par l'application. Création du formulaire : [formulaire-declaration.md](formulaire-declaration.md).
 
 ## Les garanties techniques
 

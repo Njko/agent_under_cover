@@ -191,6 +191,8 @@ export default {
   "setup.advanced": "Avanzada",
   "setup.advancedHint": "Todas las opciones: modo competitivo y 2 undercovers a partir de 7 jugadores.",
   "setup.submit": "Generar la partida",
+  "setup.declare": "Registrar el taller al crear la partida",
+  "setup.declareHint": "El formulario de tu organización se abre en una nueva pestaña para contar los participantes por dirección. No se envía ningún nombre.",
   "setup.namesReused": "Nombres recuperados: {names}.",
   "setup.rulesFewer": "{rules} para {rounds}: {played}, {how}. {skipped}",
   "setup.chosenRules": { one: "{n} regla de oro elegida", other: "{n} reglas de oro elegidas" },

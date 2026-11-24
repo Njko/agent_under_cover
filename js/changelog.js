@@ -9,6 +9,37 @@
 export const CHANGELOG = [
   {
     date: "2026-11-24",
+    title: "Déclarer l'atelier",
+    items: [
+      "En créant une partie, la case « Déclarer l'atelier en créant la partie » (cochée par défaut) ouvre dans un nouvel onglet le formulaire de l'organisation, déjà rempli (date, édition, nombre de joueurs, code de partie). L'animateur y indique combien de participants viennent de chaque direction. Aucun prénom n'est transmis, et rien ne s'affiche sur l'écran projeté.",
+    ],
+    en: {
+      title: "Log the workshop",
+      items: [
+        "When creating a game, the “Log this workshop when creating the game” box (ticked by default) opens your organisation's form in a new tab, already filled in (date, edition, number of players, game code). The facilitator enters how many participants come from each department. No first names are sent, and nothing appears on the projected screen.",
+      ],
+    },
+    de: {
+      title: "Workshop melden",
+      items: [
+        "Beim Erstellen eines Spiels öffnet das Kästchen „Workshop beim Erstellen des Spiels melden“ (standardmäßig angekreuzt) das Formular Ihrer Organisation in einem neuen Tab, bereits ausgefüllt (Datum, Edition, Anzahl der Spieler, Spielcode). Die Spielleitung gibt an, wie viele Teilnehmende aus jeder Abteilung kommen. Es werden keine Vornamen übermittelt, und auf dem projizierten Bildschirm erscheint nichts.",
+      ],
+    },
+    it: {
+      title: "Registrare il workshop",
+      items: [
+        "Creando una partita, la casella «Registra il workshop alla creazione della partita» (selezionata per impostazione predefinita) apre in una nuova scheda il modulo della tua organizzazione, già compilato (data, edizione, numero di giocatori, codice della partita). Chi conduce indica quanti partecipanti vengono da ciascuna direzione. Nessun nome viene trasmesso e sullo schermo proiettato non appare nulla.",
+      ],
+    },
+    es: {
+      title: "Registrar el taller",
+      items: [
+        "Al crear una partida, la casilla «Registrar el taller al crear la partida» (marcada por defecto) abre en una nueva pestaña el formulario de tu organización, ya rellenado (fecha, edición, número de jugadores, código de la partida). Quien anima indica cuántos participantes vienen de cada dirección. No se envía ningún nombre y no aparece nada en la pantalla proyectada.",
+      ],
+    },
+  },
+  {
+    date: "2026-11-24",
     title: "Toutes les cartes à l'écran, parties nommées",
     items: [
       "Mode coopératif : le bouton « Afficher toutes les cartes » montre au groupe les cartes de tous les joueurs sur un même écran, sans les rôles, pour comparer avant de désigner. La manche continue.",

@@ -192,6 +192,8 @@ export default {
   "setup.advanced": "Avancée",
   "setup.advancedHint": "Toutes les options : mode compétitif, et 2 undercovers à partir de 7 joueurs.",
   "setup.submit": "Générer la partie",
+  "setup.declare": "Déclarer l'atelier en créant la partie",
+  "setup.declareHint": "Le formulaire de votre organisation s'ouvre dans un nouvel onglet pour compter les participants par direction. Aucun prénom n'est transmis.",
   "setup.namesReused": "Prénoms repris : {names}.",
   "setup.rulesFewer": "{rules} pour {rounds} : {played}, {how}. {skipped}",
   "setup.chosenRules": { one: "{n} règle d'or choisie", other: "{n} règles d'or choisies" },

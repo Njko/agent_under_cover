@@ -196,6 +196,8 @@ export default {
   "setup.advanced": "Advanced",
   "setup.advancedHint": "All options: competitive mode, and 2 undercovers from 7 players.",
   "setup.submit": "Create the game",
+  "setup.declare": "Log this workshop when creating the game",
+  "setup.declareHint": "Your organisation's form opens in a new tab to count participants by department. No first names are sent.",
   "setup.namesReused": "Names reused: {names}.",
   "setup.rulesFewer": "{rules} for {rounds}: {played}, {how}. {skipped}",
   "setup.chosenRules": { one: "{n} golden rule selected", other: "{n} golden rules selected" },

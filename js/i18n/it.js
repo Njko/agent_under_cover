@@ -191,6 +191,8 @@ export default {
   "setup.advanced": "Avanzata",
   "setup.advancedHint": "Tutte le opzioni: modalità competitiva e 2 undercover da 7 giocatori.",
   "setup.submit": "Genera la partita",
+  "setup.declare": "Registra il workshop alla creazione della partita",
+  "setup.declareHint": "Il modulo della tua organizzazione si apre in una nuova scheda per contare i partecipanti per direzione. Nessun nome viene trasmesso.",
   "setup.namesReused": "Nomi ripresi: {names}.",
   "setup.rulesFewer": "{rules} per {rounds}: {played}, {how}. {skipped}",
   "setup.chosenRules": { one: "{n} regola d'oro scelta", other: "{n} regole d'oro scelte" },

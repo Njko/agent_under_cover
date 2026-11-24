@@ -191,6 +191,8 @@ export default {
   "setup.advanced": "Erweitert",
   "setup.advancedHint": "Alle Optionen: kompetitiver Modus und 2 Undercover ab 7 Spielern.",
   "setup.submit": "Spiel erstellen",
+  "setup.declare": "Workshop beim Erstellen des Spiels melden",
+  "setup.declareHint": "Das Formular Ihrer Organisation öffnet sich in einem neuen Tab, um die Teilnehmenden pro Abteilung zu zählen. Es werden keine Vornamen übermittelt.",
   "setup.namesReused": "Namen übernommen: {names}.",
   "setup.rulesFewer": "{rules} für {rounds}: {played}, {how}. {skipped}",
   "setup.chosenRules": { one: "{n} goldene Regel ausgewählt", other: "{n} goldene Regeln ausgewählt" },

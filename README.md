@@ -86,6 +86,7 @@ Reste à faire : un test avec de vrais lecteurs d'écran (VoiceOver sur iPhone, 
 | Document | Contenu |
 | --- | --- |
 | [Fonctionnement technique](doc/fonctionnement-technique.md) | Architecture, données échangées et stockées, garanties (CSP, NetworkPolicy) : pourquoi l'application n'est pas connectée |
+| [Formulaire « Déclarer l'atelier »](doc/formulaire-declaration.md) | Créer le formulaire Microsoft Forms qui compte les participants par direction, et le relier à l'application |
 | [Image Docker](doc/docker.md) | Construire, lancer et publier l'image nginx de l'application |
 | [Kubernetes](doc/kubernetes.md) | Déployer l'image dans un cluster : manifestes, sécurité du pod, ingress, opérations |
 

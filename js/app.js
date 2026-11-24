@@ -1,5 +1,6 @@
 import { EDITION_IDS, RULES, rulesOf } from "./cards.js";
 import { CHANGELOG, LATEST_CHANGE } from "./changelog.js";
+import { DECLARATION_FORM_URL, declarationUrl } from "./declaration.js";
 import { ICONS } from "./icons.js";
 import { LANGUAGES, cardText, cardTranslations, formatDate, formatDecimal, lang, loadLanguage, pickLanguage, ruleText, t } from "./i18n.js";
 import fr from "./i18n/fr.js";
@@ -1265,6 +1266,15 @@ function viewHostSetup() {
           <label class="radio"><input type="radio" name="undercovers" value="2" ${prefs.undercovers === 2 ? "checked" : ""}> <span>${t("setup.twoUndercovers", { n: MIN_PLAYERS_TWO_UNDERCOVERS })}</span></label>
         </fieldset>
 
+        ${
+          DECLARATION_FORM_URL
+            ? `<div class="declare-pick">
+                <label class="check"><input type="checkbox" name="declare" checked aria-describedby="declare-hint"> <span>${t("setup.declare")}</span></label>
+                <p class="hint" id="declare-hint">${t("setup.declareHint")}</p>
+              </div>`
+            : ""
+        }
+
         <p class="error" id="setup-error" role="alert"></p>
         <button class="btn btn--primary" type="submit">${t("setup.submit")}</button>
       </form>
@@ -1392,6 +1402,11 @@ function viewHostSetup() {
     const title = cleanTitle(form.elements.title.value);
     if (title) store.set(`title:${code}`, title);
     saveHostState(code, { ...hostState(code), names });
+    // Déclaration de l'atelier (comptage par direction) : le formulaire de l'organisation s'ouvre dans un
+    // nouvel onglet, prérempli avec le code tout juste tiré. Rien ne s'affiche sur l'écran projeté.
+    if (form.elements.declare?.checked) {
+      window.open(declarationUrl(DECLARATION_FORM_URL, { date: new Date(), edition: settings.edition, players: settings.players, code }), "_blank", "noopener");
+    }
     go(`#/host/${code}`);
   });
 }
