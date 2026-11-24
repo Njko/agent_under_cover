@@ -37,7 +37,7 @@ Les animateurs ne disposent d'aucun moyen de recenser les participants aux ateli
   - On y laisse des **marqueurs** `__DATE__`, `__EDITION__`, `__JOUEURS__` et `__CODE__`, que l'application remplace par les valeurs (encodées) au moment de l'ouverture.
   - Aucun identifiant de question à extraire à la main : si l'équipe change le formulaire, elle recolle simplement le nouveau lien.
   - Constante vide : la case n'apparaît pas, et le jeu reste utilisable hors de l'organisation.
-- **Directions saisies dans Forms**, une réponse par direction présente. Une question à choix « Direction » avec l'option « Autre » permet de saisir une direction absente de la liste. Guide pour l'équipe : `doc/formulaire-declaration.md`.
+- **Directions saisies dans Forms**, **une seule réponse par atelier** : jusqu'à 5 directions, une section chacune, reliées par « Ajouter une autre direction ? » et des branchements. Décision du 2026-11-24 : « Envoyer une autre réponse » de Forms réinitialise le formulaire et perd le préremplissage, ce qui rendait inutilisable une réponse par direction. Les questions « Direction n » ont l'option « Autre » pour une direction absente de la liste. Guide pour l'équipe : `doc/formulaire-declaration.md`.
 - **Règles du projet à respecter :**
   - texte de la case dans les 5 langues ;
   - deux thèmes, en clair et en sombre ;
